@@ -1,6 +1,7 @@
 import argparse
 import math
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import os
 import pandas as pd
@@ -26,131 +27,141 @@ warnings.filterwarnings("ignore")
 
 HIDDEN_UNITS_POS_CONTACT = 5
 
+# CUDA specifications
+
 print("\ntorch.cuda.is_available() =", torch.cuda.is_available(), "\ttorch version =", torch.version.cuda)
+
+# Set Random Seeds
 
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
 
+# Global dictionaries for Models, Losses and Optimizers
 
+models = {"Milano":          ProstT5_Milano,
+          "MilanoMean":      ProstT5_MilanoMean,
+          "Roma":            ProstT5_Roma,
+          "RomaMean":        ProstT5_RomaMean,
+          "Trieste":         ProstT5_Trieste,
+          "TriesteMean":     ProstT5_TriesteMean,
+          "Conconello":      ProstT5_Conconello,
+          "ConconelloMean":  ProstT5_ConconelloMean,
+          "Basovizza":       ProstT5_Basovizza,
+          "BasovizzaMean":   ProstT5_BasovizzaMean,
+          "Padriciano":      ProstT5_Padriciano,
+          "PadricianoMean":  ProstT5_PadricianoMean,
+          "mutLin2":         ProstT5_mutLin2,
+          "mutLin2Mean":     ProstT5_mutLin2Mean,
+          "mutLin4":         ProstT5_mutLin4,
+          "mutLin4Mean":     ProstT5_mutLin4Mean,
+        }
 
+losses = {"L1":  torch.nn.functional.l1_loss,
+          "MSE": torch.nn.functional.mse_loss,
+          }
+
+optimizers = {"Adam":  torch.optim.Adam,
+              "AdamW": torch.optim.AdamW, 
+              }
+
+# Define the args from argparser
 
 args = argparser()
-print("\n", args)
-
+lr = args.lr
+max_epochs = args.max_epochs
+loss_fn_name = args.loss_fn
+model_name = args.model_name
+optimizer_name = args.optimizer
+train_dir = args.train_dir
+val_dir   = args.val_dir
+current_dir = args.current_dir
+device_name = args.device
 # Main
 
-lr = args.lr
-EPOCHS = args.epochs
-device = torch.device("cuda:0") if torch.cuda.is_available() else "cpu"
+device = torch.device("cuda") if torch.cuda.is_available() and device_name == "cuda" else "cpu"
 
-allmodels = ['ProstT5_Milano', 
-             'ProstT5_Roma', 
-             'ProstT5_Trieste', 
-             'ProstT5_Conconello', 
-             'ProstT5_Basovizza',
-             'ProstT5_Padriciano',
-             'ProstT5_mutLin2', 
-             'ProstT5_mutLin4',
-             ]
+result_dir = current_dir + "/results"
 
-optimizer_name="Adam" # "AdamW"
+curr_work_dir = os.getcwd()
 
-models = [allmodels[5]]
+print(f"curr_work_dir={curr_work_dir}")
 
-training_name="fixed_training"
-training_name="cut_training"
-CurrWorDir = os.getcwd()
-print()
+loss_fn = losses[loss_fn_name]
+model = models[model_name]()
+model.to(device)
+optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
 
-#test_path  = CurrWorDir + "/S669_subsets/data/"
-#test_files = os.listdir(test_path)
+train_dfs, _       = from_cvs_files_in_dir_to_dfs_list(curr_work_dir + "/" + train_dir)
+train_name = "train_" + train_dir.rsplit('/', 1)[1] 
+val_name   = "val_"   +   val_dir.rsplit('/', 1)[1] 
+val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(curr_work_dir + "/" + val_dir)
 
-full_df = pd.read_csv('../datasets/' + training_name +'_direct.csv',sep=',')
-test_datasets = ['datasets/p53_direct.csv','datasets/myoglobin_direct.csv','datasets/ssym_direct.csv','datasets/S669_direct.csv']
+print(train_name, val_name)
+train_df = pd.concat(train_dfs)
 
 #test_datasets = os.listdir(test_path)
 #test_datasets = [ "S669_subsets/data/" + f for f in test_datasets]
 
-datasets_path = '/orfeo/scratch/dssc/mceloria/PLM4Muts/'
+#datasets_path = '/orfeo/scratch/dssc/mceloria/PLM4Muts/'
 #for td in test_datasets:
 #    print(os.path.join(datasets_path, td))
 
-preds = {n:[] for n in models} 
-
-model_name  = args.model_name
-
-print("AAA", lr, model_name)
-model_class = globals()[model_name]
-print(f'Training model {model_name}', flush=True) 
-train_df = full_df
-train_ds = ProteinDataset(train_df)
-model = model_class()    
-model.to(device) 
-print("Debug A", flush=True)
-if optimizer_name=="Adam":
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
-if optimizer_name=="AdamW":
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=lr)
-
-training_loader = DataLoader(train_ds, batch_size=1, num_workers = 0, shuffle = True)
-scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(training_loader), epochs=EPOCHS)
+train_ds    = ProteinDataset(train_df)
+train_dl    = DataLoader(train_ds, batch_size=1, num_workers = 0, shuffle = True)
+train_rmse = np.zeros(max_epochs) 
+train_mae  = np.zeros(max_epochs) 
+train_corr = np.zeros(max_epochs)
+scheduler   = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl), epochs=max_epochs)
     
-testing_dataframes = [None] * len(test_datasets)
-testing_datasets   = [None] * len(test_datasets)
-testing_loaders    = [None] * len(test_datasets)
+val_dss   = [ProteinDataset(val_df) for val_df in val_dfs] 
+val_dls   = [DataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False) for val_ds in val_dss]
+val_rmses = [np.zeros(max_epochs)] * len(val_dfs)
+val_maes  = [np.zeros(max_epochs)] * len(val_dfs)
+val_corrs = [np.zeros(max_epochs)] * len(val_dfs)
 
-train_loss   = np.zeros(EPOCHS) 
-train_maes   = np.zeros(EPOCHS) 
-val_losses   = [None] * len(test_datasets)
-val_maes     = [None] * len(test_datasets)
-val_corr     = [None] * len(test_datasets)
-print("Debug B", flush=True) 
-for test_no, test_dataset in enumerate(test_datasets):
+for epoch in range(max_epochs):
+    t_labels, t_preds = train(model, train_dl, device, optimizer, scheduler, epoch)
+    t_mse  = np.mean(      (np.array(t_labels) - np.array(t_preds))**2)  
+    t_mae  = np.mean(np.abs(np.array(t_labels) - np.array(t_preds))   )
+    t_rmse = np.sqrt(t_mse)
+    t_corr, _ = pearsonr(t_labels, t_preds)
+    train_mae[epoch]  = t_mae
+    train_corr[epoch] = t_corr
+    train_rmse[epoch] = t_rmse
+    print("***********************************************************************", flush=True) 
+    print(f"Training Dataset - {model_name}:\tlen={len(train_dl)}", flush=True) 
+    print(f"Training RMSE - {model_name}            for epoch {epoch+1}/{max_epochs}:\t{train_rmse[epoch]}", flush=True) 
+    print(f"Training MAE - {model_name}             for epoch {epoch+1}/{max_epochs}:\t{train_mae[epoch]}", flush=True) 
+    print(f"Training Correlation - {model_name}     for epoch {epoch+1}/{max_epochs}:\t{train_corr[epoch]}", flush=True) 
+    print("***********************************************************************", flush=True) 
+    
 
-    testing_dataframes[test_no] = pd.read_csv(os.path.join(datasets_path, test_dataset))
-    testing_datasets[test_no]   = ProteinDataset(testing_dataframes[test_no])
-    testing_loaders[test_no]    = DataLoader(testing_datasets[test_no], batch_size=1, num_workers = 0)
-    val_losses[test_no] = np.zeros(EPOCHS)
-    val_maes[test_no]   = np.zeros(EPOCHS)
-    val_corr[test_no]   = np.zeros(EPOCHS)
-print("Debug C", flush=True)    
-for epoch in range(EPOCHS):
-    labels, predictions =train(model, training_loader, device, optimizer, scheduler, epoch)
-    L2loss = np.mean((np.array(labels) - np.array(predictions))**2)  
-    MAE  = np.mean(np.abs(np.array(labels) - np.array(predictions)))
-    RMSE = np.sqrt(L2loss)
-    train_loss[epoch] = RMSE
-    train_maes[epoch] = MAE
-    print("-----------------------------------------------------------------------", flush=True) 
-    print(f"Training Loss for epoch {epoch+1}/{EPOCHS} - {model_name}: RMSE[{train_loss[epoch]}] - MAE[{train_maes[epoch]}]", flush=True) 
-    print("-----------------------------------------------------------------------", flush=True) 
-
-    for test_no, testing_loader in enumerate(testing_loaders):
-        labels, predictions = valid(model, testing_loader, device)
-        L2loss = np.mean((np.array(labels) - np.array(predictions))**2) 
-        MAE = np.mean(np.abs(np.array(labels) - np.array(predictions)))
-        Correlation, p_value=pearsonr(labels, predictions)
-        val_maes[test_no][epoch]=MAE
-        val_corr[test_no][epoch]=Correlation
-        RMSE=np.sqrt(L2loss)
-        val_losses[test_no][epoch] = RMSE 
+    for val_no, val_dl in enumerate(val_dls):
+        v_labels, v_preds = valid(model, val_dl, device)
+        v_mse  = np.mean(      (np.array(v_labels) - np.array(v_preds))**2) 
+        v_mae  = np.mean(np.abs(np.array(v_labels) - np.array(v_preds))   )
+        v_rmse = np.sqrt(v_mse)
+        v_corr, _ = pearsonr(v_labels, v_preds)
+        val_maes[val_no][epoch]  = v_mae
+        val_corrs[val_no][epoch] = v_corr
+        val_rmses[val_no][epoch] = v_rmse 
             
         print("***********************************************************************", flush=True) 
-        print(f"Validation Dataset - {model_name}:\t{test_datasets[test_no]} len={len(testing_loader)}", flush=True) 
-        print(f"Validation RMSE - {model_name}            for epoch {epoch+1}/{EPOCHS}:\t{val_losses[test_no][epoch]}", flush=True) 
-        print(f"Validation MAE - {model_name}             for epoch {epoch+1}/{EPOCHS}:\t{val_maes[test_no][epoch]}", flush=True) 
-        print(f"Validation Correlation - {model_name}     for epoch {epoch+1}/{EPOCHS}:\t{val_corr[test_no][epoch]}", flush=True) 
+        print(f"Validation Dataset - {model_name}:\t{val_names[val_no]} len={len(val_dl)}", flush=True) 
+        print(f"Validation RMSE - {model_name}            for epoch {epoch+1}/{max_epochs}:\t{val_rmses[val_no][epoch]}", flush=True) 
+        print(f"Validation MAE - {model_name}             for epoch {epoch+1}/{max_epochs}:\t{val_maes[val_no][epoch]}", flush=True) 
+        print(f"Validation Correlation - {model_name}     for epoch {epoch+1}/{max_epochs}:\t{val_corrs[val_no][epoch]}", flush=True) 
         print("***********************************************************************", flush=True) 
            
-        if epoch==EPOCHS-1:
-            for idx,(lab, pred) in enumerate(zip(labels,predictions)):
+        if epoch==max_epochs - 1:
+            for idx,(lab, pred) in enumerate(zip(v_labels,v_preds)):
                 if np.abs(lab-pred) > 0.0:
-                    wild_seq = testing_dataframes[test_no].iloc[idx]['wild_type']
-                    mut_seq  = testing_dataframes[test_no].iloc[idx]['mutated']
-                    pos = testing_dataframes[test_no].iloc[idx]['pos']
-                    ddg = testing_dataframes[test_no].iloc[idx]['ddg']
-                    print(f"\n{test_datasets[test_no]}:\nwild_seq={wild_seq}\nmuta_seq={mut_seq}\npos={pos}\nlabels={lab}\tpredictions={pred}\n", 
+                    wild_seq = val_dfs[val_no].iloc[idx]['wild_type']
+                    mut_seq  = val_dfs[val_no].iloc[idx]['mutated']
+                    pos = val_dfs[val_no].iloc[idx]['pos']
+                    ddg = val_dfs[val_no].iloc[idx]['ddg']
+                    print(f"\n{val_names[val_no]}:\nwild_seq={wild_seq}\nmuta_seq={mut_seq}\npos={pos}\nlabels={lab}\tpredictions={pred}\n", 
                               flush=True)
          
 model.to('cpu') 
@@ -162,67 +173,72 @@ torch.cuda.empty_cache()
 
 print("Summary Direct Training", flush=True) 
 
-test_dataset_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in test_datasets ] 
+val_rmse_names  = [ s + "_rmse" for s in val_names]
+val_mae_names   = [ s + "_mae"  for s in val_names]
+val_corr_names  = [ s + "_corr" for s in val_names]
+train_rmse_dict = {'train_rmse': train_rmse}
+train_mae_dict  = {'train_mae':  train_mae}
+train_corr_dict = {'train_corr': train_corr}
 
-val_loss_names  = [ s + "_RMSE" for s in test_dataset_names]
-val_mae_names   = [ s + "_MAE"  for s in test_dataset_names]
-val_corr_names  = [ s + "_CORR"  for s in test_dataset_names]
-train_loss_dict = {'train_RMSE': train_loss}
-
-print(val_loss_names)
+print(val_rmse_names)
 print(val_mae_names)
 print(val_corr_names)
 
-val_loss_df   = pd.DataFrame.from_dict(dict(zip(val_loss_names,  val_losses)))
+val_rmse_df   = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  val_rmses)))
 val_mae_df    = pd.DataFrame.from_dict(dict(zip(val_mae_names,   val_maes)))
-val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  val_corr)))
-train_loss_df = pd.DataFrame.from_dict(train_loss_dict)
+val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  val_corrs)))
+train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
+train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
+train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
 
-train_loss_df["epoch"]= train_loss_df.index
-val_corr_df["epoch"]  = val_corr_df.index
-val_mae_df["epoch"]   = val_mae_df.index
-val_loss_df["epoch"]  = val_loss_df.index
+train_rmse_df["epoch"] = train_rmse_df.index
+train_mae_df["epoch"]  = train_mae_df.index
+train_corr_df["epoch"] = train_corr_df.index
+val_corr_df["epoch"]   = val_corr_df.index
+val_mae_df["epoch"]    = val_mae_df.index
+val_rmse_df["epoch"]   = val_rmse_df.index
 
-df = pd.concat([frame.set_index("epoch") for frame in [train_loss_df, val_loss_df, val_mae_df, val_corr_df]], axis=1, join="inner").reset_index()
+df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df]],
+               axis=1, join="inner").reset_index()
 
 print(df, flush=True) 
 
-df.to_csv(f'../results3008/Epochs_Statistics_direcT_{model_name}_{training_name}_{optimizer_name}_{lr}_{EPOCHS}_L2.csv')
+if not(os.path.exists(result_dir) and os.path.isdir(result_dir)):
+    os.makedirs(result_dir)
 
+df.to_csv( result_dir + "/epochs_statistics.csv")
+
+colors = cm.rainbow(torch.linspace(0, 1, len(val_rmse_names)))
 plt.figure(figsize=(8,6))
-plt.plot(df["epoch"], df["train_RMSE"],            label="train_direct_RMSE",     color="black",      linestyle="-.")
-plt.plot(df["epoch"], df["p53_direct_RMSE"],       label="p53_direct_RMSE",       color="tab:orange", linestyle="-")
-plt.plot(df["epoch"], df["myoglobin_direct_RMSE"], label="myoglobin_direct_RMSE", color="tab:green",  linestyle="-")
-plt.plot(df["epoch"], df["ssym_direct_RMSE"],      label="ssym_direct_RMSE",      color="tab:red",    linestyle="-")
-plt.plot(df["epoch"], df["S669_direct_RMSE"],      label="S669_direct_RMSE",      color="tab:blue",   linestyle="-")
+plt.plot(df["epoch"], df["train_rmse"],      label='train_rmse',  color="black",   linestyle="-.")
+for i, val_rmse_name in enumerate(val_rmse_names): 
+    plt.plot(df["epoch"], df[val_rmse_name], label=val_rmse_name, color=colors[i], linestyle="-")
 plt.xlabel("epoch")
-plt.ylabel("Loss")
+plt.ylabel("RMSE")
 plt.title(f"Model: {model_name}")
 plt.legend()
-plt.savefig(f'../results3008/Epochs_Loss_direcT_{model_name}_{training_name}_{optimizer_name}_{lr}_{EPOCHS}_L2.png')
+plt.savefig( result_dir + "/epochs_rmse.png")
 plt.clf()
 
 plt.figure(figsize=(8,6))
-plt.plot(df["epoch"], df["p53_direct_MAE"],       label="p53_direct_MAE",       color="tab:orange")
-plt.plot(df["epoch"], df["myoglobin_direct_MAE"], label="myoglobin_direct_MAE", color="tab:green")
-plt.plot(df["epoch"], df["ssym_direct_MAE"],      label="ssym_direct_MAE",      color="tab:red")
-plt.plot(df["epoch"], df["S669_direct_MAE"],      label="S669_direct_MAE",      color="tab:blue")
+plt.plot(df["epoch"], df["train_mae"],      label='train_mae',  color="black",   linestyle="-.")
+for i, val_mae_name in enumerate(val_mae_names): 
+    plt.plot(df["epoch"], df[val_mae_name], label=val_mae_name, color=colors[i], linestyle="-")
 plt.xlabel("epoch")
 plt.ylabel("MAE")
 plt.title(f"Model: {model_name}")
 plt.legend()
-plt.savefig(f'../results3008/Epochs_MAE_direcT_{model_name}_{training_name}_{optimizer_name}_{lr}_{EPOCHS}_L2.png')
+plt.savefig( result_dir + "/epochs_mae.png")
 plt.clf()
 
 plt.figure(figsize=(8,6))
-plt.plot(df["epoch"], df["p53_direct_CORR"],       label="p53_direct_CORR",       color="tab:orange")
-plt.plot(df["epoch"], df["myoglobin_direct_CORR"], label="myoglobin_direct_CORR", color="tab:green")
-plt.plot(df["epoch"], df["ssym_direct_CORR"],      label="ssym_direct_CORR",      color="tab:red")
-plt.plot(df["epoch"], df["S669_direct_CORR"],      label="S669_direct_CORR",      color="tab:blue")
+plt.plot(df["epoch"], df["train_corr"],      label='train_corr',  color="black",   linestyle="-.")
+for i, val_corr_name in enumerate(val_corr_names): 
+    plt.plot(df["epoch"], df[val_corr_name], label=val_corr_name, color=colors[i], linestyle="-")
 plt.xlabel("epoch")
 plt.ylabel("Pearson correlation coefficient")
 plt.title(f"Model: {model_name}")
 plt.legend()
-plt.savefig(f'../results3008/Epochs_Pearsonr_direcT_{model_name}_{training_name}_{optimizer_name}_{lr}_{EPOCHS}_L2.png')
+plt.savefig(result_dir + "/epochs_pearsonr.png")
 plt.clf()
 

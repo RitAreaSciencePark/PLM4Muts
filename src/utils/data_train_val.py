@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import re
 from transformers import T5Tokenizer
 import torch
@@ -13,6 +14,18 @@ warnings.filterwarnings("ignore")
 HIDDEN_UNITS_POS_CONTACT = 5
 
 
+def from_cvs_files_in_dir_to_dfs_list(dir_path):
+    print(dir_path)
+    datasets = os.listdir(dir_path)
+    print(datasets)
+    #datasets_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in datasets ]
+    datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]
+    print(datasets_names)
+    dfs = [None] * len(datasets)
+    for i,d in enumerate(datasets):
+        d_path = os.path.join(dir_path, d)
+        dfs[i] = pd.read_csv(d_path, sep=',')
+    return dfs, datasets_names
 
 ### Dataset Definition
 
