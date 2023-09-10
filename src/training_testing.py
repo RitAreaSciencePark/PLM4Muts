@@ -17,6 +17,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 from torch.cuda.amp import autocast
 import warnings
+import yaml
 
 from models.models import *
 from utils.data_train_val  import *
@@ -68,15 +69,39 @@ optimizers = {"Adam":  torch.optim.Adam,
 # Define the args from argparser
 
 args = argparser()
-lr = args.lr
-max_epochs = args.max_epochs
-loss_fn_name = args.loss_fn
-model_name = args.model_name
-optimizer_name = args.optimizer
-train_dir = args.train_dir
-val_dir   = args.val_dir
 current_dir = args.current_dir
-device_name = args.device
+
+# load config file
+config_file = os.path.join(current_dir, "config.yaml") 
+if os.path.exists(config_file):
+    config = load_config(config_file)
+    device_name    = config["device"]
+    loss_fn_name   = config["loss_fn"]
+    lr             = config["learning_rate"]
+    max_epochs     = config["max_epochs"]
+    model_name     = config["model"]
+    optimizer_name = config["optimizer"]
+    train_dir      = config["train_dir"]
+    val_dir        = config["val_dir"]
+else:
+    lr = args.lr
+    max_epochs = args.max_epochs
+    loss_fn_name = args.loss_fn
+    model_name = args.model
+    optimizer_name = args.optimizer
+    train_dir = args.train_dir
+    val_dir   = args.val_dir
+    device_name = args.device
+
+print(f"device_name:\t{device_name}\t{type(device_name)}", flush=True)
+print(f"loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
+print(f"learning rate:\t{lr}\t{type(lr)}", flush=True)
+print(f"max_epochs:\t{max_epochs}\t{type(max_epochs)}", flush=True)
+print(f"model_name:\t{model_name}\t{type(model_name)}", flush=True)
+print(f"optimizer_name:\t{optimizer_name}\t{type(optimizer_name)}", flush=True)
+print(f"train_dir:\t{train_dir}\t{type(train_dir)}", flush=True)
+print(f"val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
+
 # Main
 
 device = torch.device("cuda") if torch.cuda.is_available() and device_name == "cuda" else "cpu"

@@ -17,7 +17,7 @@
 ##SBATCH -w dgx002 
 #SBATCH --mem=100G
 
-MODEL_NAME="Padriciano"
+MODEL="Padriciano"
 LR=1e-5
 OPTIMIZER="Adam"
 MAX_EPOCHS=1
@@ -30,7 +30,7 @@ VERBOSE="True"
 
 cd ../..
 source myenv_dgx/bin/activate
-python src/training_testing.py --model_name ${MODEL_NAME} --lr ${LR} --optimizer ${OPTIMIZER} \
+python src/training_testing.py --model ${MODEL} --lr ${LR} --optimizer ${OPTIMIZER} \
 	                       --max_epochs ${MAX_EPOCHS} --current_dir ${CURRENT_DIR} --loss_fn ${LOSS_FN} \
 			       --train_dir ${TRAIN_DIR} --val_dir ${VAL_DIR} --device ${DEVICE} \
 	                       --verbose ${VERBOSE}
