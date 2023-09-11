@@ -28,6 +28,7 @@ class ProstT5_Milano(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="Milano"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(4096, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -51,6 +52,7 @@ class ProstT5_MilanoMean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="MilanoMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(4096, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -78,6 +80,7 @@ class ProstT5_MilanoMean(nn.Module):
 class ProstT5_Roma(nn.Module):
     def __init__(self):
         super().__init__()
+        self.name="Roma"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(4096, 1024)
         nn.init.xavier_normal_(self.classifier1.weight)
@@ -103,6 +106,7 @@ class ProstT5_Roma(nn.Module):
 class ProstT5_RomaMean(nn.Module):
     def __init__(self):
         super().__init__()
+        self.name="RomaMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(4096, 1024)
         nn.init.xavier_normal_(self.classifier1.weight)
@@ -133,6 +137,7 @@ class ProstT5_Trieste(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="Trieste"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(2048, 1024)
         self.classifier2 = nn.Linear(2048, 1024)
@@ -173,6 +178,7 @@ class ProstT5_TriesteMean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="TriesteMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(2048, 1024)
         self.classifier2 = nn.Linear(2048, 1024)
@@ -217,6 +223,7 @@ class ProstT5_Conconello(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="Conconello"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(2048, 1024)
         self.classifier2 = nn.Linear(2048, 1024)
@@ -256,6 +263,7 @@ class ProstT5_ConconelloMean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="ConconelloMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier1 = nn.Linear(2048, 1024)
         self.classifier2 = nn.Linear(2048, 1024)
@@ -300,6 +308,7 @@ class ProstT5_Basovizza(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="Basovizza"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(2048, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -330,6 +339,7 @@ class ProstT5_BasovizzaMean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="BasovizzaMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(2048, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -365,6 +375,7 @@ class ProstT5_Padriciano(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="Padriciano"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(2048, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -392,6 +403,7 @@ class ProstT5_PadricianoMean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="PadricianoMean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(2048, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -425,6 +437,7 @@ class ProstT5_mutLin2(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="mutLin2"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(1024, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -450,6 +463,7 @@ class ProstT5_mutLin2Mean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="mutLin2Mean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(1024, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -482,6 +496,7 @@ class ProstT5_mutLin4(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="mutLin4"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(1024, 1)
         nn.init.xavier_normal_(self.classifier.weight)
@@ -510,6 +525,7 @@ class ProstT5_mutLin4Mean(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name="mutLin4Mean"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
         self.classifier = nn.Linear(1024, 1)
         nn.init.xavier_normal_(self.classifier.weight)

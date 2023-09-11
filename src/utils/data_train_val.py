@@ -1,6 +1,9 @@
 import pandas as pd
 import os
 import re
+import scipy
+from scipy import stats
+from scipy.stats import pearsonr
 from transformers import T5Tokenizer
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -57,7 +60,7 @@ class ProteinDataset(Dataset):
 
 ### Training and Validation function
 
-def train(model, training_loader, device, optimizer,scheduler, epoch):
+def train_epoch(model, training_loader, device, optimizer,scheduler, epoch):
     scaler = torch.cuda.amp.GradScaler()
     tr_loss, tr_accuracy = 0, 0
     nb_tr_examples, nb_tr_steps = 0, 0
@@ -107,7 +110,7 @@ def train(model, training_loader, device, optimizer,scheduler, epoch):
 
 
 
-def valid(model, testing_loader, device):
+def valid_epoch(model, testing_loader, device):
     model.eval()
 
     eval_loss, eval_accuracy = 0, 0
@@ -141,4 +144,175 @@ def valid(model, testing_loader, device):
     return labels, predictions
 
 
+
+
+
+
+class Trainer:
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        train_dl: DataLoader,
+        val_dls:  list,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler,
+        gpu_id: int,
+        save_every: int,
+        device: torch.cuda.device,
+    ) -> None:
+        self.gpu_id = gpu_id
+        self.model = model#.to(gpu_id)
+        self.device = "cuda"
+        self.train_dl = train_dl
+        self.val_dls = val_dls
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.save_every = save_every
+
+#    def _run_batch(self, source, targets):
+#        self.optimizer.zero_grad()
+#        output = self.model(source)
+#        loss = F.cross_entropy(output, targets)
+#        loss.backward()
+#        self.optimizer.step()
+
+#    def _run_epoch(self, epoch):
+#        b_sz = len(next(iter(self.train_data))[0])
+#        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
+#        for source, targets in self.train_data:
+#            source = source.to(self.gpu_id)
+#            targets = targets.to(self.gpu_id)
+#            self._run_batch(source, targets)
+
+#    def _save_checkpoint(self, epoch):
+#        ckp = self.model.state_dict()
+#        PATH = "checkpoint.pt"
+#        torch.save(ckp, PATH)
+#        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+
+    def train(self, max_epochs: int):
+        self.train_rmse  = torch.zeros(max_epochs)
+        self.train_mae   = torch.zeros(max_epochs)
+        self.train_corr  = torch.zeros(max_epochs)
+        self.val_rmses = [torch.zeros(max_epochs)] * len(self.val_dls)
+        self.val_maes  = [torch.zeros(max_epochs)] * len(self.val_dls)
+        self.val_corrs = [torch.zeros(max_epochs)] * len(self.val_dls)
+        for epoch in range(max_epochs):
+            t_labels, t_preds = train_epoch(self.model, self.train_dl, self.device, self.optimizer, self.scheduler, epoch)
+            t_mse  = torch.mean(         (torch.tensor(t_labels) - torch.tensor(t_preds))**2)
+            t_mae  = torch.mean(torch.abs(torch.tensor(t_labels) - torch.tensor(t_preds))   )
+            t_rmse = torch.sqrt(t_mse)
+            t_corr, _ = pearsonr(t_labels, t_preds)
+            self.train_mae[epoch]  = t_mae
+            self.train_corr[epoch] = t_corr
+            self.train_rmse[epoch] = t_rmse
+            print("***********************************************************************", flush=True)
+            print(f"Training Dataset - {self.model.name}:\tlen={len(self.train_dl)}", flush=True)
+            print(f"Training RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.train_rmse[epoch]}", flush=True)
+            print(f"Training MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.train_mae[epoch]}", flush=True)
+            print(f"Training Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.train_corr[epoch]}", flush=True)
+            print("***********************************************************************", flush=True)
+#            if epoch % self.save_every == 0:
+#                self._save_checkpoint(epoch)
+            
+            for val_no, val_dl in enumerate(self.val_dls):
+                v_labels, v_preds = valid_epoch(self.model, val_dl, self.device)
+                v_mse  = torch.mean(         (torch.tensor(v_labels) - torch.tensor(v_preds))**2)
+                v_mae  = torch.mean(torch.abs(torch.tensor(v_labels) - torch.tensor(v_preds))   )
+                v_rmse = torch.sqrt(v_mse)
+                v_corr, _ = pearsonr(v_labels, v_preds)
+                self.val_maes[val_no][epoch]  = v_mae
+                self.val_corrs[val_no][epoch] = v_corr
+                self.val_rmses[val_no][epoch] = v_rmse
+                print("***********************************************************************", flush=True)
+                print(f"Validation Dataset - {self.model.name}:\t{val_names[val_no]} len={len(self.val_dl)}", flush=True)
+                print(f"Validation RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.val_rmses[val_no][epoch]}", 
+                      flush=True)
+                print(f"Validation MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.val_maes[val_no][epoch]}", 
+                      flush=True)
+                print(f"Validation Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.val_corrs[val_no][epoch]}", 
+                      flush=True)
+                print("***********************************************************************", flush=True)
+
+                if epoch==max_epochs - 1:
+                    for idx,(lab, pred) in enumerate(zip(v_labels,v_preds)):
+                        if np.abs(lab-pred) > 0.0:
+                            wild_seq = val_dfs[val_no].iloc[idx]['wild_type']
+                            mut_seq  = val_dfs[val_no].iloc[idx]['mutated']
+                            pos = val_dfs[val_no].iloc[idx]['pos']
+                            ddg = val_dfs[val_no].iloc[idx]['ddg']
+                            print(f"{val_names[val_no]}:\nwild_seq={wild_seq}\nmuta_seq={mut_seq}\npos={pos}\nlabels={lab}\tpredictions={pred}\n",
+                                  flush=True)
+
+        model.to('cpu')
+
+        #    torch.save(model.state_dict(), 'weights/' + self.model.name)
+
+        del model
+        torch.cuda.empty_cache()
+
+        print("Summary Direct Training", flush=True)
+        val_rmse_names  = [ s + "_rmse" for s in val_names]
+        val_mae_names   = [ s + "_mae"  for s in val_names]
+        val_corr_names  = [ s + "_corr" for s in val_names]
+        train_rmse_dict = {'train_rmse': train_rmse}
+        train_mae_dict  = {'train_mae':  train_mae}
+        train_corr_dict = {'train_corr': train_corr}
+
+        val_rmse_df   = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  val_rmses)))
+        val_mae_df    = pd.DataFrame.from_dict(dict(zip(val_mae_names,   val_maes)))
+        val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  val_corrs)))
+        train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
+        train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
+        train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
+
+        train_rmse_df["epoch"] = train_rmse_df.index
+        train_mae_df["epoch"]  = train_mae_df.index
+        train_corr_df["epoch"] = train_corr_df.index
+        val_corr_df["epoch"]   = val_corr_df.index
+        val_mae_df["epoch"]    = val_mae_df.index
+        val_rmse_df["epoch"]   = val_rmse_df.index
+
+        df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df]],
+               axis=1, join="inner").reset_index()
+
+        print(df, flush=True)
+
+        if not(os.path.exists(result_dir) and os.path.isdir(result_dir)):
+            os.makedirs(result_dir)
+
+        df.to_csv( result_dir + "/epochs_statistics.csv")
+        colors = cm.rainbow(torch.linspace(0, 1, len(val_rmse_names)))
+        plt.figure(figsize=(8,6))
+        plt.plot(df["epoch"], df["train_rmse"],      label='train_rmse',  color="black",   linestyle="-.")
+        for i, val_rmse_name in enumerate(val_rmse_names):
+            plt.plot(df["epoch"], df[val_rmse_name], label=val_rmse_name, color=colors[i], linestyle="-")
+        plt.xlabel("epoch")
+        plt.ylabel("RMSE")
+        plt.title(f"Model: {self.model.name}")
+        plt.legend()
+        plt.savefig( result_dir + "/epochs_rmse.png")
+        plt.clf()
+
+        plt.figure(figsize=(8,6))
+        plt.plot(df["epoch"], df["train_mae"],      label='train_mae',  color="black",   linestyle="-.")
+        for i, val_mae_name in enumerate(val_mae_names):
+            plt.plot(df["epoch"], df[val_mae_name], label=val_mae_name, color=colors[i], linestyle="-")
+        plt.xlabel("epoch")
+        plt.ylabel("MAE")
+        plt.title(f"Model: {self.model.name}")
+        plt.legend()
+        plt.savefig( result_dir + "/epochs_mae.png")
+        plt.clf()
+
+        plt.figure(figsize=(8,6))
+        plt.plot(df["epoch"], df["train_corr"],      label='train_corr',  color="black",   linestyle="-.")
+        for i, val_corr_name in enumerate(val_corr_names):
+            plt.plot(df["epoch"], df[val_corr_name], label=val_corr_name, color=colors[i], linestyle="-")
+        plt.xlabel("epoch")
+        plt.ylabel("Pearson correlation coefficient")
+        plt.title(f"Model: {self.model.name}")
+        plt.legend()
+        plt.savefig(result_dir + "/epochs_pearsonr.png")
+        plt.clf()
 
