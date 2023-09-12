@@ -135,7 +135,11 @@ scheduler   = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_pe
 val_dss   = [ProteinDataset(val_df) for val_df in val_dfs] 
 val_dls   = [DataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False) for val_ds in val_dss]
 
-trainer = Trainer(model=model, train_dl=train_dl, val_dls=val_dls, optimizer=optimizer, scheduler=scheduler, device=device, gpu_id=0, save_every=0)
+trainer = Trainer(model=model, 
+		  train_dl=train_dl,   val_dls=val_dls,
+		  optimizer=optimizer, scheduler=scheduler, 
+		  device=device,       gpu_id=0, 
+                  save_every=0,        result_dir=result_dir)
 
 trainer.train(max_epochs=max_epochs)
 #val_rmses = [np.zeros(max_epochs)] * len(val_dls)

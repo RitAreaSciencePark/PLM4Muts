@@ -16,6 +16,12 @@ warnings.filterwarnings("ignore")
 
 HIDDEN_UNITS_POS_CONTACT = 5
 
+def print_peak_memory(prefix, device):
+    if device == 0:
+	mma = torch.cuda.max_memory_allocated(device)
+        mmr = torch.cuda.max_memory_reserved(device)
+	tot = torch.cuda.get_device_properties(0).total_memory
+        print(f"{prefix}: allocated [{mma // 1e6} MB] - reserved [{mmr // 1e6} MB] - total [{tot // 1e6} MB]")
 
 def from_cvs_files_in_dir_to_dfs_list(dir_path):
     print(dir_path)
@@ -68,6 +74,7 @@ def train_epoch(model, training_loader, device, optimizer,scheduler, epoch):
     model.train()
 
     for idx, batch in enumerate(training_loader):
+	print_peak_memory("Max GPU memory", 0)
         t = torch.cuda.get_device_properties(0).total_memory
         r = torch.cuda.memory_reserved(0)
         a = torch.cuda.memory_allocated(0)
@@ -159,6 +166,7 @@ class Trainer:
         gpu_id: int,
         save_every: int,
         device: torch.cuda.device,
+	result_dir: str
     ) -> None:
         self.gpu_id = gpu_id
         self.model = model#.to(gpu_id)
@@ -168,27 +176,72 @@ class Trainer:
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.save_every = save_every
+	self.loss_fn = loss_fn
+	self.result_dir = result_dir
+	
+	self.train_logfile = self.result_dir + "/train_metrics.log"
+	with open(self.train_logfile, "w") as train_logfile:
+    	    train_logfile.write("appended text")
 
-#    def _run_batch(self, source, targets):
-#        self.optimizer.zero_grad()
-#        output = self.model(source)
-#        loss = F.cross_entropy(output, targets)
-#        loss.backward()
-#        self.optimizer.step()
+    def train_batch(self, epoch, batch_idx, batch):
+        print(f"epoch:{epoch} - batch_idx:{batch_idx}/{len(self.train_dl)}", flush=True)
+        print_peak_memory("Max GPU memory", 0)
+	input_ids1, input_ids2, pos, labels = batch
+        input_ids1 = input_ids1['input_ids'].to(self.device)[0]
+        input_ids2 = input_ids2['input_ids'].to(self.device)[0]
+        labels = labels.to(self.device)
+        pos    =    pos.to(self.device)
+        with autocast():
+            logits = self.model(token_ids1 = input_ids1, token_ids2 = input_ids2, pos = pos).to(self.device)
+	    loss = self.loss_fn(logits, labels) 
+        torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.1)
+        self.optimizer.zero_grad()
+        self.scaler.scale(loss).backward()
+        self.scaler.unscale_(self.optimizer)
+        self.scaler.step(self.optimizer)
+        self.scheduler.step()
+        self.scaler.update()
+        self.t_labels.extend(labels.cpu().detach())
+        self.t_preds.extend(logits.cpu().detach())
 
-#    def _run_epoch(self, epoch):
-#        b_sz = len(next(iter(self.train_data))[0])
-#        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
-#        for source, targets in self.train_data:
-#            source = source.to(self.gpu_id)
-#            targets = targets.to(self.gpu_id)
-#            self._run_batch(source, targets)
+    def train_epoch(self, epoch):
+	self.scaler = torch.cuda.amp.GradScaler()
+    	self.t_preds, self.t_labels = [], []
+    	self.model.train()
+	for idx, batch in enumerate(self.train_dl):
+		self.train_batch(epoch, idx, batch)
+    	t_labels = [id.item() for id in self.t_labels]
+    	t_preds  = [id.item() for id in self.t_preds ]
+	return t_labels, t_preds
 
-#    def _save_checkpoint(self, epoch):
-#        ckp = self.model.state_dict()
-#        PATH = "checkpoint.pt"
-#        torch.save(ckp, PATH)
-#        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+    def save_checkpoint(self, epoch):
+        ckp = self.model.state_dict()
+        PATH = "checkpoint.pt"
+        torch.save(ckp, PATH)
+        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+
+    
+    def valid_batch(self, batch_idx, batch):
+        print(f"idx={idx}/{len(testing_loader)}", flush=True)
+        input_ids1, input_ids2, pos, labels = batch
+        input_ids1 = input_ids1['input_ids'].to(device)[0]
+        input_ids2 = input_ids2['input_ids'].to(device)[0]
+        labels = labels.to(device)
+        logits = self.model(token_ids1 = input_ids1, token_ids2 = input_ids2, pos = pos)
+        labels_cpu=labels.cpu().detach()
+        logits_cpu=logits.cpu().detach()
+        self.eval_labels.extend(labels_cpu)
+        self.eval_preds.extend(logits_cpu)
+
+    def valid_epoch(self, epoch, val_dataloader):
+    	self.model.eval()
+        self.eval_preds, self.eval_labels = [], []
+        with torch.no_grad():
+            for idx, batch in enumerate(val_dataloader):
+		self.valid_batch(idx, batch)
+        labels = [id.item() for id in self.eval_labels]
+        predictions = [id.item() for id in self.eval_preds]
+        return labels, predictions
 
     def train(self, max_epochs: int):
         self.train_rmse  = torch.zeros(max_epochs)
@@ -198,7 +251,7 @@ class Trainer:
         self.val_maes  = [torch.zeros(max_epochs)] * len(self.val_dls)
         self.val_corrs = [torch.zeros(max_epochs)] * len(self.val_dls)
         for epoch in range(max_epochs):
-            t_labels, t_preds = train_epoch(self.model, self.train_dl, self.device, self.optimizer, self.scheduler, epoch)
+            t_labels, t_preds = self.train_epoch(epoch)
             t_mse  = torch.mean(         (torch.tensor(t_labels) - torch.tensor(t_preds))**2)
             t_mae  = torch.mean(torch.abs(torch.tensor(t_labels) - torch.tensor(t_preds))   )
             t_rmse = torch.sqrt(t_mse)
@@ -206,17 +259,19 @@ class Trainer:
             self.train_mae[epoch]  = t_mae
             self.train_corr[epoch] = t_corr
             self.train_rmse[epoch] = t_rmse
-            print("***********************************************************************", flush=True)
-            print(f"Training Dataset - {self.model.name}:\tlen={len(self.train_dl)}", flush=True)
-            print(f"Training RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.train_rmse[epoch]}", flush=True)
-            print(f"Training MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.train_mae[epoch]}", flush=True)
-            print(f"Training Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.train_corr[epoch]}", flush=True)
-            print("***********************************************************************", flush=True)
+            with open("test.txt", "a") as myfile:
+               myfile.write(f"{epoch},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}")
+#            print("***********************************************************************", flush=True)
+#            print(f"Training Dataset - {self.model.name}:\tlen={len(self.train_dl)}", flush=True)
+#            print(f"Training RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.train_rmse[epoch]}", flush=True)
+#            print(f"Training MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.train_mae[epoch]}", flush=True)
+#            print(f"Training Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.train_corr[epoch]}", flush=True)
+#            print("***********************************************************************", flush=True)
 #            if epoch % self.save_every == 0:
 #                self._save_checkpoint(epoch)
             
             for val_no, val_dl in enumerate(self.val_dls):
-                v_labels, v_preds = valid_epoch(self.model, val_dl, self.device)
+                v_labels, v_preds = self.valid_epoch(val_dl)
                 v_mse  = torch.mean(         (torch.tensor(v_labels) - torch.tensor(v_preds))**2)
                 v_mae  = torch.mean(torch.abs(torch.tensor(v_labels) - torch.tensor(v_preds))   )
                 v_rmse = torch.sqrt(v_mse)
@@ -224,15 +279,15 @@ class Trainer:
                 self.val_maes[val_no][epoch]  = v_mae
                 self.val_corrs[val_no][epoch] = v_corr
                 self.val_rmses[val_no][epoch] = v_rmse
-                print("***********************************************************************", flush=True)
-                print(f"Validation Dataset - {self.model.name}:\t{val_names[val_no]} len={len(self.val_dl)}", flush=True)
-                print(f"Validation RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.val_rmses[val_no][epoch]}", 
-                      flush=True)
-                print(f"Validation MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.val_maes[val_no][epoch]}", 
-                      flush=True)
-                print(f"Validation Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.val_corrs[val_no][epoch]}", 
-                      flush=True)
-                print("***********************************************************************", flush=True)
+                #print("***********************************************************************", flush=True)
+                #print(f"Validation Dataset - {self.model.name}:\t{val_names[val_no]} len={len(self.val_dl)}", flush=True)
+                #print(f"Validation RMSE - {self.model.name}            for epoch {epoch+1}/{max_epochs}:\t{self.val_rmses[val_no][epoch]}", 
+                #      flush=True)
+                #print(f"Validation MAE - {self.model.name}             for epoch {epoch+1}/{max_epochs}:\t{self.val_maes[val_no][epoch]}", 
+                #      flush=True)
+                #print(f"Validation Correlation - {self.model.name}     for epoch {epoch+1}/{max_epochs}:\t{self.val_corrs[val_no][epoch]}", 
+                #      flush=True)
+                #print("***********************************************************************", flush=True)
 
                 if epoch==max_epochs - 1:
                     for idx,(lab, pred) in enumerate(zip(v_labels,v_preds)):
