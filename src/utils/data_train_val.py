@@ -209,17 +209,17 @@ class Trainer:
 
         self.train_logfile =  self.result_dir +  "/train_metrics.log"
         with open(self.train_logfile, "w") as t_log:
-            t_log.write("epoch,rmse,mae,corr")
+            t_log.write("epoch,rmse,mae,corr\n")
         
         self.val_logfiles  = [self.result_dir + f"/{val.name}_metrics.log" for val in self.val_dls ] 
         for val_logfile in self.val_logfiles:
             with open(val_logfile, "w") as v_log:
-                v_log.write("epoch,rmse,mae,corr")
+                v_log.write("epoch,rmse,mae,corr\n")
         
         self.val_diffiles = [self.result_dir + f"/{val.name}_labels_preds.diffs" for val in self.val_dls ]
         for val_diffile in self.val_diffiles:
             with open(val_diffile, "w") as v_diff:
-                v_diff.write("mut_seq,wild_seq,position,label,prediction")
+                v_diff.write("mut_seq,wild_seq,position,label,prediction\n")
 
 
     def train_batch(self,  batch):
@@ -291,7 +291,7 @@ class Trainer:
                 pos      = protein_dataloader.df.iloc[idx]['pos']
                 ddg      = protein_dataloader.df.iloc[idx]['ddg']
                 with open(self.result_dir + f"/{protein_dataloader.name}_labels_preds.diffs", "a") as v_diffs:
-                   v_diffs.write(f"{mut_seq},{wild_seq},{pos},{lab},{pred}")
+                   v_diffs.write(f"{mut_seq},{wild_seq},{pos},{lab},{pred}\n")
 
 
     def train(self, model, train_dl, val_dls):
@@ -319,7 +319,7 @@ class Trainer:
                   f"mae  = {self.train_mae[epoch]} - "
                   f"corr = {self.train_corr[epoch]}")
             with open(self.train_logfile, "a") as t_log:
-               t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}")
+               t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
             if epoch % self.save_every == 0:
                 self.save_checkpoint(epoch)
             
@@ -337,7 +337,7 @@ class Trainer:
                       f"mae  = {self.val_maes[val_no][epoch]} - "
                       f"corr = {self.val_corrs[val_no][epoch]}")
                 with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
-                   v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}")
+                   v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}\n")
 
                 if epoch==self.max_epochs - 1:
                     self.difference_labels_preds(protein_dataloader=val_dl, labels=v_labels, preds=v_preds, cutoff=0.0)
