@@ -83,15 +83,17 @@ if os.path.exists(config_file):
     optimizer_name = config["optimizer"]
     train_dir      = config["train_dir"]
     val_dir        = config["val_dir"]
+    save_every     = config["save_every"] 
 else:
     lr = args.lr
-    max_epochs = args.max_epochs
-    loss_fn_name = args.loss_fn
-    model_name = args.model
+    max_epochs     = args.max_epochs
+    loss_fn_name   = args.loss_fn
+    model_name     = args.model
     optimizer_name = args.optimizer
-    train_dir = args.train_dir
-    val_dir   = args.val_dir
-    device_name = args.device
+    train_dir      = args.train_dir
+    val_dir        = args.val_dir
+    device_name    = args.device
+    save_every     = args.save_every
 
 print(f"device_name:\t{device_name}\t{type(device_name)}", flush=True)
 print(f"loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
@@ -107,6 +109,8 @@ print(f"val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
 device = torch.device("cuda") if torch.cuda.is_available() and device_name == "cuda" else "cpu"
 
 result_dir = current_dir + "/results"
+if not(os.path.exists(result_dir) and os.path.isdir(result_dir)):
+    os.makedirs(result_dir)
 
 curr_work_dir = os.getcwd()
 
@@ -118,30 +122,28 @@ model.to(device)
 optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
 
 train_dfs, _       = from_cvs_files_in_dir_to_dfs_list(curr_work_dir + "/" + train_dir)
-train_name = "train_" + train_dir.rsplit('/', 1)[1] 
-val_name   = "val_"   +   val_dir.rsplit('/', 1)[1] 
+train_name =  train_dir.rsplit('/', 1)[1] 
 val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(curr_work_dir + "/" + val_dir)
 
-print(train_name, val_name)
+print(train_name, val_names)
 train_df = pd.concat(train_dfs)
 
-train_ds    = ProteinDataset(train_df)
-train_dl    = DataLoader(train_ds, batch_size=1, num_workers = 0, shuffle = True)
+train_ds    = ProteinDataset(train_df, train_name)
+train_dl    = ProteinDataLoader(train_ds, batch_size=1, num_workers = 0, shuffle = True, pin_memory=False, sampler=None)
 #train_rmse  = np.zeros(max_epochs) 
 #train_mae   = np.zeros(max_epochs) 
 #train_corr  = np.zeros(max_epochs)
-scheduler   = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl), epochs=max_epochs)
+scheduler   = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
     
-val_dss   = [ProteinDataset(val_df) for val_df in val_dfs] 
-val_dls   = [DataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False) for val_ds in val_dss]
+val_dss   = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names) ] 
+val_dls   = [ProteinDataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False, pin_memory=False, sampler=None) for val_ds in val_dss]
 
-trainer = Trainer(model=model, 
-		  train_dl=train_dl,   val_dls=val_dls,
-		  optimizer=optimizer, scheduler=scheduler, 
-		  device=device,       gpu_id=0, 
-                  save_every=0,        result_dir=result_dir)
+trainer = Trainer(max_epochs=max_epochs,loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler,
+                  device=device, gpu_id=0, save_every=save_every, current_dir=current_dir)
 
-trainer.train(max_epochs=max_epochs)
+trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
+trainer.describe()
+
 #val_rmses = [np.zeros(max_epochs)] * len(val_dls)
 #val_maes  = [np.zeros(max_epochs)] * len(val_dls)
 #val_corrs = [np.zeros(max_epochs)] * len(val_dls)
