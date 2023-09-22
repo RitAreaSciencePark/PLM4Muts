@@ -18,21 +18,13 @@ import torch.nn.functional as F
 from torch.cuda.amp import autocast
 import warnings
 import yaml
-
+import sys
 from models.models import *
 from utils.data_train_val  import *
 from utils.argparser import *
-
+import torch.multiprocessing as mp
 torch.cuda.empty_cache()
 warnings.filterwarnings("ignore")
-
-# CUDA specifications
-print("\ntorch.cuda.is_available() =", torch.cuda.is_available(), "\ttorch version =", torch.version.cuda)
-
-# Set Random Seeds
-random.seed(0)
-np.random.seed(0)
-torch.manual_seed(0)
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"Milano":          ProstT5_Milano,
@@ -62,10 +54,12 @@ optimizers = {"Adam":  torch.optim.Adam,
               }
 
 
-def main(device_name, loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every):
-    device = torch.device("cuda:0") if torch.cuda.is_available() and device_name == "cuda" else "cpu"
+def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every, current_dir):
+    #device = torch.device("cuda:0") if torch.cuda.is_available() and device_name == "cuda" else "cpu"
     curr_work_dir = os.getcwd()
-    print(f"curr_work_dir={curr_work_dir}")
+    ddp_setup()
+    rank = int(os.environ["LOCAL_RANK"])
+    print(f"I am rank {rank}")
     loss_fn = losses[loss_fn_name]
     model = models[model_name]()
     optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
@@ -74,19 +68,19 @@ def main(device_name, loss_fn_name, model_name, optimizer_name, train_dir, val_d
     train_name = train_dir.rsplit('/', 1)[1] 
     train_df = pd.concat(train_dfs)
     train_ds = ProteinDataset(train_df, train_name)
-    train_dl = ProteinDataLoader(train_ds, batch_size=1, num_workers = 0, shuffle = True, pin_memory=False, sampler=None)
+    train_dl = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds))
     
     val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(curr_work_dir + "/" + val_dir)
     val_dss = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names) ] 
-    val_dls = [ProteinDataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False, pin_memory=False, sampler=None) for val_ds in val_dss]
+    val_dls = [ProteinDataLoader(val_ds, batch_size=1, num_workers = 0, shuffle = False, pin_memory=False, sampler=DistributedSampler(val_ds)) for val_ds in val_dss]
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
-    
-    trainer = Trainer(max_epochs=max_epochs,loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler,
-                  gpu_id=0, save_every=save_every, current_dir=current_dir)
+   
+    trainer = Trainer(max_epochs=max_epochs,loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler,save_every=save_every, current_dir=current_dir, snapshot_path="None")
 
     trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
     trainer.describe()
+    destroy_process_group()
 
 if __name__ == "__main__":
     # Define the args from argparser
@@ -96,7 +90,6 @@ if __name__ == "__main__":
     config_file = os.path.join(current_dir, "config.yaml") 
     if os.path.exists(config_file):
         config = load_config(config_file)
-        device_name    = config["device"]
         loss_fn_name   = config["loss_fn"]
         lr             = config["learning_rate"]
         max_epochs     = config["max_epochs"]
@@ -113,10 +106,8 @@ if __name__ == "__main__":
         optimizer_name = args.optimizer
         train_dir      = args.train_dir
         val_dir        = args.val_dir
-        device_name    = args.device
         save_every     = args.save_every
 
-    print(f"device_name:\t{device_name}\t{type(device_name)}", flush=True)
     print(f"loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
     print(f"learning rate:\t{lr}\t{type(lr)}", flush=True)
     print(f"max_epochs:\t{max_epochs}\t{type(max_epochs)}", flush=True)
@@ -125,4 +116,7 @@ if __name__ == "__main__":
     print(f"train_dir:\t{train_dir}\t{type(train_dir)}", flush=True)
     print(f"val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
 
-    main(device_name, loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every)
+    world_size = torch.cuda.device_count()
+    print("world_size is ", world_size)
+    main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every, current_dir)
+

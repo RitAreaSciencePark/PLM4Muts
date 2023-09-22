@@ -14,10 +14,19 @@ from torch.cuda.amp import autocast
 from transformers import T5Tokenizer
 import warnings
 
+import torch.multiprocessing as mp
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.distributed import init_process_group, destroy_process_group
+
 torch.cuda.empty_cache()
 warnings.filterwarnings("ignore")
 
 HIDDEN_UNITS_POS_CONTACT = 5
+
+def ddp_setup():
+    init_process_group(backend="nccl")
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 def print_peak_memory(prefix, device):
     if device == 0:
@@ -93,47 +102,68 @@ class Trainer:
         self,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
-        gpu_id: int,
         save_every: int,
         loss_fn: torch.nn.functional, 
-	    current_dir: str,
-        max_epochs: int
+	current_dir: str,
+        max_epochs: int,
+        snapshot_path: str
 
     ) -> None:
         self.max_epochs = max_epochs
-        self.gpu_id = gpu_id
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.save_every = save_every
         self.loss_fn = loss_fn
         self.current_dir = current_dir
         self.save_every = save_every
+        self.gpu_id = int(os.environ["LOCAL_RANK"])
+        self.epochs_run = 0
+        self.snapshot_path=snapshot_path
+
+    def _load_snapshot(self, snapshot_path):
+        loc = f"cuda:{self.gpu_id}"
+        snapshot = torch.load(snapshot_path, map_location=loc)
+        self.model.load_state_dict(snapshot["MODEL_STATE"])
+        self.epochs_run = snapshot["EPOCHS_RUN"]
+        print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+
+    def _save_snapshot(self, epoch):
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "EPOCHS_RUN": epoch,
+        }
+        torch.save(snapshot, self.snapshot_path)
+        print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
 
     def initialize_files(self):
         self.result_dir      = self.current_dir + "/results"
         self.weights_dir     = self.current_dir + "/weights"
         self.checkpoints_dir = self.current_dir + "/checkpoints"
-        
-        if not(os.path.exists(self.result_dir) and os.path.isdir(self.result_dir)):
-            os.makedirs(self.result_dir)
-        if not(os.path.exists(self.weights_dir) and os.path.isdir(self.weights_dir)):
-            os.makedirs(self.weights_dir)
-        if not(os.path.exists(self.checkpoints_dir) and os.path.isdir(self.checkpoints_dir)):
-            os.makedirs(self.checkpoints_dir)            
+       
+        if self.gpu_id == 0:
+            if not(os.path.exists(self.result_dir) and os.path.isdir(self.result_dir)):
+                os.makedirs(self.result_dir)
+            if not(os.path.exists(self.weights_dir) and os.path.isdir(self.weights_dir)):
+                os.makedirs(self.weights_dir)
+            if not(os.path.exists(self.checkpoints_dir) and os.path.isdir(self.checkpoints_dir)):
+                os.makedirs(self.checkpoints_dir)            
 
         self.train_logfile =  self.result_dir +  "/train_metrics.log"
-        with open(self.train_logfile, "w") as t_log:
-            t_log.write("epoch,rmse,mae,corr\n")
+        if self.gpu_id == 0:
+            with open(self.train_logfile, "w") as t_log:
+                t_log.write("epoch,rmse,mae,corr\n")
         
         self.val_logfiles  = [self.result_dir + f"/{val.name}_metrics.log" for val in self.val_dls ] 
-        for val_logfile in self.val_logfiles:
-            with open(val_logfile, "w") as v_log:
-                v_log.write("epoch,rmse,mae,corr\n")
+        if self.gpu_id == 0:
+            for val_logfile in self.val_logfiles:
+                with open(val_logfile, "w") as v_log:
+                    v_log.write("epoch,rmse,mae,corr\n")
         
         self.val_diffiles = [self.result_dir + f"/{val.name}_labels_preds.diffs" for val in self.val_dls ]
-        for val_diffile in self.val_diffiles:
-            with open(val_diffile, "w") as v_diff:
-                v_diff.write("mut_seq,wild_seq,position,label,prediction\n")
+        if self.gpu_id == 0:
+            for val_diffile in self.val_diffiles:
+                with open(val_diffile, "w") as v_diff:
+                    v_diff.write("mut_seq,wild_seq,position,label,prediction\n")
 
 
     def train_batch(self,  batch):
@@ -164,9 +194,10 @@ class Trainer:
         self.t_preds, self.t_labels = [], []
         self.model.train()
         len_dataloader = len(train_proteindataloader.dataloader)
+        train_proteindataloader.dataloader.sampler.set_epoch(epoch)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
             print_peak_memory("Max GPU memory", self.gpu_id)
-            print(f"{train_proteindataloader.name}\tepoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+            print(f"{train_proteindataloader.name}\ton GPU {self.gpu_id} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
             self.train_batch(batch)
         print("IDA",  len(self.t_labels), self.t_labels[0].shape)
         print("MARCO", len(self.t_preds), self.t_preds[0].shape)
@@ -174,12 +205,12 @@ class Trainer:
         t_preds  = [id.item() for id in self.t_preds ]
         return t_labels, t_preds
 
-    def save_checkpoint(self, epoch):
-        ckp  = self.model.state_dict()
-        PATH = self.checkpoints_dir + f"/checkpoint.pt"
-        torch.save(ckp, PATH)
-        print(f"Epoch {epoch+1} | Training checkpoint saved at {PATH}")
-    
+#    def _save_checkpoint(self, epoch):
+#        ckp = self.model.module.state_dict()
+#        PATH = "checkpoint.pt"
+#        torch.save(ckp, PATH)
+#        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+
     def valid_batch(self, batch):
         seqs, pos, labels = batch
         seqs  = seqs.to(self.gpu_id)
@@ -197,7 +228,7 @@ class Trainer:
         len_dataloader = len(val_proteindataloader.dataloader)
         with torch.no_grad():
             for idx, batch in enumerate(val_proteindataloader.dataloader):
-                print(f"{val_proteindataloader.name}\tepoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+                print(f"{val_proteindataloader.name}\ton GPU {self.gpu_id} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
                 self.valid_batch(batch)
         labels = [id.item() for id in self.eval_labels]
         preds  = [id.item() for id in self.eval_preds]
@@ -210,22 +241,30 @@ class Trainer:
                 mut_seq  = protein_dataloader.df.iloc[idx]['mutated']
                 pos      = protein_dataloader.df.iloc[idx]['pos']
                 ddg      = protein_dataloader.df.iloc[idx]['ddg']
-                with open(self.result_dir + f"/{protein_dataloader.name}_labels_preds.diffs", "a") as v_diffs:
-                   v_diffs.write(f"{mut_seq},{wild_seq},{pos},{lab},{pred}\n")
+                if self.gpu_id == 0:
+                    with open(self.result_dir + f"/{protein_dataloader.name}_labels_preds.diffs", "a") as v_diffs:
+                       v_diffs.write(f"{mut_seq},{wild_seq},{pos},{lab},{pred}\n")
 
 
     def train(self, model, train_dl, val_dls):
+        print(f"I am rank {self.gpu_id}")
+        self.model_name = model.name
         self.model = model.to(self.gpu_id)
+        self.model = DDP(self.model, device_ids=[self.gpu_id])
+#        if os.path.exists(self.snapshot_path):
+#            print("Loading snapshot")
+#            self._load_snapshot(self.snapshot_path)
         self.train_dl = train_dl
         self.val_dls = val_dls
-        self.initialize_files()
+        if self.gpu_id == 0:
+            self.initialize_files()
         self.train_rmse  = torch.zeros(self.max_epochs)
         self.train_mae   = torch.zeros(self.max_epochs)
         self.train_corr  = torch.zeros(self.max_epochs)
         self.val_rmses = [torch.zeros(self.max_epochs)] * len(self.val_dls)
         self.val_maes  = [torch.zeros(self.max_epochs)] * len(self.val_dls)
         self.val_corrs = [torch.zeros(self.max_epochs)] * len(self.val_dls)
-        for epoch in range(0,self.max_epochs):
+        for epoch in range(self.epochs_run, self.max_epochs):
             t_labels, t_preds = self.train_epoch(epoch, self.train_dl)
             t_mse  = torch.mean(         (torch.tensor(t_labels) - torch.tensor(t_preds))**2)
             t_mae  = torch.mean(torch.abs(torch.tensor(t_labels) - torch.tensor(t_preds))   )
@@ -234,14 +273,16 @@ class Trainer:
             self.train_mae[epoch]  = t_mae
             self.train_corr[epoch] = t_corr
             self.train_rmse[epoch] = t_rmse
-            print(f"{self.train_dl.name}: epoch {epoch+1}/{self.max_epochs}\t"
+            print(f"{self.train_dl.name}: on GPU {self.gpu_id} epoch {epoch+1}/{self.max_epochs}\t"
                   f"rmse = {self.train_rmse[epoch]}\t"
                   f"mae = {self.train_mae[epoch]}\t"
                   f"corr = {self.train_corr[epoch]}")
-            with open(self.train_logfile, "a") as t_log:
-               t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
-            if epoch % self.save_every == 0:
-                self.save_checkpoint(epoch)
+            if self.gpu_id == 0:
+                with open(self.train_logfile, "a") as t_log:
+                    t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
+            
+            if self.gpu_id == 0 and epoch % self.save_every == 0:
+                self._save_snapshot(epoch)
             
             for val_no, val_dl in enumerate(self.val_dls):
                 v_labels, v_preds = self.valid_epoch(epoch, val_dl)
@@ -252,19 +293,26 @@ class Trainer:
                 self.val_maes[val_no][epoch]  = v_mae
                 self.val_corrs[val_no][epoch] = v_corr
                 self.val_rmses[val_no][epoch] = v_rmse
-                print(f"{val_dl.name}: epoch {epoch+1}/{self.max_epochs}\t"
+                print(f"{val_dl.name}: on GPU {self.gpu_id} epoch {epoch+1}/{self.max_epochs}\t"
                       f"rmse = {self.val_rmses[val_no][epoch]}\t"
                       f"mae = {self.val_maes[val_no][epoch]}\t"
                       f"corr = {self.val_corrs[val_no][epoch]}")
-                with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
-                   v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}\n")
+                if self.gpu_id == 0:
+                    with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
+                        v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}\n")
 
                 if epoch==self.max_epochs - 1:
                     self.difference_labels_preds(protein_dataloader=val_dl, labels=v_labels, preds=v_preds, cutoff=0.0)
 
         self.model.to('cpu')
-
-        torch.save(self.model.state_dict(), self.weights_dir + "/weight.pt")
+        if self.gpu_id == 0:
+            weights_path = self.weights_dir + "/weight.pt"
+            snapshot = {
+                        "MODEL_STATE": self.model.module.state_dict(),
+                        "EPOCHS_RUN": epoch,
+                       }
+            torch.save(snapshot, weights_path)
+            print(f"Epoch {epoch} | Training snapshot saved at {weights_path}")
 
     def plot(self, dataframe, train_name, val_names, ylabel, title):
         colors = cm.rainbow(torch.linspace(0, 1, len(val_names)))
@@ -280,44 +328,41 @@ class Trainer:
         plt.clf()
 
 
-    def describe(self): 
-        val_rmse_names  = [ s.name + "_rmse" for s in self.val_dls]
-        val_mae_names   = [ s.name + "_mae"  for s in self.val_dls]
-        val_corr_names  = [ s.name + "_corr" for s in self.val_dls]
-        train_rmse_name = self.train_dl.name + '_rmse'
-        train_mae_name  = self.train_dl.name + '_mae'
-        train_corr_name = self.train_dl.name + '_corr'
-        train_rmse_dict = { train_rmse_name: self.train_rmse}
-        train_mae_dict  = { train_mae_name:  self.train_mae}
-        train_corr_dict = { train_corr_name: self.train_corr}
+    def describe(self):
+        if self.gpu_id == 0:
+            val_rmse_names  = [ s.name + "_rmse" for s in self.val_dls]
+            val_mae_names   = [ s.name + "_mae"  for s in self.val_dls]
+            val_corr_names  = [ s.name + "_corr" for s in self.val_dls]
+            train_rmse_name = self.train_dl.name + '_rmse'
+            train_mae_name  = self.train_dl.name + '_mae'
+            train_corr_name = self.train_dl.name + '_corr'
+            train_rmse_dict = { train_rmse_name: self.train_rmse}
+            train_mae_dict  = { train_mae_name:  self.train_mae}
+            train_corr_dict = { train_corr_name: self.train_corr}
 
-        val_rmse_df   = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  self.val_rmses)))
-        val_mae_df    = pd.DataFrame.from_dict(dict(zip(val_mae_names,   self.val_maes)))
-        val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  self.val_corrs)))
-        train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
-        train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
-        train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
+            val_rmse_df   = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  self.val_rmses)))
+            val_mae_df    = pd.DataFrame.from_dict(dict(zip(val_mae_names,   self.val_maes)))
+            val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  self.val_corrs)))
+            train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
+            train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
+            train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
 
-        train_rmse_df["epoch"] = train_rmse_df.index
-        train_mae_df["epoch"]  = train_mae_df.index
-        train_corr_df["epoch"] = train_corr_df.index
-        val_corr_df["epoch"]   = val_corr_df.index
-        val_mae_df["epoch"]    = val_mae_df.index
-        val_rmse_df["epoch"]   = val_rmse_df.index
+            train_rmse_df["epoch"] = train_rmse_df.index
+            train_mae_df["epoch"]  = train_mae_df.index
+            train_corr_df["epoch"] = train_corr_df.index
+            val_corr_df["epoch"]   = val_corr_df.index
+            val_mae_df["epoch"]    = val_mae_df.index
+            val_rmse_df["epoch"]   = val_rmse_df.index
 
-        df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df]],
+            df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df]],
                axis=1, join="inner").reset_index()
 
-        print(df, flush=True)
+            print(df, flush=True)
 
-        if not(os.path.exists(self.result_dir) and os.path.isdir(self.result_dir)):
-            os.makedirs(self.result_dir)
-
-        df.to_csv( self.result_dir + "/epochs_statistics.csv")
-        model_name = self.model.name
-        self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {model_name}")
-        self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {model_name}")
-        self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {model_name}")
+            df.to_csv( self.result_dir + "/epochs_statistics.csv")
+            self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {self.model_name}")
+            self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {self.model_name}")
+            self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")
 
     def free_memory(self):
         del self.model
