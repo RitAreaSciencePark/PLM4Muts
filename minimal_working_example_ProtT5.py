@@ -14,7 +14,7 @@ model = model.to(device)
 model = model.eval()
 tokenizer = T5Tokenizer.from_pretrained(transformer_link, do_lower_case=False )
 
-sequence_examples = ["PRTEINO", "SEQWENCE"]
+sequence_examples = ["PRTEINO", "SEQWENCE", "MARCO"]
 # this will replace all rare/ambiguous amino acids by X and introduce white-space between all amino acids
 sequence_examples = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequence_examples]
 
@@ -27,6 +27,7 @@ attention_mask = torch.tensor(ids['attention_mask']).to(device)
 with torch.no_grad():
     embedding_repr = model(input_ids=input_ids,attention_mask=attention_mask)
 
+print("HERE", embedding_repr.last_hidden_state.shape)
 # extract embeddings for the first ([0,:]) sequence in the batch while removing padded & special tokens ([0,:7])
 emb_0 = embedding_repr.last_hidden_state[0,:7] # shape (7 x 1024)
 print(f"Shape of per-residue embedding of first sequences: {emb_0.shape}")

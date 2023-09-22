@@ -30,22 +30,30 @@ class ProstT5_Milano(nn.Module):
         super().__init__()
         self.name="Milano"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
-        self.classifier = nn.Linear(4096, 1)
-        nn.init.xavier_normal_(self.classifier.weight)
-        #nn.init.zeros_(self.classifier.bias)
+        self.classifier1 = nn.Linear(6144,1024)
+        self.classifier2 = nn.Linear(1024,1)
+        self.relu=nn.ReLU(inplace=True)
+        nn.init.xavier_normal_(self.classifier1.weight)
+        nn.init.xavier_normal_(self.classifier2.weight)
+        nn.init.zeros_(self.classifier1.bias)
+        nn.init.zeros_(self.classifier2.bias)
 
-    def forward(self, token_ids1, token_ids2, pos):
-        outputs1 = self.prostt5.forward(token_ids1).last_hidden_state
-        outputs2 = self.prostt5.forward(token_ids2).last_hidden_state
-        tmp10=outputs1[:1,pos+1,:]
-        tmp11=outputs1[1:,pos+1,:]
-        tmp20=outputs2[:1,pos+1,:]
-        tmp21=outputs2[1:,pos+1,:]
-        # print("a",tmp10.shape) torch.Size([1, 1, 1024])
-        outputs=torch.concat((tmp10, tmp11, tmp20, tmp21), dim=2)
-        # print("b",outputs.shape) torch.Size([1, 1, 4096])
-        logits = self.classifier(outputs)
-        # print("c",logits.shape) torch.Size([1, 1, 1])
+    def forward(self, seqs, pos):
+        batch_size=seqs.input_ids.shape[0]
+        N = seqs.input_ids.shape[1]
+        L = seqs.input_ids.shape[2]
+        assert batch_size == 1
+        seqs.input_ids      = seqs.input_ids.reshape((-1, L))
+        seqs.attention_mask = seqs.attention_mask.reshape((-1, L))
+        reps = self.prostt5(seqs.input_ids,attention_mask=seqs.attention_mask).last_hidden_state
+        reps = reps.reshape(batch_size, N, L, -1)
+        reps_p = reps[:, :, pos+1, :]
+        reps_m = reps.mean(dim=2)
+        reps_p = reps_p.reshape((batch_size,-1))
+        reps_m = reps_m.reshape((batch_size,-1))
+        outputs = torch.cat((reps_p, reps_m), dim=1)
+        outputs = self.relu(self.classifier1(outputs))
+        logits  = self.classifier2(outputs)
         return logits
 
 class ProstT5_MilanoMean(nn.Module):
@@ -448,15 +456,16 @@ class ProstT5_mutLin2(nn.Module):
     def forward(self, token_ids1, token_ids2, pos):
         outputs1 = self.prostt5.forward(token_ids1).last_hidden_state
         outputs2 = self.prostt5.forward(token_ids2).last_hidden_state
+        print("o", outputs1.shape, pos.shape)
         tmp10=outputs1[:1,pos+1,:]
         tmp11=outputs1[1:,pos+1,:]
         tmp20=outputs2[:1,pos+1,:]
         tmp21=outputs2[1:,pos+1,:]
-        #print("a",tmp10.shape) torch.Size([1, 1, 1024])
+        print("a",tmp10.shape) #torch.Size([1, 1, 1024])
         outputs = self.const1 * tmp10 + self.const2 * tmp20
-        #print("b",outputs.shape) torch.Size([1, 1, 1024])
+        print("b",outputs.shape) #torch.Size([1, 1, 1024])
         logits = self.classifier(outputs)
-        #print("c", logits.shape) torch.Size([1, 1, 1])
+        print("c", logits.shape)# torch.Size([1, 1, 1])
         return logits
 
 class ProstT5_mutLin2Mean(nn.Module):

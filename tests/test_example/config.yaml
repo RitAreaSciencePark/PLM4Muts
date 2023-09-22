@@ -3,9 +3,9 @@
 
 model: "Milano"
 learning_rate: 1.0e-5
-optimizer: "AdamW"
-max_epochs: 4
-loss_fn: "L1"
+optimizer: "Adam"
+max_epochs: 15
+loss_fn: "MSE"
 train_dir: "datasets/train/train_example"
 val_dir: "datasets/val/val_example"
 device: "cuda"
