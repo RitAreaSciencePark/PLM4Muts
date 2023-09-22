@@ -3,8 +3,8 @@
 
 model: "Milano"
 learning_rate: 1.0e-5
-optimizer: "Adam"
-max_epochs: 15
+optimizer: "AdamW"
+max_epochs: 3
 loss_fn: "MSE"
 train_dir: "datasets/train/train_example"
 val_dir: "datasets/val/val_example"

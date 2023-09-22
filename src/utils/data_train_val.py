@@ -95,7 +95,6 @@ class Trainer:
         scheduler: torch.optim.lr_scheduler,
         gpu_id: int,
         save_every: int,
-        device: torch.cuda.device,
         loss_fn: torch.nn.functional, 
 	    current_dir: str,
         max_epochs: int
@@ -103,7 +102,6 @@ class Trainer:
     ) -> None:
         self.max_epochs = max_epochs
         self.gpu_id = gpu_id
-        self.device = "cuda"
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.save_every = save_every
@@ -140,16 +138,16 @@ class Trainer:
 
     def train_batch(self,  batch):
         seqs, pos, labels = batch
-        seqs = seqs.to(self.device)
+        seqs = seqs.to(self.gpu_id)
         #struct  = struct.to(self.device)
         #mut.input_ids         = mut.input_ids.to(self.device)
         #mut.attention_mask    = mut.attention_mask.to(self.device)
         #struct.input_ids      = struct.input_ids.to(self.device)
         #struct.attention_mask = struct.attention_mask.to(self.device)
-        labels = labels.to(self.device).reshape((-1,1))
-        pos    =    pos.to(self.device)
+        labels = labels.to(self.gpu_id).reshape((-1,1))
+        pos    =    pos.to(self.gpu_id)
         with autocast(dtype=torch.bfloat16):
-            logits = self.model(seqs, pos).to(self.device)
+            logits = self.model(seqs, pos).to(self.gpu_id)
             loss   = self.loss_fn(logits, labels)
         torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.2)
         self.optimizer.zero_grad()
@@ -167,7 +165,7 @@ class Trainer:
         self.model.train()
         len_dataloader = len(train_proteindataloader.dataloader)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
-            print_peak_memory("Max GPU memory", 0)
+            print_peak_memory("Max GPU memory", self.gpu_id)
             print(f"{train_proteindataloader.name}\tepoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
             self.train_batch(batch)
         print("IDA",  len(self.t_labels), self.t_labels[0].shape)
@@ -184,10 +182,10 @@ class Trainer:
     
     def valid_batch(self, batch):
         seqs, pos, labels = batch
-        seqs  = seqs.to(self.device)
-        labels = labels.to(self.device)
-        pos    =    pos.to(self.device)
-        logits = self.model(seqs, pos).to(self.device)
+        seqs  = seqs.to(self.gpu_id)
+        labels = labels.to(self.gpu_id)
+        pos    =    pos.to(self.gpu_id)
+        logits = self.model(seqs, pos).to(self.gpu_id)
         labels_cpu=labels.cpu().detach()
         logits_cpu=logits.cpu().detach()
         self.eval_labels.extend(labels_cpu)
@@ -217,7 +215,7 @@ class Trainer:
 
 
     def train(self, model, train_dl, val_dls):
-        self.model = model
+        self.model = model.to(self.gpu_id)
         self.train_dl = train_dl
         self.val_dls = val_dls
         self.initialize_files()
