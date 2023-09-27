@@ -308,7 +308,7 @@ class Trainer:
                 print(f"{val_dl.name}: on GPU {self.global_rank} epoch {epoch+1}/{self.max_epochs}\t"
                       f"rmse = {self.val_rmses[val_no,epoch]} / {l_v_rmse}\t"
                       f"mae = {self.val_maes[val_no,epoch]} / {l_v_mae}\t"
-                      f"corr = {self.val_maes[val_no,epoch]} / {l_v_corr}")
+                      f"corr = {self.val_corrs[val_no,epoch]} / {l_v_corr}")
                 if self.global_rank == 0:
                     with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
                         v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
