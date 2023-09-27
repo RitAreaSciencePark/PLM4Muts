@@ -17,23 +17,20 @@ import warnings
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import init_process_group, destroy_process_group
+from torch.distributed import init_process_group, destroy_process_group, get_world_size, get_rank, all_gather
 
 torch.cuda.empty_cache()
 warnings.filterwarnings("ignore")
-
-HIDDEN_UNITS_POS_CONTACT = 5
 
 def ddp_setup():
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 def print_peak_memory(prefix, device):
-    if device == 0:
-        mma = torch.cuda.max_memory_allocated(device)
-        mmr = torch.cuda.max_memory_reserved(device)
-        tot = torch.cuda.get_device_properties(0).total_memory
-        print(f"{prefix}: allocated [{mma // 1e6} MB]\treserved [{mmr // 1e6} MB]\ttotal [{tot // 1e6} MB]")
+    mma = torch.cuda.max_memory_allocated(device)
+    mmr = torch.cuda.max_memory_reserved(device)
+    tot = torch.cuda.get_device_properties(0).total_memory
+    print(f"{prefix}: allocated [{mma//1e6} MB]\treserved [{mmr//1e6} MB]\ttotal [{tot//1e6} MB]")
 
 def from_cvs_files_in_dir_to_dfs_list(dir_path):
     print(dir_path)
@@ -74,7 +71,7 @@ class ProteinDataset(Dataset):
         pos = self.df.iloc[idx]['pos']
         ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
         ddg = torch.unsqueeze(ddg, 0)
-        return seqs, pos, ddg
+        return seqs, pos, ddg, wild_seq, mut_seq, struct
 
     def __len__(self):
         return len(self.df)
@@ -96,6 +93,7 @@ class ProteinDataLoader():
 
 
 
+ 
 
 class Trainer:
     def __init__(
@@ -104,24 +102,22 @@ class Trainer:
         scheduler: torch.optim.lr_scheduler,
         save_every: int,
         loss_fn: torch.nn.functional, 
-	current_dir: str,
+        output_dir: str,
         max_epochs: int,
-        snapshot_path: str
-
     ) -> None:
-        self.max_epochs = max_epochs
-        self.optimizer = optimizer
-        self.scheduler = scheduler
-        self.save_every = save_every
-        self.loss_fn = loss_fn
-        self.current_dir = current_dir
-        self.save_every = save_every
-        self.gpu_id = int(os.environ["LOCAL_RANK"])
-        self.epochs_run = 0
-        self.snapshot_path=snapshot_path
+        self.max_epochs  = max_epochs
+        self.optimizer   = optimizer
+        self.scheduler   = scheduler
+        self.save_every  = save_every
+        self.loss_fn     = loss_fn
+        self.output_dir  = output_dir
+        self.save_every  = save_every
+        self.local_rank  = int(os.environ["LOCAL_RANK"])
+        self.global_rank = int(os.environ["RANK"])
+        self.epochs_run  = 0
 
     def _load_snapshot(self, snapshot_path):
-        loc = f"cuda:{self.gpu_id}"
+        loc = f"cuda:{self.local_rank}"
         snapshot = torch.load(snapshot_path, map_location=loc)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
@@ -136,48 +132,35 @@ class Trainer:
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
 
     def initialize_files(self):
-        self.result_dir      = self.current_dir + "/results"
-        self.weights_dir     = self.current_dir + "/weights"
-        self.checkpoints_dir = self.current_dir + "/checkpoints"
-       
-        if self.gpu_id == 0:
+        self.result_dir    = self.output_dir + "/results"
+        self.snapshot_dir  = self.output_dir + "/snapshot"
+        if self.global_rank == 0:
+            if not(os.path.exists(self.output_dir) and os.path.isdir(self.output_dir)):
+                os.makedirs(self.output_dir)
             if not(os.path.exists(self.result_dir) and os.path.isdir(self.result_dir)):
                 os.makedirs(self.result_dir)
-            if not(os.path.exists(self.weights_dir) and os.path.isdir(self.weights_dir)):
-                os.makedirs(self.weights_dir)
-            if not(os.path.exists(self.checkpoints_dir) and os.path.isdir(self.checkpoints_dir)):
-                os.makedirs(self.checkpoints_dir)            
+            if not(os.path.exists(self.snapshot_dir) and os.path.isdir(self.snapshot_dir)):
+                os.makedirs(self.snapshot_dir)            
 
-        self.train_logfile =  self.result_dir +  "/train_metrics.log"
-        if self.gpu_id == 0:
+        self.snapshot_path = self.snapshot_dir + "/snapshot.pt"
+        self.train_logfile =  self.result_dir + "/train_metrics.log"
+        self.val_logfiles  = [self.result_dir + f"/{val.name}_metrics.log" for val in self.val_dls] 
+        
+        if self.global_rank == 0:
             with open(self.train_logfile, "w") as t_log:
                 t_log.write("epoch,rmse,mae,corr\n")
-        
-        self.val_logfiles  = [self.result_dir + f"/{val.name}_metrics.log" for val in self.val_dls ] 
-        if self.gpu_id == 0:
             for val_logfile in self.val_logfiles:
                 with open(val_logfile, "w") as v_log:
                     v_log.write("epoch,rmse,mae,corr\n")
         
-        self.val_diffiles = [self.result_dir + f"/{val.name}_labels_preds.diffs" for val in self.val_dls ]
-        if self.gpu_id == 0:
-            for val_diffile in self.val_diffiles:
-                with open(val_diffile, "w") as v_diff:
-                    v_diff.write("mut_seq,wild_seq,position,label,prediction\n")
-
 
     def train_batch(self,  batch):
-        seqs, pos, labels = batch
-        seqs = seqs.to(self.gpu_id)
-        #struct  = struct.to(self.device)
-        #mut.input_ids         = mut.input_ids.to(self.device)
-        #mut.attention_mask    = mut.attention_mask.to(self.device)
-        #struct.input_ids      = struct.input_ids.to(self.device)
-        #struct.attention_mask = struct.attention_mask.to(self.device)
-        labels = labels.to(self.gpu_id).reshape((-1,1))
-        pos    =    pos.to(self.gpu_id)
+        seqs, pos, labels, _,_,_ = batch
+        seqs = seqs.to(self.local_rank)
+        labels = labels.to(self.local_rank).reshape((-1,1))
+        pos    =    pos.to(self.local_rank)
         with autocast(dtype=torch.bfloat16):
-            logits = self.model(seqs, pos).to(self.gpu_id)
+            logits = self.model(seqs, pos).to(self.local_rank)
             loss   = self.loss_fn(logits, labels)
         torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.2)
         self.optimizer.zero_grad()
@@ -189,6 +172,23 @@ class Trainer:
         self.t_labels.extend(labels.cpu().detach())
         self.t_preds.extend(logits.cpu().detach())
 
+    def all_gather_lab_preds(self, preds, labels):
+        #size is the world size
+        size = get_world_size()
+        preds = torch.tensor(preds).to(self.local_rank)
+        labels = torch.tensor(labels).to(self.local_rank)
+        prediction_list = [torch.zeros_like(preds).to(self.local_rank)  for _ in range(size)]
+        labels_list     = [torch.zeros_like(labels).to(self.local_rank) for _ in range(size)]
+        all_gather(prediction_list, preds)
+        all_gather(labels_list, labels)
+        new_preds  = torch.tensor([], dtype=torch.float32).to(self.local_rank)
+        new_labels = torch.tensor([], dtype=torch.float32).to(self.local_rank)
+        for t1 in prediction_list:
+            new_preds = torch.cat((new_preds,t1), dim=0)
+        for t2 in labels_list:
+            new_labels = torch.cat((new_labels,t2),dim=0)
+        return new_preds, new_labels 
+
     def train_epoch(self, epoch, train_proteindataloader):
         self.scaler = torch.cuda.amp.GradScaler()
         self.t_preds, self.t_labels = [], []
@@ -196,123 +196,127 @@ class Trainer:
         len_dataloader = len(train_proteindataloader.dataloader)
         train_proteindataloader.dataloader.sampler.set_epoch(epoch)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
-            print_peak_memory("Max GPU memory", self.gpu_id)
-            print(f"{train_proteindataloader.name}\ton GPU {self.gpu_id} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+            print_peak_memory("Max GPU memory", self.local_rank)
+            print(f"{train_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
             self.train_batch(batch)
-        print("IDA",  len(self.t_labels), self.t_labels[0].shape)
-        print("MARCO", len(self.t_preds), self.t_preds[0].shape)
-        t_labels = [id.item() for id in self.t_labels]
-        t_preds  = [id.item() for id in self.t_preds ]
-        return t_labels, t_preds
 
-#    def _save_checkpoint(self, epoch):
-#        ckp = self.model.module.state_dict()
-#        PATH = "checkpoint.pt"
-#        torch.save(ckp, PATH)
-#        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+        global_t_preds, global_t_labels = self.all_gather_lab_preds(self.t_preds, self.t_labels)
+        g_t_labels = global_t_labels.to("cpu")
+        g_t_preds  = global_t_preds.to("cpu")
+        l_t_labels = torch.tensor(self.t_labels).to("cpu")
+        l_t_preds  = torch.tensor(self.t_preds).to("cpu")
+        return g_t_labels, g_t_preds, l_t_labels, l_t_preds
 
     def valid_batch(self, batch):
-        seqs, pos, labels = batch
-        seqs  = seqs.to(self.gpu_id)
-        labels = labels.to(self.gpu_id)
-        pos    =    pos.to(self.gpu_id)
-        logits = self.model(seqs, pos).to(self.gpu_id)
-        labels_cpu=labels.cpu().detach()
-        logits_cpu=logits.cpu().detach()
-        self.eval_labels.extend(labels_cpu)
-        self.eval_preds.extend(logits_cpu)
+        seqs, pos, labels,_,_,_ = batch
+        seqs   =   seqs.to(self.local_rank)
+        labels = labels.to(self.local_rank)
+        pos    =    pos.to(self.local_rank)
+        logits = self.model(seqs, pos).to(self.local_rank)
+        labels_cpu = labels.cpu().detach()
+        logits_cpu = logits.cpu().detach()
+        self.v_labels.extend(labels_cpu)
+        self.v_preds.extend(logits_cpu)
 
     def valid_epoch(self, epoch, val_proteindataloader):
         self.model.eval()
-        self.eval_preds, self.eval_labels = [], []
+        self.v_preds, self.v_labels = [], []
         len_dataloader = len(val_proteindataloader.dataloader)
         with torch.no_grad():
             for idx, batch in enumerate(val_proteindataloader.dataloader):
-                print(f"{val_proteindataloader.name}\ton GPU {self.gpu_id} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+                print(f"{val_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
                 self.valid_batch(batch)
-        labels = [id.item() for id in self.eval_labels]
-        preds  = [id.item() for id in self.eval_preds]
-        return labels, preds
+        global_v_preds, global_v_labels = self.all_gather_lab_preds(self.v_preds, self.v_labels)
+        g_v_labels = global_v_labels.to("cpu")
+        g_v_preds  = global_v_preds.to("cpu")
+        l_v_labels = torch.tensor(self.v_labels).to("cpu")
+        l_v_preds  = torch.tensor(self.v_preds).to("cpu")
+        return g_v_labels, g_v_preds, l_v_labels, l_v_preds
 
-    def difference_labels_preds(self, protein_dataloader, labels, preds, cutoff):
-        for idx,(lab, pred) in enumerate(zip(labels,preds)):
-            if abs(lab-pred) > cutoff:
-                wild_seq = protein_dataloader.df.iloc[idx]['wild_type']
-                mut_seq  = protein_dataloader.df.iloc[idx]['mutated']
-                pos      = protein_dataloader.df.iloc[idx]['pos']
-                ddg      = protein_dataloader.df.iloc[idx]['ddg']
-                if self.gpu_id == 0:
-                    with open(self.result_dir + f"/{protein_dataloader.name}_labels_preds.diffs", "a") as v_diffs:
-                       v_diffs.write(f"{mut_seq},{wild_seq},{pos},{lab},{pred}\n")
-
+    def difference_labels_preds(self, cutoff):
+        for val_no, val_dl in enumerate(self.val_dls):
+            with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
+                v_diffs.write(f"mut_seq,wild_seq,pos,ddg,pred\n")
+            self.model.eval()
+            self.v_preds, self.v_labels = [], []
+            with torch.no_grad():
+                for idx, batch in enumerate(val_dl.dataloader):
+                    seqs, pos, labels,wild_seq, mut_seq, struct = batch
+                    seqs   =   seqs.to(self.local_rank)
+                    labels = labels.to(self.local_rank)
+                    pos    =    pos.to(self.local_rank)
+                    logits = self.model(seqs, pos).to(self.local_rank)
+                    labels_cpu = labels.cpu().detach()
+                    logits_cpu = logits.cpu().detach()
+                    pos_cpu = pos.cpu().detach()
+                    with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
+                       v_diffs.write(f"{mut_seq},{wild_seq},{pos_cpu},{labels_cpu},{logits_cpu}\n")
 
     def train(self, model, train_dl, val_dls):
-        print(f"I am rank {self.gpu_id}")
+        print(f"I am rank {self.local_rank}")
         self.model_name = model.name
-        self.model = model.to(self.gpu_id)
-        self.model = DDP(self.model, device_ids=[self.gpu_id])
+        self.model = model.to(self.local_rank)
+        self.model = DDP(self.model, device_ids=[self.local_rank])
 #        if os.path.exists(self.snapshot_path):
 #            print("Loading snapshot")
 #            self._load_snapshot(self.snapshot_path)
         self.train_dl = train_dl
         self.val_dls = val_dls
-        if self.gpu_id == 0:
-            self.initialize_files()
+        self.initialize_files()
         self.train_rmse  = torch.zeros(self.max_epochs)
         self.train_mae   = torch.zeros(self.max_epochs)
         self.train_corr  = torch.zeros(self.max_epochs)
-        self.val_rmses = [torch.zeros(self.max_epochs)] * len(self.val_dls)
-        self.val_maes  = [torch.zeros(self.max_epochs)] * len(self.val_dls)
-        self.val_corrs = [torch.zeros(self.max_epochs)] * len(self.val_dls)
+        self.val_rmses   = [torch.zeros(self.max_epochs)] * len(self.val_dls)
+        self.val_maes    = [torch.zeros(self.max_epochs)] * len(self.val_dls)
+        self.val_corrs   = [torch.zeros(self.max_epochs)] * len(self.val_dls)
         for epoch in range(self.epochs_run, self.max_epochs):
-            t_labels, t_preds = self.train_epoch(epoch, self.train_dl)
-            t_mse  = torch.mean(         (torch.tensor(t_labels) - torch.tensor(t_preds))**2)
-            t_mae  = torch.mean(torch.abs(torch.tensor(t_labels) - torch.tensor(t_preds))   )
-            t_rmse = torch.sqrt(t_mse)
-            t_corr, _ = pearsonr(t_labels, t_preds)
-            self.train_mae[epoch]  = t_mae
-            self.train_corr[epoch] = t_corr
-            self.train_rmse[epoch] = t_rmse
-            print(f"{self.train_dl.name}: on GPU {self.gpu_id} epoch {epoch+1}/{self.max_epochs}\t"
-                  f"rmse = {self.train_rmse[epoch]}\t"
-                  f"mae = {self.train_mae[epoch]}\t"
-                  f"corr = {self.train_corr[epoch]}")
-            if self.gpu_id == 0:
+            g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
+            g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
+            g_t_mae  = torch.mean(torch.abs(g_t_labels - g_t_preds)   )
+            g_t_rmse = torch.sqrt(g_t_mse)
+            g_t_corr, _ = pearsonr(g_t_labels.tolist(), g_t_preds.tolist())
+            l_t_mse  = torch.mean(         (l_t_labels - l_t_preds)**2)
+            l_t_mae  = torch.mean(torch.abs(l_t_labels - l_t_preds)   )
+            l_t_rmse = torch.sqrt(l_t_mse)
+            l_t_corr, _ = pearsonr(l_t_labels.tolist(), l_t_preds.tolist())
+            self.train_mae[epoch]  = g_t_mae
+            self.train_corr[epoch] = g_t_corr
+            self.train_rmse[epoch] = g_t_rmse
+            print(f"{self.train_dl.name}: on GPU {self.global_rank} epoch {epoch+1}/{self.max_epochs}\t"
+                  f"rmse = {g_t_rmse} / {l_t_rmse}\t"
+                  f"mae = {g_t_mae} / {l_t_mae}\t"
+                  f"corr = {g_t_corr} / {l_t_corr}")
+            if self.global_rank == 0:
                 with open(self.train_logfile, "a") as t_log:
                     t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
             
-            if self.gpu_id == 0 and epoch % self.save_every == 0:
+            if self.global_rank == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
             
             for val_no, val_dl in enumerate(self.val_dls):
-                v_labels, v_preds = self.valid_epoch(epoch, val_dl)
-                v_mse  = torch.mean(         (torch.tensor(v_labels) - torch.tensor(v_preds))**2)
-                v_mae  = torch.mean(torch.abs(torch.tensor(v_labels) - torch.tensor(v_preds))   )
-                v_rmse = torch.sqrt(v_mse)
-                v_corr, _ = pearsonr(v_labels, v_preds)
-                self.val_maes[val_no][epoch]  = v_mae
-                self.val_corrs[val_no][epoch] = v_corr
-                self.val_rmses[val_no][epoch] = v_rmse
-                print(f"{val_dl.name}: on GPU {self.gpu_id} epoch {epoch+1}/{self.max_epochs}\t"
-                      f"rmse = {self.val_rmses[val_no][epoch]}\t"
-                      f"mae = {self.val_maes[val_no][epoch]}\t"
-                      f"corr = {self.val_corrs[val_no][epoch]}")
-                if self.gpu_id == 0:
+                g_v_labels, g_v_preds, l_v_labels, l_v_preds = self.valid_epoch(epoch, val_dl)
+                g_v_mse  = torch.mean(         (g_v_labels - g_v_preds)**2)
+                g_v_mae  = torch.mean(torch.abs(g_v_labels - g_v_preds)   )
+                g_v_rmse = torch.sqrt(g_v_mse)
+                g_v_corr, _ = pearsonr(g_v_labels.tolist(), g_v_preds.tolist())
+                l_v_mse  = torch.mean(         (l_v_labels - l_v_preds)**2)
+                l_v_mae  = torch.mean(torch.abs(l_v_labels - l_v_preds)   )
+                l_v_rmse = torch.sqrt(l_v_mse)
+                l_v_corr, _ = pearsonr(l_v_labels.tolist(), l_v_preds.tolist())
+                self.val_maes[val_no][epoch]  = g_v_mae
+                self.val_corrs[val_no][epoch] = g_v_corr
+                self.val_rmses[val_no][epoch] = g_v_rmse
+                print(f"{val_dl.name}: on GPU {self.global_rank} epoch {epoch+1}/{self.max_epochs}\t"
+                      f"rmse = {g_v_rmse} / {l_v_rmse}\t"
+                      f"mae = {g_v_mae} / {l_v_mae}\t"
+                      f"corr = {g_v_corr} / {l_v_corr}")
+                if self.global_rank == 0:
                     with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
                         v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}\n")
-
-                if epoch==self.max_epochs - 1:
-                    self.difference_labels_preds(protein_dataloader=val_dl, labels=v_labels, preds=v_preds, cutoff=0.0)
-
-        self.model.to('cpu')
-        if self.gpu_id == 0:
-            weights_path = self.weights_dir + "/weight.pt"
-            snapshot = {
-                        "MODEL_STATE": self.model.module.state_dict(),
-                        "EPOCHS_RUN": epoch,
-                       }
-            torch.save(snapshot, weights_path)
-            print(f"Epoch {epoch} | Training snapshot saved at {weights_path}")
+        self.difference_labels_preds(cutoff=0.0)
+        if self.global_rank == 0:
+            self._save_snapshot(epoch)
+        
 
     def plot(self, dataframe, train_name, val_names, ylabel, title):
         colors = cm.rainbow(torch.linspace(0, 1, len(val_names)))
@@ -329,7 +333,7 @@ class Trainer:
 
 
     def describe(self):
-        if self.gpu_id == 0:
+        if self.global_rank == 0:
             val_rmse_names  = [ s.name + "_rmse" for s in self.val_dls]
             val_mae_names   = [ s.name + "_mae"  for s in self.val_dls]
             val_corr_names  = [ s.name + "_corr" for s in self.val_dls]
@@ -367,38 +371,4 @@ class Trainer:
     def free_memory(self):
         del self.model
         torch.cuda.empty_cache()
-
-#        colors = cm.rainbow(torch.linspace(0, 1, len(val_rmse_names)))
-#        plt.figure(figsize=(8,6))
-#        plt.plot(df["epoch"], df["train_rmse"],      label='train_rmse',  color="black",   linestyle="-.")
-#        for i, val_rmse_name in enumerate(val_rmse_names):
-#            plt.plot(df["epoch"], df[val_rmse_name], label=val_rmse_name, color=colors[i], linestyle="-")
-#        plt.xlabel("epoch")
-#        plt.ylabel("RMSE")
-#        plt.title(f"Model: {self.model.name}")
-#        plt.legend()
-#        plt.savefig( result_dir + "/epochs_rmse.png")
-#        plt.clf()
-#
-#        plt.figure(figsize=(8,6))
-#        plt.plot(df["epoch"], df["train_mae"],      label='train_mae',  color="black",   linestyle="-.")
-#        for i, val_mae_name in enumerate(val_mae_names):
-#            plt.plot(df["epoch"], df[val_mae_name], label=val_mae_name, color=colors[i], linestyle="-")
-#        plt.xlabel("epoch")
-#        plt.ylabel("MAE")
-#        plt.title(f"Model: {self.model.name}")
-#        plt.legend()
-#        plt.savefig( result_dir + "/epochs_mae.png")
-#        plt.clf()
-#
-#        plt.figure(figsize=(8,6))
-#        plt.plot(df["epoch"], df["train_corr"],      label='train_corr',  color="black",   linestyle="-.")
-#        for i, val_corr_name in enumerate(val_corr_names):
-#            plt.plot(df["epoch"], df[val_corr_name], label=val_corr_name, color=colors[i], linestyle="-")
-#        plt.xlabel("epoch")
-#        plt.ylabel("Pearson correlation coefficient")
-#        plt.title(f"Model: {self.model.name}")
-#        plt.legend()
-#        plt.savefig(result_dir + "/epochs_pearsonr.png")
-#        plt.clf()
 

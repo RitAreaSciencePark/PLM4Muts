@@ -9,9 +9,10 @@
 #SBATCH -o test.%A.out
 #SBATCH -e test.%A.error
 #SBATCH -A lade
-#SBATCH --mem=500G
 #SBATCH --wait-all-nodes=1
 #SBATCH --cpus-per-task=32
+#SBATCH --mem=400G 
+
 CURRENT_DIR=${SLURM_SUBMIT_DIR}
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
@@ -23,10 +24,9 @@ export OMP_NUM_THREADS=32
 cd ../..
 source myenv_dgx/bin/activate
 echo $(pwd)
-#export CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7,8
 echo ${CUDA_VISIBLE_DEVICES}
 
-srun -l torchrun \
+srun -l torchrun   \
 --nnodes 2 \
 --nproc_per_node 2 \
 --rdzv_id $RANDOM \
