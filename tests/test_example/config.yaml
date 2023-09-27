@@ -1,6 +1,6 @@
 
 #INITIAL SETTINGS
-
+output_dir: "tests/test_example"
 model: "Milano"
 learning_rate: 1.0e-5
 optimizer: "AdamW"

@@ -1,28 +1,37 @@
 #!/bin/bash
 #
-#SBATCH --job-name=test
+#SBATCH --job-name=multinode-example
 #SBATCH -p DGX
-#SBATCH --nodes=1
-#SBATCH --sockets-per-node=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1
-#SBATCH --ntasks-per-socket=1
-#SBATCH --gpus=1
-#SBATCH --gpus-per-node=1
-#SBATCH --gpus-per-socket=1
-#SBATCH --cpus-per-task=16
-#SBATCH --time=12:00:00
+#SBATCH --gres=gpu:2
+#SBATCH --time=2:00:00
 #SBATCH -o test.%A.out
 #SBATCH -e test.%A.error
 #SBATCH -A lade
-##SBATCH -w dgx002 
-#SBATCH --mem=100G
-
+#SBATCH --mem=500G
+#SBATCH --wait-all-nodes=1
+#SBATCH --cpus-per-task=32
 CURRENT_DIR=${SLURM_SUBMIT_DIR}
+head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
 
+echo "head_node=" ${head_node} " - head_node_ip=" $head_node_ip
+#export LOGLEVEL=INFO
+#export NCCL_DEBUG=INFO
+export OMP_NUM_THREADS=32
 cd ../..
 source myenv_dgx/bin/activate
-python src/training_testing.py --current_dir ${CURRENT_DIR} 
+echo $(pwd)
+#export CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7,8
+echo ${CUDA_VISIBLE_DEVICES}
 
-cd -
+srun -l torchrun \
+--nnodes 2 \
+--nproc_per_node 2 \
+--rdzv_id $RANDOM \
+--rdzv_backend c10d \
+--rdzv_endpoint $head_node_ip:29500 \
+src/training_testing.py --config_file ${CURRENT_DIR}/config.yaml
 
 
