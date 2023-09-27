@@ -238,7 +238,6 @@ class Trainer:
             with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
                 v_diffs.write(f"mut_seq,wild_seq,pos,ddg,pred\n")
             self.model.eval()
-            self.v_preds, self.v_labels = [], []
             with torch.no_grad():
                 for idx, batch in enumerate(val_dl.dataloader):
                     seqs, pos, labels,wild_seq, mut_seq, struct = batch
@@ -266,9 +265,9 @@ class Trainer:
         self.train_rmse  = torch.zeros(self.max_epochs)
         self.train_mae   = torch.zeros(self.max_epochs)
         self.train_corr  = torch.zeros(self.max_epochs)
-        self.val_rmses   = [torch.zeros(self.max_epochs)] * len(self.val_dls)
-        self.val_maes    = [torch.zeros(self.max_epochs)] * len(self.val_dls)
-        self.val_corrs   = [torch.zeros(self.max_epochs)] * len(self.val_dls)
+        self.val_rmses   = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.val_maes    = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.val_corrs   = torch.zeros(len(self.val_dls),self.max_epochs)
         for epoch in range(self.epochs_run, self.max_epochs):
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
             g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -303,16 +302,16 @@ class Trainer:
                 l_v_mae  = torch.mean(torch.abs(l_v_labels - l_v_preds)   )
                 l_v_rmse = torch.sqrt(l_v_mse)
                 l_v_corr, _ = pearsonr(l_v_labels.tolist(), l_v_preds.tolist())
-                self.val_maes[val_no][epoch]  = g_v_mae
-                self.val_corrs[val_no][epoch] = g_v_corr
-                self.val_rmses[val_no][epoch] = g_v_rmse
+                self.val_maes[val_no,epoch]  = g_v_mae
+                self.val_corrs[val_no,epoch] = g_v_corr
+                self.val_rmses[val_no,epoch] = g_v_rmse
                 print(f"{val_dl.name}: on GPU {self.global_rank} epoch {epoch+1}/{self.max_epochs}\t"
-                      f"rmse = {g_v_rmse} / {l_v_rmse}\t"
-                      f"mae = {g_v_mae} / {l_v_mae}\t"
-                      f"corr = {g_v_corr} / {l_v_corr}")
+                      f"rmse = {self.val_rmses[val_no,epoch]} / {l_v_rmse}\t"
+                      f"mae = {self.val_maes[val_no,epoch]} / {l_v_mae}\t"
+                      f"corr = {self.val_maes[val_no,epoch]} / {l_v_corr}")
                 if self.global_rank == 0:
                     with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
-                        v_log.write(f"{epoch+1},{self.val_rmses[val_no][epoch]},{self.val_maes[val_no][epoch]},{self.val_corrs[val_no][epoch]}\n")
+                        v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
         self.difference_labels_preds(cutoff=0.0)
         if self.global_rank == 0:
             self._save_snapshot(epoch)
@@ -350,7 +349,10 @@ class Trainer:
             train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
             train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
             train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
-
+             
+            print(self.val_maes)
+            print(self.val_rmses)
+            print(self.val_corrs)
             train_rmse_df["epoch"] = train_rmse_df.index
             train_mae_df["epoch"]  = train_mae_df.index
             train_corr_df["epoch"] = train_corr_df.index
