@@ -5,7 +5,7 @@
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:2
-#SBATCH --time=2:00:00
+#SBATCH --time=12:00:00
 #SBATCH -o test.%A.out
 #SBATCH -e test.%A.error
 #SBATCH -A lade

@@ -1,10 +1,10 @@
 
 #INITIAL SETTINGS
 output_dir: "tests/test_example"
-model: "Milano"
+model: "Roma"
 learning_rate: 1.0e-5
 optimizer: "AdamW"
-max_epochs: 2
+max_epochs: 15
 loss_fn: "MSE"
 train_dir: "datasets/train/train_example"
 val_dir: "datasets/val/val_example"

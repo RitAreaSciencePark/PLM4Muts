@@ -25,7 +25,6 @@ from torch.distributed import init_process_group, destroy_process_group, barrier
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"Milano":          ProstT5_Milano,
-          "MilanoMean":      ProstT5_MilanoMean,
           "Roma":            ProstT5_Roma,
           "RomaMean":        ProstT5_RomaMean,
           "Trieste":         ProstT5_Trieste,

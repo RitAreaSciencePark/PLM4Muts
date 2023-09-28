@@ -245,11 +245,11 @@ class Trainer:
                     labels = labels.to(self.local_rank)
                     pos    =    pos.to(self.local_rank)
                     logits = self.model(seqs, pos).to(self.local_rank)
-                    labels_cpu = labels.cpu().detach()
-                    logits_cpu = logits.cpu().detach()
-                    pos_cpu = pos.cpu().detach()
+                    labels_cpu = labels.cpu().detach().item()
+                    logits_cpu = logits.cpu().detach().item()
+                    pos_cpu = pos.cpu().detach().item()
                     with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
-                       v_diffs.write(f"{mut_seq},{wild_seq},{pos_cpu},{labels_cpu},{logits_cpu}\n")
+                       v_diffs.write(f"{mut_seq[0]},{wild_seq[0]},{pos_cpu},{labels_cpu},{logits_cpu}\n")
 
     def train(self, model, train_dl, val_dls):
         print(f"I am rank {self.local_rank}")
