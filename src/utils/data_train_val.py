@@ -17,7 +17,7 @@ import warnings
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import init_process_group, destroy_process_group, get_world_size, get_rank, all_gather
+from torch.distributed import init_process_group, destroy_process_group, get_world_size, get_rank, all_gather, barrier
 
 torch.cuda.empty_cache()
 warnings.filterwarnings("ignore")
@@ -71,7 +71,7 @@ class ProteinDataset(Dataset):
         pos = self.df.iloc[idx]['pos']
         ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
         ddg = torch.unsqueeze(ddg, 0)
-        return seqs, pos, ddg, wild_seq, mut_seq, struct
+        return (seqs, pos), ddg, (wild_seq, mut_seq, struct)
 
     def __len__(self):
         return len(self.df)
@@ -155,22 +155,21 @@ class Trainer:
         
 
     def train_batch(self,  batch):
-        seqs, pos, labels, _,_,_ = batch
-        seqs = seqs.to(self.local_rank)
-        labels = labels.to(self.local_rank).reshape((-1,1))
-        pos    =    pos.to(self.local_rank)
+        X, Y, _ = batch
+        X = [x.to(self.local_rank) for x in X]
+        Y = Y.to(self.local_rank)
         with autocast(dtype=torch.bfloat16):
-            logits = self.model(seqs, pos).to(self.local_rank)
-            loss   = self.loss_fn(logits, labels)
-        torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.2)
+            Y_hat = self.model(*X).to(self.local_rank)
+            loss   = self.loss_fn(Y_hat, Y)
+        torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.1)
         self.optimizer.zero_grad()
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)
         self.scaler.step(self.optimizer)
         self.scheduler.step()
         self.scaler.update()
-        self.t_labels.extend(labels.cpu().detach())
-        self.t_preds.extend(logits.cpu().detach())
+        self.t_labels.extend(Y.cpu().detach())
+        self.t_preds.extend(Y_hat.cpu().detach())
 
     def all_gather_lab_preds(self, preds, labels):
         #size is the world size
@@ -181,13 +180,13 @@ class Trainer:
         labels_list     = [torch.zeros_like(labels).to(self.local_rank) for _ in range(size)]
         all_gather(prediction_list, preds)
         all_gather(labels_list, labels)
-        new_preds  = torch.tensor([], dtype=torch.float32).to(self.local_rank)
-        new_labels = torch.tensor([], dtype=torch.float32).to(self.local_rank)
+        global_preds  = torch.tensor([], dtype=torch.float32).to(self.local_rank)
+        global_labels = torch.tensor([], dtype=torch.float32).to(self.local_rank)
         for t1 in prediction_list:
-            new_preds = torch.cat((new_preds,t1), dim=0)
+            global_preds = torch.cat((global_preds,t1), dim=0)
         for t2 in labels_list:
-            new_labels = torch.cat((new_labels,t2),dim=0)
-        return new_preds, new_labels 
+            global_labels = torch.cat((global_labels,t2),dim=0)
+        return global_preds, global_labels 
 
     def train_epoch(self, epoch, train_proteindataloader):
         self.scaler = torch.cuda.amp.GradScaler()
@@ -208,15 +207,13 @@ class Trainer:
         return g_t_labels, g_t_preds, l_t_labels, l_t_preds
 
     def valid_batch(self, batch):
-        seqs, pos, labels,_,_,_ = batch
-        seqs   =   seqs.to(self.local_rank)
-        labels = labels.to(self.local_rank)
-        pos    =    pos.to(self.local_rank)
-        logits = self.model(seqs, pos).to(self.local_rank)
-        labels_cpu = labels.cpu().detach()
-        logits_cpu = logits.cpu().detach()
-        self.v_labels.extend(labels_cpu)
-        self.v_preds.extend(logits_cpu)
+        X, Y, _ = batch
+        X = [x.to(self.local_rank) for x in X]
+        Yhat = self.model(*X).to(self.local_rank)
+        Y_cpu = Y.cpu().detach()
+        Yhat_cpu = Yhat.cpu().detach()
+        self.v_labels.extend(Y_cpu)
+        self.v_preds.extend(Yhat_cpu)
 
     def valid_epoch(self, epoch, val_proteindataloader):
         self.model.eval()
@@ -240,16 +237,15 @@ class Trainer:
             self.model.eval()
             with torch.no_grad():
                 for idx, batch in enumerate(val_dl.dataloader):
-                    seqs, pos, labels,wild_seq, mut_seq, struct = batch
-                    seqs   =   seqs.to(self.local_rank)
-                    labels = labels.to(self.local_rank)
-                    pos    =    pos.to(self.local_rank)
-                    logits = self.model(seqs, pos).to(self.local_rank)
-                    labels_cpu = labels.cpu().detach().item()
-                    logits_cpu = logits.cpu().detach().item()
+                    X, Y, (wild_seq, mut_seq, struct) = batch
+                    X = [x.to(self.local_rank) for x in X]
+                    Yhat = self.model(*X).to(self.local_rank)
+                    Y_cpu = Y.cpu().detach().item()
+                    Yhat_cpu = Yhat.cpu().detach().item()
+                    seqs, pos = X
                     pos_cpu = pos.cpu().detach().item()
                     with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
-                       v_diffs.write(f"{mut_seq[0]},{wild_seq[0]},{pos_cpu},{labels_cpu},{logits_cpu}\n")
+                       v_diffs.write(f"{mut_seq[0]},{wild_seq[0]},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
 
     def train(self, model, train_dl, val_dls):
         print(f"I am rank {self.local_rank}")
@@ -315,6 +311,7 @@ class Trainer:
         self.difference_labels_preds(cutoff=0.0)
         if self.global_rank == 0:
             self._save_snapshot(epoch)
+        barrier()
         
 
     def plot(self, dataframe, train_name, val_names, ylabel, title):
@@ -350,9 +347,6 @@ class Trainer:
             train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
             train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
              
-            print(self.val_maes)
-            print(self.val_rmses)
-            print(self.val_corrs)
             train_rmse_df["epoch"] = train_rmse_df.index
             train_mae_df["epoch"]  = train_mae_df.index
             train_corr_df["epoch"] = train_corr_df.index
@@ -369,6 +363,7 @@ class Trainer:
             self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {self.model_name}")
             self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {self.model_name}")
             self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")
+        barrier()
 
     def free_memory(self):
         del self.model

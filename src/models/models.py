@@ -65,6 +65,9 @@ class ProstT5_Roma(nn.Module):
         self.classifier = nn.Linear(3072,1)
         nn.init.xavier_normal_(self.classifier.weight)
         nn.init.zeros_(self.classifier.bias)
+        self.const1 = torch.nn.Parameter(torch.ones((1,1024)))
+        self.const2 = torch.nn.Parameter(torch.ones((1,1024)))
+        self.const3 = torch.nn.Parameter(torch.ones((1,1024)))
 
     def forward(self, seqs, pos):
         batch_size=seqs.input_ids.shape[0]
@@ -77,9 +80,9 @@ class ProstT5_Roma(nn.Module):
         reps = reps.reshape(batch_size, N, L, -1)
         reps_p = reps[:, :, pos+1, :]
         reps_m = reps.mean(dim=2)
-        aa_mut_wild_diff_p = reps_p[:, 0, :] - reps_p[:, 1, :] 
-        aa_mut_wild_diff_m = reps_m[:, 0, :] - reps_m[:, 1, :] 
-        ss_wild_p_m_diff   = reps_p[:, 2, :] - reps_m[:, 2, :]
+        aa_mut_wild_diff_p = reps_p[:, 0, :] - self.const1 * reps_p[:, 1, :] 
+        aa_mut_wild_diff_m = reps_m[:, 0, :] - self.const2 * reps_m[:, 1, :] 
+        ss_wild_p_m_diff   = reps_p[:, 2, :] - self.const3 * reps_m[:, 2, :]
         aa_mut_wild_diff_p = aa_mut_wild_diff_p.reshape((batch_size,-1))
         aa_mut_wild_diff_m = aa_mut_wild_diff_m.reshape((batch_size,-1))
         ss_wild_p_m_diff = ss_wild_p_m_diff.reshape((batch_size,-1))
@@ -118,44 +121,37 @@ class ProstT5_RomaMean(nn.Module):
 
 
 class ProstT5_Trieste(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.name="Trieste"
         self.prostt5 = T5EncoderModel.from_pretrained("Rostlab/ProstT5")
-        self.classifier1 = nn.Linear(2048, 1024)
-        self.classifier2 = nn.Linear(2048, 1024)
-        self.const1 = torch.nn.Parameter(      torch.ones((1,1,1024)))
-        self.const2 = torch.nn.Parameter( -1 * torch.ones((1,1,1024)))
-        self.classifier3 = nn.Linear(1024, 1)
-        nn.init.xavier_normal_(self.classifier1.weight)
-        nn.init.xavier_normal_(self.classifier2.weight)
-        nn.init.xavier_normal_(self.classifier3.weight)
-        #nn.init.zeros_(self.classifier1.bias)
-        #nn.init.zeros_(self.classifier2.bias)
-        #nn.init.zeros_(self.classifier3.bias)
-        self.relu1 = nn.ReLU(inplace=True)
-        self.relu2 = nn.ReLU(inplace=True)
+        self.classifier = nn.Linear(2048,1)
+        nn.init.xavier_normal_(self.classifier.weight)
+        nn.init.zeros_(self.classifier.bias)
+        self.dropout = nn.Dropout(p=0.5, inplace=True)
+        self.const1 = torch.nn.Parameter(torch.ones((1,1024)))
+        self.const2 = torch.nn.Parameter(torch.ones((1,1024)))
 
-    def forward(self, token_ids1, token_ids2, pos):
-        outputs1 = self.prostt5.forward(token_ids1).last_hidden_state
-        outputs2 = self.prostt5.forward(token_ids2).last_hidden_state
-        tmp10=outputs1[:1,pos+1,:]
-        tmp11=outputs1[1:,pos+1,:]
-        tmp20=outputs2[:1,pos+1,:]
-        tmp21=outputs2[1:,pos+1,:]
-        # print("a",tmp10.shape) torch.Size([1, 1, 1024])
-        tmp1=torch.concat((tmp10, tmp11), dim=2)
-        tmp2=torch.concat((tmp20, tmp21), dim=2)
-        # print("b",tmp1.shape) torch.Size([1, 1, 2048])
-        outputs1 = self.relu1(self.classifier1(tmp1))
-        outputs2 = self.relu2(self.classifier2(tmp2))
-        # print("c",outputs1.shape) torch.Size([1, 1, 1024])
-        outputs = self.const1 * outputs1 + self.const2 * outputs2
-        # print("d",outputs.shape) torch.Size([1, 1, 1024])
-        logits = self.classifier3(outputs)
-        # print("e",logits.shape) torch.Size([1, 1, 1])
+    def forward(self, seqs, pos):
+        batch_size=seqs.input_ids.shape[0]
+        N = seqs.input_ids.shape[1]
+        L = seqs.input_ids.shape[2]
+        assert batch_size == 1
+        seqs.input_ids      = seqs.input_ids.reshape((-1, L))
+        seqs.attention_mask = seqs.attention_mask.reshape((-1, L))
+        reps = self.prostt5(seqs.input_ids,attention_mask=seqs.attention_mask).last_hidden_state
+        reps = reps.reshape(batch_size, N, L, -1)
+        reps_p = reps[:, :, pos+1, :]
+        reps_m = reps.mean(dim=2)
+        aa_mut_wild_diff_p = self.const1 * reps_p[:, 0, :] - self.const2 * reps_p[:, 1, :] 
+        ss_wild_p_m_diff   = reps_p[:, 2, :] 
+        aa_mut_wild_diff_p = aa_mut_wild_diff_p.reshape((batch_size,-1))
+        ss_wild_p_m_diff   = ss_wild_p_m_diff.reshape((batch_size,-1))
+        outputs = torch.cat((aa_mut_wild_diff_p, ss_wild_p_m_diff), dim=1)
+        outputs = self.dropout(outputs)
+        logits  = self.classifier(outputs)
         return logits
+
 
 
 class ProstT5_TriesteMean(nn.Module):

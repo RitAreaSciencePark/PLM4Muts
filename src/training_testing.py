@@ -54,7 +54,10 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
     ddp_setup()
     loss_fn   = losses[loss_fn_name]
     model     = models[model_name]()
-    optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
+    if optimizer_name=="AdamW":
+        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, weight_decay=0.05)
+    if optimizer_name=="Adam":
+        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
     train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir)
     train_df     = pd.concat(train_dfs)
     train_name   = train_dir.rsplit('/', 1)[1] 
@@ -78,6 +81,7 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
 
     trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
     trainer.describe()
+    barrier()
     destroy_process_group()
 
 

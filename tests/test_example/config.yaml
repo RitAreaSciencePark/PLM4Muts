@@ -1,7 +1,7 @@
 
 #INITIAL SETTINGS
 output_dir: "tests/test_example"
-model: "Roma"
+model: "Trieste"
 learning_rate: 1.0e-5
 optimizer: "AdamW"
 max_epochs: 15
