@@ -27,7 +27,7 @@ echo $(pwd)
 echo ${CUDA_VISIBLE_DEVICES}
 cd -
 srun -l torchrun   \
---nnodes 1 \
+--nnodes 2 \
 --nproc_per_node 8 \
 --rdzv_id $RANDOM \
 --rdzv_backend c10d \
