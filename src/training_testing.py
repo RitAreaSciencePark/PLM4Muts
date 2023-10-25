@@ -22,6 +22,7 @@ from models.models import *
 from utils.data_train_val  import *
 from utils.argparser import *
 from torch.distributed import init_process_group, destroy_process_group, barrier, get_rank
+from torch.utils.data.distributed import DistributedSampler
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"Milano":          ProstT5_Milano,
