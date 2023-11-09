@@ -215,7 +215,7 @@ def prepare_inference(args):
                             collate_fn = custom_collate, pin_memory = False)
     
     ''' Define an iterator over the selected msa '''
-    msa_loader_iter = iter(msa_loader)
+    #msa_loader_iter = iter(msa_loader)
     
     d_loss = {}
     

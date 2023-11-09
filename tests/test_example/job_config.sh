@@ -22,7 +22,7 @@ echo "head_node=" ${head_node} " - head_node_ip=" $head_node_ip
 #export NCCL_DEBUG=INFO
 export OMP_NUM_THREADS=128
 cd ../..
-source myenv_dgx/bin/activate
+source myenv_esm/bin/activate
 echo $(pwd)
 echo ${CUDA_VISIBLE_DEVICES}
 
@@ -32,6 +32,6 @@ srun -l torchrun  \
 --rdzv_id $RANDOM \
 --rdzv_backend c10d \
 --rdzv_endpoint $head_node_ip:29500 \
-src/training_testing.py --config_file ${CURRENT_DIR}/config.yaml
+src/PLMfinetuning.py --config_file ${CURRENT_DIR}/config.yaml
 
 

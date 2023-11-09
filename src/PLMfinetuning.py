@@ -19,27 +19,18 @@ from torch.cuda.amp import autocast
 import yaml
 import sys
 from models.models import *
-from utils.data_train_val  import *
-from utils.argparser import *
-from torch.distributed import init_process_group, destroy_process_group, barrier, get_rank
+from dataloader  import *
+from utils  import *
+from trainer  import *
+from argparser import *
+import torch.distributed  as dist
 from torch.utils.data.distributed import DistributedSampler
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"Milano":          ProstT5_Milano,
           "Roma":            ProstT5_Roma,
-          "RomaMean":        ProstT5_RomaMean,
           "Trieste":         ProstT5_Trieste,
-          "TriesteMean":     ProstT5_TriesteMean,
-          "Conconello":      ProstT5_Conconello,
-          "ConconelloMean":  ProstT5_ConconelloMean,
-          "Basovizza":       ProstT5_Basovizza,
-          "BasovizzaMean":   ProstT5_BasovizzaMean,
-          "Padriciano":      ProstT5_Padriciano,
-          "PadricianoMean":  ProstT5_PadricianoMean,
-          "mutLin2":         ProstT5_mutLin2,
-          "mutLin2Mean":     ProstT5_mutLin2Mean,
-          "mutLin4":         ProstT5_mutLin4,
-          "mutLin4Mean":     ProstT5_mutLin4Mean,
+          "MSA_Torino":      MSA_Torino,
         }
 
 losses = {"L1":  torch.nn.functional.l1_loss,
@@ -61,12 +52,14 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
         optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
     train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir)
     train_df     = pd.concat(train_dfs)
-    train_name   = train_dir.rsplit('/', 1)[1] 
-    train_ds     = ProteinDataset(train_df, train_name)
-    train_dl     = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds))
+    train_name   = train_dir.rsplit('/', 1)[1]
+#    train_ds     = ProteinDataset(train_df, train_name)
+    train_ds     = MSA_Dataset(train_df, train_name, train_dir, 10)
+    train_dl     = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds),custom_collate_fn=custom_collate)
     val_dfs,val_names = from_cvs_files_in_dir_to_dfs_list(val_dir)
-    val_dss           = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names)] 
-    val_dls           = [ProteinDataLoader(val_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=DistributedSampler(val_ds)) for val_ds in val_dss]
+#    val_dss         = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names)] 
+    val_dss           = [MSA_Dataset(val_df, val_name, val_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
+    val_dls           = [ProteinDataLoader(val_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=DistributedSampler(val_ds),custom_collate_fn=custom_collate) for val_ds in val_dss]
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
     trainer   = Trainer(max_epochs=max_epochs,loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler, save_every=save_every, output_dir=output_dir)
@@ -82,8 +75,8 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
 
     trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
     trainer.describe()
-    barrier()
-    destroy_process_group()
+    dist.barrier()
+    dist.destroy_process_group()
 
 
 if __name__ == "__main__":
@@ -112,6 +105,5 @@ if __name__ == "__main__":
         train_dir      = args.train_dir
         val_dir        = args.val_dir
         save_every     = args.save_every
-
     main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every, output_dir)
 

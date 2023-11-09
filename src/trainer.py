@@ -1,29 +1,44 @@
+import argparse
+from Bio import SeqIO
+import csv
+import esm
+import itertools
 import math
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import numpy as np
 import pandas as pd
 import os
+import random
 import re
 import scipy
-from scipy import stats
+from scipy import stats 
 from scipy.stats import pearsonr
+import string
+import time
 import torch
+import torch.distributed  as dist
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.distributed import DistributedSampler
 import torch.nn.functional as F
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.cuda.amp import autocast
+import torch.multiprocessing as mp
 from transformers import T5Tokenizer
+from typing import List, Tuple
 import warnings
 
-import torch.multiprocessing as mp
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import init_process_group, destroy_process_group, get_world_size, get_rank, all_gather, barrier
-
 torch.cuda.empty_cache()
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
 
-def ddp_setup():
-    init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+
+
+#data-preprocessing step
+deletekeys = dict.fromkeys(string.ascii_lowercase)
+deletekeys["."] = None
+deletekeys["*"] = None
+translation = str.maketrans(deletekeys)
+
 
 def print_peak_memory(prefix, device):
     mma = torch.cuda.max_memory_allocated(device)
@@ -31,68 +46,6 @@ def print_peak_memory(prefix, device):
     tot = torch.cuda.get_device_properties(0).total_memory
     print(f"{prefix}: allocated [{mma//1e6} MB]\treserved [{mmr//1e6} MB]\ttotal [{tot//1e6} MB]")
 
-def from_cvs_files_in_dir_to_dfs_list(dir_path):
-    print(dir_path)
-    datasets = os.listdir(dir_path)
-    print(datasets)
-    #datasets_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in datasets ]
-    datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]
-    print(datasets_names)
-    dfs = [None] * len(datasets)
-    for i,d in enumerate(datasets):
-        d_path = os.path.join(dir_path, d)
-        dfs[i] = pd.read_csv(d_path, sep=',')
-    return dfs, datasets_names
-
-### Dataset Definition
-
-class ProteinDataset(Dataset):
-    def __init__(self, df, name):
-        self.name = name
-        self.df = df
-        self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
-        lengths = [len(s) for s in df['wild_type'].to_list()]
-        self.max_length = max(lengths) + 2
-
-    def __getitem__(self, idx):
-        wild_seq = self.df.iloc[idx]['wild_type']
-        mut_seq  = self.df.iloc[idx]['mutated']
-        struct   = self.df.iloc[idx]['structure']
-        seqs = [wild_seq, mut_seq, struct]
-        seqs = [" ".join(list(re.sub(r"[UZOB]", "X", seq))) for seq in seqs]
-        #mut_seq  = [" ".join(list(re.sub(r"[UZOB]", "X", mut_seq )))] #for sequence in mut_seq]
-        #struct   = [" ".join(list(re.sub(r"[UZOB]", "X", struct  )))] #for sequence in struct]
-        seqs = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in seqs]
-        #mut_seq  = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_seq]
-        #struct   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in struct]
-        #seqs  = self.tokenizer.batch_encode_plus(seqs, add_special_tokens=True, padding="longest", return_tensors='pt')
-        seqs  = self.tokenizer.batch_encode_plus(seqs, add_special_tokens=True, max_length=self.max_length, padding="max_length", return_tensors='pt')
-        pos = self.df.iloc[idx]['pos']
-        ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
-        ddg = torch.unsqueeze(ddg, 0)
-        return (seqs, pos), ddg, (wild_seq, mut_seq, struct)
-
-    def __len__(self):
-        return len(self.df)
-
-
-
-
-class ProteinDataLoader():
-    def __init__(self, dataset, batch_size, num_workers, shuffle, pin_memory, sampler ):
-        self.name = dataset.name
-        self.df = dataset.df
-        self.dataloader = DataLoader(dataset, 
-                                     batch_size=batch_size, 
-                                     num_workers=num_workers, 
-                                     shuffle=shuffle, 
-                                     pin_memory=pin_memory, 
-                                     sampler=sampler)
-
-
-
-
- 
 
 class Trainer:
     def __init__(
@@ -155,10 +108,10 @@ class Trainer:
 
     def train_batch(self,  batch):
         X, Y, _ = batch
-        X = [x.to(self.local_rank) for x in X]
+        #X = [x.to(self.local_rank) for x in X]
         Y = Y.to(self.local_rank)
         with autocast(dtype=torch.bfloat16):
-            Y_hat = self.model(*X).to(self.local_rank)
+            Y_hat = self.model(*X, self.local_rank).to(self.local_rank)
             loss   = self.loss_fn(Y_hat, Y)
         torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.1)
         self.optimizer.zero_grad()
@@ -172,13 +125,13 @@ class Trainer:
 
     def all_gather_lab_preds(self, preds, labels):
         #size is the world size
-        size = get_world_size()
+        size = dist.get_world_size()
         preds = torch.tensor(preds).to(self.local_rank)
         labels = torch.tensor(labels).to(self.local_rank)
         prediction_list = [torch.zeros_like(preds).to(self.local_rank)  for _ in range(size)]
         labels_list     = [torch.zeros_like(labels).to(self.local_rank) for _ in range(size)]
-        all_gather(prediction_list, preds)
-        all_gather(labels_list, labels)
+        dist.all_gather(prediction_list, preds)
+        dist.all_gather(labels_list, labels)
         global_preds  = torch.tensor([], dtype=torch.float32).to(self.local_rank)
         global_labels = torch.tensor([], dtype=torch.float32).to(self.local_rank)
         for t1 in prediction_list:
@@ -207,8 +160,8 @@ class Trainer:
 
     def valid_batch(self, batch):
         X, Y, _ = batch
-        X = [x.to(self.local_rank) for x in X]
-        Yhat = self.model(*X).to(self.local_rank)
+        #X = [x.to(self.local_rank) for x in X]
+        Yhat = self.model(*X, self.local_rank).to(self.local_rank)
         Y_cpu = Y.cpu().detach()
         Yhat_cpu = Yhat.cpu().detach()
         self.v_labels.extend(Y_cpu)
@@ -236,21 +189,21 @@ class Trainer:
             self.model.eval()
             with torch.no_grad():
                 for idx, batch in enumerate(val_dl.dataloader):
-                    X, Y, (wild_seq, mut_seq, struct) = batch
-                    X = [x.to(self.local_rank) for x in X]
-                    Yhat = self.model(*X).to(self.local_rank)
+                    X, Y, (wild_seq, mut_seq) = batch
+                    #X = [x.to(self.local_rank) for x in X]
+                    Yhat = self.model(*X, self.local_rank).to(self.local_rank)
                     Y_cpu = Y.cpu().detach().item()
                     Yhat_cpu = Yhat.cpu().detach().item()
-                    seqs, pos = X
+                    pos = X[-1]
                     pos_cpu = pos.cpu().detach().item()
                     with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
-                       v_diffs.write(f"{mut_seq[0]},{wild_seq[0]},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
+                       v_diffs.write(f"{mut_seq},{wild_seq},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
 
     def train(self, model, train_dl, val_dls):
         print(f"I am rank {self.local_rank}")
         self.model_name = model.name
         self.model = model.to(self.local_rank)
-        self.model = DDP(self.model, device_ids=[self.local_rank])
+        self.model = DDP(self.model, device_ids=[self.local_rank], find_unused_parameters=True)
 #        if os.path.exists(self.snapshot_path):
 #            print("Loading snapshot")
 #            self._load_snapshot(self.snapshot_path)
@@ -264,6 +217,7 @@ class Trainer:
         self.val_maes    = torch.zeros(len(self.val_dls),self.max_epochs)
         self.val_corrs   = torch.zeros(len(self.val_dls),self.max_epochs)
         for epoch in range(self.epochs_run, self.max_epochs):
+            dist.barrier()
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
             g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
             g_t_mae  = torch.mean(torch.abs(g_t_labels - g_t_preds)   )
@@ -304,13 +258,17 @@ class Trainer:
                       f"rmse = {self.val_rmses[val_no,epoch]} / {l_v_rmse}\t"
                       f"mae = {self.val_maes[val_no,epoch]} / {l_v_mae}\t"
                       f"corr = {self.val_corrs[val_no,epoch]} / {l_v_corr}")
+
+                dist.barrier()
                 if self.global_rank == 0:
                     with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
                         v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
+        dist.barrier()
         self.difference_labels_preds(cutoff=0.0)
+        dist.barrier()
         if self.global_rank == 0:
             self._save_snapshot(epoch)
-        barrier()
+        dist.barrier()
         
 
     def plot(self, dataframe, train_name, val_names, ylabel, title):
@@ -362,7 +320,7 @@ class Trainer:
             self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {self.model_name}")
             self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {self.model_name}")
             self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")
-        barrier()
+        dist.barrier()
 
     def free_memory(self):
         del self.model
