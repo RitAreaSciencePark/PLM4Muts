@@ -16,18 +16,26 @@ model.full() if device=='cpu' else model.half()
 # prepare your protein sequences/structures as a list.
 # Amino acid sequences are expected to be upper-case ("PRTEINO" below)
 # while 3Di-sequences need to be lower-case.
-sequence_examples = ["PRTEINO", "SEQWENCE"]
+sequence_examples = ["HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGAQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGALDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESFIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
+                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHFKELKQLAAARGQ",
+        ]
 min_len = min([ len(s) for s in sequence_examples])
-max_len = max([ len(s) for s in sequence_examples])
+max_len = max([ len(s) for s in sequence_examples])+10
 
 # replace all rare/ambiguous amino acids by X (3Di sequences does not have those) and introduce white-space between all sequences (AAs and 3Di)
-sequence_examples = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequence_examples]
+sequence_examples_p = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequence_examples]
 
 # add pre-fixes accordingly. For the translation from AAs to 3Di, you need to prepend "<AA2fold>"
-sequence_examples = [ "<AA2fold>" + " " + s for s in sequence_examples]
+sequence_examples_p = [ "<AA2fold>" + " " + s for s in sequence_examples_p]
 
 # tokenize sequences and pad up to the longest sequence in the batch
-ids = tokenizer.batch_encode_plus(sequence_examples,
+ids = tokenizer.batch_encode_plus(sequence_examples_p,
                                   add_special_tokens=True,
                                   padding="longest",
                                   return_tensors='pt').to(device)
@@ -35,15 +43,17 @@ ids = tokenizer.batch_encode_plus(sequence_examples,
 # Generation configuration for "folding" (AA-->3Di)
 gen_kwargs_aa2fold = {
                   "do_sample": True,
-                  "num_beams": 3, 
-                  "top_p" : 0.95, 
-                  "temperature" : 1.2, 
+                  "num_beams": 3,
+                  "top_p" : 0.95,
+                  "temperature" : 1.2,
                   "top_k" : 6,
                   "repetition_penalty" : 1.2,
-}
+                  }
 
 # translate from AA to 3Di (AA-->3Di)
 with torch.no_grad():
+  print(sequence_examples)
+  print(ids.input_ids.shape, ids.attention_mask.shape)
   translations = model.generate( 
               ids.input_ids, 
               attention_mask=ids.attention_mask, 
@@ -57,6 +67,25 @@ with torch.no_grad():
 decoded_translations = tokenizer.batch_decode( translations, skip_special_tokens=True )
 structure_sequences = [ "".join(ts.split(" ")) for ts in decoded_translations ] # predicted 3Di strings
 
+print(sequence_examples)
+print(structure_sequences)
+
+if structure_sequences[0] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+    print("1 ERROR")
+if structure_sequences[1] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvvlvvpdpcnvvsvvsnvvsvvssvvsvvssvvsnd":
+    print("2 ERROR")
+if structure_sequences[2] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+    print("3 ERROR")
+if structure_sequences[3] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvhpcnvvsvvsnvvsvvssvvsvvssvvsvd":
+    print("4 ERROR")
+if structure_sequences[4] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+    print("5 ERROR")
+if structure_sequences[5] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsnd":
+    print("6 ERROR")
+if structure_sequences[6] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+    print("7 ERROR")
+if structure_sequences[7] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvclvvvhpcnvvsvvsnvvsvvssvvsvvssvvsnd":
+    print("8 ERROR")
 # Now we can use the same model and invert the translation logic
 # to generate an amino acid sequence from the predicted 3Di-sequence (3Di-->AA)
 
@@ -72,6 +101,7 @@ ids_backtranslation = tokenizer.batch_encode_plus(sequence_examples_backtranslat
 # Example generation configuration for "inverse folding" (3Di-->AA)
 gen_kwargs_fold2AA = {
             "do_sample": True,
+            "num_beams": 3,
             "top_p" : 0.90,
             "temperature" : 1.1,
             "top_k" : 6,
@@ -94,3 +124,5 @@ decoded_backtranslations = tokenizer.batch_decode( backtranslations, skip_specia
 aminoAcid_sequences = [ "".join(ts.split(" ")) for ts in decoded_backtranslations ] # predicted amino acid strings
 
 print(aminoAcid_sequences)
+
+

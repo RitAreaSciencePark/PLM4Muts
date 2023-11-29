@@ -54,11 +54,12 @@ def read_msa(filename: str, nseq: int) -> List[Tuple[str, str,str]]:
     if(nseq * lseq > (300 * 100)):
         nseq = (300 * 100)//(lseq + 1)
     
-    idx  = random.sample(list(range(0, len(records) - 1)), nseq - 1) #extract nseq-1 idx'''
+    idx  = random.sample(list(range(0, len(records) - 1)), nseq - 1) #extract nseq-1 idx
     idxs = []
-    for i in range(nseq - 1):
+    #for i in range(nseq - 1):
+    #    idxs.append(records[i].id)
+    for i in idx:
         idxs.append(records[i].id)
-
     pdb_list = [(records[0].description, remove_insertions(str(records[0].seq)))] #the first is included always
     return pdb_list + [(records[i].description, remove_insertions(str(records[i].seq))) for i in range(1, nseq - 1)], nseq, idxs
 
