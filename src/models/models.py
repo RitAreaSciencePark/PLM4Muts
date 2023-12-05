@@ -9,6 +9,57 @@ import warnings
 
 #HIDDEN_UNITS_POS_CONTACT = 5
 
+class ESM_Torino(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.name="ESM_Torino"
+        self.esm_transformer, esm_alphabet = esm.pretrained.esm2_t33_650M_UR50D()
+        self.esm_batch_converter = esm_alphabet.get_batch_converter()
+        self.classifier = nn.Linear(2560,1)
+        nn.init.xavier_normal_(self.classifier.weight)
+        nn.init.zeros_(self.classifier.bias)
+        self.const1 = torch.nn.Parameter(torch.ones((1,1280)))
+        self.const2 = torch.nn.Parameter(torch.ones((1,1280)))
+        self.const3 = torch.nn.Parameter(torch.ones((1,1280)))
+        self.const4 = torch.nn.Parameter(torch.ones((1,1280)))
+
+    def forward(self, wild_seq_esm, mut_seq_esm, pos, local_rank):
+        wild_seq_esm = [('' , ''.join(wild_seq_esm[0]))]
+        mut_seq_esm = [('' , ''.join(mut_seq_esm[0]))]
+        wild_esm_batch_labels, wild_esm_batch_strs, wild_esm_batch_tokens = self.esm_batch_converter(wild_seq_esm) 
+        mut_esm_batch_labels,  mut_esm_batch_strs,  mut_esm_batch_tokens  = self.esm_batch_converter(mut_seq_esm) 
+        batch_size = wild_esm_batch_tokens.shape[0]
+        L = wild_esm_batch_tokens.shape[1]
+        assert batch_size == 1
+        
+        wild_esm_batch_tokens = wild_esm_batch_tokens.to(local_rank)
+        mut_esm_batch_tokens  = mut_esm_batch_tokens.to(local_rank)
+        pos = pos.to(local_rank)
+        wild_esm = self.esm_transformer(wild_esm_batch_tokens, repr_layers=[33])
+        mut_esm  = self.esm_transformer(mut_esm_batch_tokens, repr_layers=[33])
+        wild_esm_logits = wild_esm['logits']
+        wild_esm_reps   = wild_esm['representations'][33]
+        mut_esm_logits = mut_esm['logits']
+        mut_esm_reps   = mut_esm['representations'][33]
+        
+        wild_esm_reps = wild_esm_reps.reshape(batch_size, L, -1)
+        mut_esm_reps  =  mut_esm_reps.reshape(batch_size, L, -1)
+        
+        wild_esm_reps_p = wild_esm_reps[:, pos+1, :].reshape((batch_size,-1))
+        mut_esm_reps_p  =  mut_esm_reps[:, pos+1, :].reshape((batch_size,-1))
+        
+        wild_esm_reps_m = wild_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        mut_esm_reps_m  =  mut_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        esm_reps_p = self.const1 * wild_esm_reps_p - self.const2 *  mut_esm_reps_p
+        esm_reps_m = self.const3 * wild_esm_reps_m - self.const4 *  mut_esm_reps_m
+
+        outputs = torch.cat((esm_reps_p, esm_reps_m), dim=1)
+
+        outputs = self.classifier(outputs)
+        return outputs
+
+
 class MSA_Torino(nn.Module):
 
     def __init__(self):

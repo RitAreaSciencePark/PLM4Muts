@@ -68,14 +68,15 @@ class Trainer:
         self.global_rank = int(os.environ["RANK"])
         self.epochs_run  = 0
 
-    def _load_snapshot(self, snapshot_path):
+    def _load_snapshot(self, model, snapshot_path):
         loc = f"cuda:{self.local_rank}"
         snapshot = torch.load(snapshot_path, map_location=loc)
-        self.model.load_state_dict(snapshot["MODEL_STATE"])
-        self.epochs_run = snapshot["EPOCHS_RUN"]
-        print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+        model.module.load_state_dict(snapshot["MODEL_STATE"])
+        epoch = snapshot["EPOCHS_RUN"]
+        print(f"Resuming training from snapshot at Epoch {epoch}")
 
     def _save_snapshot(self, epoch):
+        print("AAAA", self.model.module.state_dict())
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "EPOCHS_RUN": epoch,
@@ -217,6 +218,7 @@ class Trainer:
         self.val_rmses   = torch.zeros(len(self.val_dls),self.max_epochs)
         self.val_maes    = torch.zeros(len(self.val_dls),self.max_epochs)
         self.val_corrs   = torch.zeros(len(self.val_dls),self.max_epochs)
+        old_corr = 0
         for epoch in range(self.epochs_run, self.max_epochs):
             dist.barrier()
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
@@ -235,11 +237,11 @@ class Trainer:
                   f"rmse = {g_t_rmse} / {l_t_rmse}\t"
                   f"mae = {g_t_mae} / {l_t_mae}\t"
                   f"corr = {g_t_corr} / {l_t_corr}")
-            #if self.global_rank == 0:
-            #    with open(self.train_logfile, "a") as t_log:
-            #        t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
+            if self.local_rank == 0:
+                with open(self.train_logfile, "a") as t_log:
+                    t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
             
-            #if self.global_rank == 0 and epoch % self.save_every == 0:
+            #if self.local_rank == 0 and epoch % self.save_every == 0:
             #    self._save_snapshot(epoch)
             
             for val_no, val_dl in enumerate(self.val_dls):
@@ -261,16 +263,63 @@ class Trainer:
                       f"corr = {self.val_corrs[val_no,epoch]} / {l_v_corr}")
 
                 dist.barrier()
-                #if self.global_rank == 0:
-                #    with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
-                #        v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
+                if self.local_rank == 0 and self.val_corrs[0,epoch] > old_corr:
+                    self._save_snapshot(epoch)
+                    old_corr = self.val_corrs[0,epoch] 
+                dist.barrier()
+                if self.local_rank == 0:
+                    with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
+                        v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
         dist.barrier()
         self.difference_labels_preds(cutoff=0.0)
         dist.barrier()
-        if self.global_rank == 0:
-            self._save_snapshot(epoch)
-        dist.barrier()
+        #if self.global_rank == 0:
+        #    self._save_snapshot(epoch)
+        #dist.barrier()
         
+    def test(self, test_model, test_dls): 
+        self.test_model_name = test_model.name
+        self.test_model = test_model.to(self.local_rank)
+        self.test_model = DDP(self.test_model, device_ids=[self.local_rank], find_unused_parameters=True)
+        self.test_dls = test_dls
+        self.test_rmses   = torch.zeros(len(self.test_dls))
+        self.test_maes    = torch.zeros(len(self.test_dls))
+        self.test_corrs   = torch.zeros(len(self.test_dls))
+        if os.path.exists(self.snapshot_path):
+            print("Loading snapshot")
+            self._load_snapshot(self.test_model, self.snapshot_path)
+        
+        self.test_model.eval()
+        for test_no, test_dl in enumerate(self.test_dls):
+            self.t_preds, self.t_labels = [], []
+            len_dataloader = len(test_dl.dataloader)
+            with torch.no_grad():
+                for idx, batch in enumerate(test_dl.dataloader):
+                    print(f"{test_dl.name}\ton GPU {self.global_rank} test:\tbatch_idx:{idx+1}/{len_dataloader}-{batch[-1]}")
+                    testX, testY, _ = batch
+                    testYhat = self.test_model.module.forward(*testX, self.local_rank).to(self.local_rank)
+                    testY_cpu = testY.cpu().detach()
+                    testYhat_cpu = testYhat.cpu().detach()
+                    self.t_labels.extend(testY_cpu)
+                    self.t_preds.extend(testYhat_cpu)
+            l_t_labels = torch.tensor(self.t_labels).to("cpu")
+            l_t_preds  = torch.tensor(self.t_preds).to("cpu")
+            l_t_mse  = torch.mean(         (l_t_labels - l_t_preds)**2)
+            l_t_mae  = torch.mean(torch.abs(l_t_labels - l_t_preds)   )
+            l_t_rmse = torch.sqrt(l_t_mse)
+            l_t_corr, _ = pearsonr(l_t_labels.tolist(), l_t_preds.tolist())
+            self.test_maes[test_no]  = l_t_mae
+            self.test_corrs[test_no] = l_t_corr
+            self.test_rmses[test_no] = l_t_rmse
+            print(f"{test_dl.name}: on GPU {self.global_rank} test\t"
+                      f"rmse = {self.test_rmses[test_no]}\t"
+                      f"mae = {self.test_maes[test_no]}\t"
+                      f"corr = {self.test_corrs[test_no]}")
+
+            dist.barrier()
+            if self.local_rank == 0:
+                with open(self.result_dir + f"/{test_dl.name}_{self.global_rank}_test.log", "a") as v_log:
+                        v_log.write(f"test,{self.test_rmses[test_no]},{self.test_maes[test_no]},{self.test_corrs[test_no]}\n")
 
     def plot(self, dataframe, train_name, val_names, ylabel, title):
         colors = cm.rainbow(torch.linspace(0, 1, len(val_names)))
@@ -287,7 +336,7 @@ class Trainer:
 
 
     def describe(self):
-        if self.global_rank == 0:
+        if self.local_rank == 0:
             val_rmse_names  = [ s.name + "_rmse" for s in self.val_dls]
             val_mae_names   = [ s.name + "_mae"  for s in self.val_dls]
             val_corr_names  = [ s.name + "_corr" for s in self.val_dls]
@@ -317,7 +366,7 @@ class Trainer:
 
             print(df, flush=True)
 
-            df.to_csv( self.result_dir + "/epochs_statistics.csv")
+            df.to_csv( self.result_dir + f"/epochs_statistics_{self.global_rank}.csv")
             self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {self.model_name}")
             self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {self.model_name}")
             self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")

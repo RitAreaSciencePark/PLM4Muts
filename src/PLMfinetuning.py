@@ -30,6 +30,7 @@ from torch.utils.data.distributed import DistributedSampler
 models = {"ProstT5_Torino":          ProstT5_Torino,
           "ProstT5_Roma":            ProstT5_Roma,
           "MSA_Torino":              MSA_Torino,
+          "ESM_Torino":              ESM_Torino,
           "ProstT5_Milano":          ProstT5_Milano
         }
 
@@ -59,14 +60,22 @@ def main(loss_fn_name, model_name, optimizer_name, dataset_dir, lr, max_epochs, 
     if model_name.rsplit("_")[0]=="ProstT5":
         train_ds = ProteinDataset(train_df, train_name)
         val_dss  = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names)]
+        test_dss = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names)]
         collate_function = None
+    if model_name.rsplit("_")[0]=="ESM":
+        train_ds = ESM_Dataset(train_df, train_name, train_dir)
+        val_dss  = [ESM_Dataset(val_df,val_name,test_dir)  for val_df, val_name in zip(val_dfs, val_names)]
+        test_dss = [ESM_Dataset(val_df,val_name,test_dir)  for val_df, val_name in zip(val_dfs, val_names)]
+        collate_function = custom_collate
     if model_name.rsplit("_")[0]=="MSA":
         train_ds     = MSA_Dataset(train_df, train_name, train_dir, 10)
-        val_dss=[MSA_Dataset(val_df,val_name,test_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
+        val_dss  = [MSA_Dataset(val_df,val_name,test_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
+        test_dss = [MSA_Dataset(val_df,val_name,test_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
         collate_function = custom_collate
 
     train_dl     = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds),custom_collate_fn=collate_function)
     val_dls = [ProteinDataLoader(val_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=DistributedSampler(val_ds),custom_collate_fn=collate_function) for val_ds in val_dss]
+    test_dls = [ProteinDataLoader(test_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False,sampler=None,custom_collate_fn=collate_function) for test_ds in test_dss]
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
     trainer   = Trainer(max_epochs=max_epochs,loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler, save_every=save_every, output_dir=output_dir)
@@ -83,6 +92,8 @@ def main(loss_fn_name, model_name, optimizer_name, dataset_dir, lr, max_epochs, 
     trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
     trainer.describe()
     dist.barrier()
+    test_model=models[model_name]()
+    trainer.test(test_model=test_model, test_dls=test_dls)
     dist.destroy_process_group()
 
 
