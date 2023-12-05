@@ -16,14 +16,14 @@ model.full() if device=='cpu' else model.half()
 # prepare your protein sequences/structures as a list.
 # Amino acid sequences are expected to be upper-case ("PRTEINO" below)
 # while 3Di-sequences need to be lower-case.
-sequence_examples = ["HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGAQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGALDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESFIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHWKELKQLAAARGQ",
-                     "HQFFRDMDDEESWIKEKKLLVSSEDYGRDLTGVQNLRKKHKRLEAELAAHEPAIQGVLDTGKKLSDDNTIGKEEIQQRLAQFVDHFKELKQLAAARGQ",
+sequence_examples = ["RSVASSKLWMLEFSAFLEQQQDPDTYNKHLFVHIGLEAVDIRQIYDKFPEKKGGLKDLFERGPSNAFFLVKFWADLNTNGSSFYGVSSQYESPENMIITCSTKVCSFGKQVVEKVETEYARYENGHYSYRIHRSPLCEYMINFIHKLKHLPEKYMMNSVLENFTILQVVTNRDTQETLLCIAYVFEVSASEHGAQHHIYRLVKE",
+                     "RSVASSKLWMLEFSAFLEQQQDPDTYNKHLFVHIGLEAVDIRQIYDKFPEKKGGLKDLFERGPSNAFFLVKFWADLNTNGSSFYGVSSQYESPENMIITCSTKVCSFGKQVVEKVETEYARYENGHYSYRIHRSPLCEYMINFIHKLKHLPEKYMMNSVLENFTILQVVTNRDTQETLLCIAYVFEVSASEHGAQHHIHRLVKE",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKRFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLSNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELVHLFRKFWMEPYD",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKKFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLSNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELVHLFRKFWMEPYD",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKRFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLSNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELVHLFRKFWMEPYD",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKRFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLGNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELVHLFRKFWMEPYD",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKRFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLSNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELVHLFRKFWMEPYD",
+                     "MPLDETNNESYRYLRSVGNTWKFNVEDVHPKMLERLYKRFDTFDLDTDGKMTMDEIMYWPDRMRQLVNATDEQVEKMRAAVHTFFFHKGVDPVNGLKREDWVEANRVFAEAERERERRGEPSLIALLSNAYYDVLDDDGDGTVDVEELKTMMKAFDVPQEAAYTFFQKADTDKTGKLERPELTHLFRKFWMEPYD",
         ]
 min_len = min([ len(s) for s in sequence_examples])
 max_len = max([ len(s) for s in sequence_examples])+10
@@ -70,21 +70,21 @@ structure_sequences = [ "".join(ts.split(" ")) for ts in decoded_translations ] 
 print(sequence_examples)
 print(structure_sequences)
 
-if structure_sequences[0] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+if structure_sequences[0] != "dwlddpfktwpdkdkdkdfdddppdpdddddddddfaedapvvcqqlaapdvvipvvdcvvallsqekekekatelpddprmfifmktkmkgldffkkkkwkfkffsrdtpdididiwtfdddpnitmtmpprhgddpvvvvvsvvlspdpdqvvsqvrqvrikmwiwmagppprrtrhiyiygyghdpdpdhmdmgmhrhdhd":
     print("1 ERROR")
-if structure_sequences[1] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvvlvvpdpcnvvsvvsnvvsvvssvvsvvssvvsnd":
+if structure_sequences[1] != "dwlddpfktwpdkdkdkdfdddppdpdddddddddfaedapvvcqqlaapdvvipvvdcvvallsqekekekatelpddprmfifmktkmkgldffkkkkwkfkffsrdtpdididiwgfdddpnitmtmpprhgddpvvvvvsvvlspdpdqvvsqvrqvrikmwiwmagppprrtrhiyiygyghdpdpdhmdmgmhrhdhd":
     print("2 ERROR")
-if structure_sequences[2] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+if structure_sequences[2] != "ddddppppvvvvvvvvvppppppplvpddplllvlllvvqvvlppvppqfralvsllcvlvvlcvqqvddpvlsvllsvlsvvlcvvlvhdnvvghhsvsssvslsvllvvqvvcvvvvhdgsllsnlvsvqsslprvppqwhalvsqqsvcvsvvhdsvvsvvlqvvlppvpprthhsvsssvssccsrrnddd":
     print("3 ERROR")
-if structure_sequences[3] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvhpcnvvsvvsnvvsvvssvvsvvssvvsvd":
+if structure_sequences[3] != "ddddppppvvvvvvvvvvpppppplvpddplllvlllvvqvvlppvppqfhalvsllcvlvvlcvqqvddpvlsvllsvlsvvlcvvlvhdnvrghhsvsssvslsvllvvqvvcvvvvhdgsllsnlvsvqsslprvppqwhalvsqqsvcvsvvhdsvvsvvlqvvlppvpprthhsvsssvssccsrrnddd":
     print("4 ERROR")
-if structure_sequences[4] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+if structure_sequences[4] != "ddddpppppvvvvvvvvvpppppplvpddpvvlvvllvvqvvlppvppqfralvsqlcvlvvlcvqqvddpvlsvlssvlsvllcvvlvhdnvvghhsvsssvslsvllvvqvvcvvvvhdhsllsnlvsvqsslprvppqwhalvsqqsvcvsvvhdsvvsvvlqvvlppvpprihhsvsssvssccvrrnddd":
     print("5 ERROR")
-if structure_sequences[5] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsnd":
+if structure_sequences[5] != "ddddppppvvvvvvvvvvpppppplvpddplllvlllvvqvvlppvppqfralvsllcvlvvlcvqqvddpvlsvllsvlsvvlcvvlvhdnvvghhsvsssvslsvllvvqvvcvvvvhdhsllsnlvsvqsslpsvppqwhalvsqqsvcvsvvhdsvvsvvlqvvlppvpprihhsvsssvssccsrrnddd":
     print("6 ERROR")
-if structure_sequences[6] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnvvvlvvsvvvlvvcvvslvvslvvlvvclvvvppcnvvsvvsnvvsvvssvvsvvssvvsvd":
+if structure_sequences[6] != "ddddpvvvvvvvvvvvvvppppddlvpddplllvlllvvqvvlppvppqfhalvsllvvlvvlcvqqvddpvlsvllsvlsvvlcvvlvhdnvvghhsvsssvslsvllvvqvvcvvvvhdhsllsnlvsvvsslprvppqwhalvsqqsvcssvvhdsvvsvvlqvvlppvpprthhsvsssvssccsrrnddd":
     print("7 ERROR")
-if structure_sequences[7] != "dvlvvllvvlvvvlvvllvvlpdpdcdddpvrnvvnlvvlvvsvvvlvvcvvslvvslvvlvvclvvvhpcnvvsvvsnvvsvvssvvsvvssvvsnd":
+if structure_sequences[7] != "ddddpppppvvvvvvvvvpppppplvpddplllvlllvvqvvlppvppqfhalvsqlcvlvvlcvqqvddpvlsvlssvlsvvlcvvlvhdnvvghhsvsssvslsvllvvqvvcvvvvhdhsllsnlvsvqsslprvppqwhalvsqvsvcvsvvhdsvvsvvlqvvlppvpprthhsvsssvssccsrhnddd":
     print("8 ERROR")
 # Now we can use the same model and invert the translation logic
 # to generate an amino acid sequence from the predicted 3Di-sequence (3Di-->AA)

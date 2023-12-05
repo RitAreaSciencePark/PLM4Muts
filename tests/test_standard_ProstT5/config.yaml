@@ -1,0 +1,12 @@
+#INITIAL SETTINGS
+output_dir: "tests/test_standard_ProstT5"
+model: "ProstT5_Torino"
+learning_rate: 0.5e-5
+optimizer: "Adam"
+max_epochs: 15
+loss_fn: "MSE"
+dataset_dir: "datasets/standard"
+device: "cuda"
+verbose: "True"
+save_every: 2
+

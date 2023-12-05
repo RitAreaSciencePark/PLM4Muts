@@ -7,7 +7,7 @@ def ddp_setup():
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 def from_cvs_files_in_dir_to_dfs_list(path):
-    dir_path = path + "/data"
+    dir_path = path + "/MSA_3Di_databases"
     datasets = os.listdir(dir_path)
     #datasets_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in datasets ]
     datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]

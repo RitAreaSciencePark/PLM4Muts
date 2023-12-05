@@ -1,0 +1,11 @@
+datasets/mega/train/MSA_mega/*
+datasets/mega/test/MSA_s669/*
+datasets/standard/train/MSA_standard/*
+datasets/standard/test/MSA_s669/*
+*.error
+*.out
+*.pt
+*.diffs
+*.log
+*.png
+*.ipynb

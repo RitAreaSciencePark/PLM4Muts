@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+#SBATCH --job-name=trainslate
+#SBATCH -p DGX
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:8
+#SBATCH --time=12:00:00
+#SBATCH -o trainslate.%A.out
+#SBATCH -e trainslate.%A.error
+#SBATCH -A lade
+#SBATCH --wait-all-nodes=1
+#SBATCH --cpus-per-task=128
+#SBATCH --mem=700G 
+##SBATCH -w dgx002
+CURRENT_DIR=${SLURM_SUBMIT_DIR}
+head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
+#head_node_ip=10.128.6.161
+echo "head_node=" ${head_node} " - head_node_ip=" $head_node_ip
+#export LOGLEVEL=INFO
+#export NCCL_DEBUG=INFO
+export OMP_NUM_THREADS=128
+cd ../..
+source myenv_esm/bin/activate
+echo $(pwd)
+echo ${CUDA_VISIBLE_DEVICES}
+
+INFILE_TRAIN="datasets/standard/train/MSA_databases/db_train.csv"
+OUTFILE_TRAIN="datasets/standard/train/MSA_3Di_databases/tb_train.csv"
+
+OMP_NUM_THREADS=128 torchrun --standalone  --nnodes 1 --nproc_per_node 8 --rdzv_id $RANDOM --rdzv_backend c10d --rdzv_endpoint $head_node_ip:29500 src/ProstT5TranslationDDP.py --input_file  ${INFILE_TRAIN} --output_file ${OUTFILE_TRAIN}
+

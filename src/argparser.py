@@ -10,8 +10,7 @@ def argparser():
     parser.add_argument("--max_epochs",  default='3',         type=int,   help="Number of epochs")
     parser.add_argument("--output_dir",  default=os.getcwd(), type=str,   help="Output dir path.")
     parser.add_argument("--config_file", default=os.getcwd()+"/config.yaml", type=str, help="Output dir")
-    parser.add_argument("--train_dir",default='datasets/train/train_example',type=str,help="Train dataset")
-    parser.add_argument("--val_dir",   default='datasets/val/val_example',type=str,help="Val dataset")
+    parser.add_argument("--dataset_dir", default='datasets/standard',type=str,help="Dataset")
     parser.add_argument("--loss_fn",   default='MSE',type=str,help="Loss function. Choose 'MSE' or 'L1'.")
     parser.add_argument("--device",    default='cuda', type=str, help="Device: choose 'cpu' or 'cuda'.")
     parser.add_argument("--verbose",   default=True, type=eval)
@@ -22,8 +21,8 @@ def argparser():
 
 def argparser_translator():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_file",  default='data/train/train_AA_example/training_standard.csv', type=str,  help="In")
-    parser.add_argument("--output_file", default='data/train/train_AA_3Di_example/training_trans.csv', type=str, help="Out")
+    parser.add_argument("--input_file",  default='datasets/standard/train/MSA_databases/db_train.csv', type=str,  help="In")
+    parser.add_argument("--output_file", default='datasets/standard/train/MSA_3Di_databases/tb_train.csv', type=str, help="Out")
     args = parser.parse_args()
     return args
 

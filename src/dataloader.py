@@ -72,8 +72,12 @@ class MSA_Dataset(Dataset):
             nseq: how many sequences for each MSA are selected
             filenames: list of all files located in the directory
         '''
-        self.df = df
         self.name = name
+        self.df = df
+        lengths = [len(s) for s in df['wt_seq'].to_list()]
+        self.df["len_seq"]=lengths
+        self.df = self.df.drop(self.df[self.df.len_seq > 550].index)
+        self.max_length = self.df["len_seq"].max() + 2
         self.dataset_dir = dataset_dir
         self.nseq = nseq
 
@@ -89,11 +93,11 @@ class MSA_Dataset(Dataset):
             msa: selected msa  
             n_seq: how many sequences have been selected 
         ''' 
-        wild_seq = [self.df.iloc[idx]['wild_type']]
-        mut_seq  = [self.df.iloc[idx]['mutated']]
+        wild_seq = [self.df.iloc[idx]['wt_seq']]
+        mut_seq  = [self.df.iloc[idx]['mut_seq']]
         
-        wild_msa_path = self.df.iloc[idx]['file_msa_wild']
-        mut_msa_path  = self.df.iloc[idx]['file_msa_mutated']
+        wild_msa_path = self.df.iloc[idx]['wt_msa']
+        mut_msa_path  = self.df.iloc[idx]['mut_msa']
         
         pos = self.df.iloc[idx]['pos']
         ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
@@ -103,36 +107,48 @@ class MSA_Dataset(Dataset):
         wild_msa, wild_n_seq, wild_idxs = read_msa(wild_msa_filename, nseq = self.nseq)
         mut_msa,  mut_n_seq,  mut_idxs  = read_msa(mut_msa_filename,  nseq = self.nseq)
         #ddg = torch.unsqueeze(ddg, 0)
-        return (wild_msa, mut_msa, pos), ddg, (wild_seq[0], mut_seq[0])
+        code = self.df.iloc[idx]['code']
+        return (wild_msa, mut_msa, pos), ddg, code
 
 class ProteinDataset(Dataset):
     def __init__(self, df, name):
         self.name = name
         self.df = df
+        wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
+        mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
+        self.df["wt_len_seq"]=wt_lengths
+        self.df["mut_len_seq"]=mut_lengths
+        self.df = self.df.drop(self.df[self.df.wt_len_seq > 490].index)
+        self.df = self.df.drop(self.df[self.df.mut_len_seq > 490].index)
+        self.max_length = 492
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
-        lengths = [len(s) for s in df['wild_type'].to_list()]
-        self.max_length = max(lengths) + 2
 
     def __getitem__(self, idx):
-        wild_seq = [self.df.iloc[idx]['wild_type']]
-        mut_seq  = [self.df.iloc[idx]['mutated']]
-        struct   = [self.df.iloc[idx]['structure']]
+        wild_seq = [self.df.iloc[idx]['wt_seq']]
+        mut_seq  = [self.df.iloc[idx]['mut_seq']]
+        wild_struct = [self.df.iloc[idx]['wt_struct']]
+        mut_struct  = [self.df.iloc[idx]['mut_struct']]
         wild_seq_p = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_seq]
         mut_seq_p  = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_seq]
-        struct_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in struct]
+        wild_struct_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_struct]
+        mut_struct_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_struct]
         wild_seq_p = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_seq_p]
         mut_seq_p  = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_seq_p]
-        struct_p   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in struct_p]
+        mut_struct_p   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_struct_p]
+        wild_struct_p   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_struct_p]
         wild_seq_e = self.tokenizer.batch_encode_plus(wild_seq_p, add_special_tokens=True, max_length=self.max_length,
                                                       padding="max_length", return_tensors='pt')
         mut_seq_e  = self.tokenizer.batch_encode_plus(mut_seq_p,  add_special_tokens=True, max_length=self.max_length, 
                                                       padding="max_length", return_tensors='pt')
-        struct_e   = self.tokenizer.batch_encode_plus(struct_p,   add_special_tokens=True, max_length=self.max_length,
+        wild_struct_e = self.tokenizer.batch_encode_plus(wild_struct_p, add_special_tokens=True, max_length=self.max_length,
+                                                      padding="max_length", return_tensors='pt')
+        mut_struct_e = self.tokenizer.batch_encode_plus(mut_struct_p, add_special_tokens=True, max_length=self.max_length,
                                                       padding="max_length", return_tensors='pt')
         pos = self.df.iloc[idx]['pos']
         ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        code = self.df.iloc[idx]['code']
         #ddg = torch.unsqueeze(ddg, 0)
-        return (wild_seq_e, mut_seq_e, struct_e, pos), ddg, (wild_seq[0], mut_seq[0])
+        return (wild_seq_e, mut_seq_e, wild_struct_e, mut_struct_e, pos), ddg, code
 
     def __len__(self):
         return len(self.df)
@@ -141,9 +157,9 @@ class ProteinDataset(Dataset):
 
 def custom_collate(batch):
     assert len(batch)==1
-    (wild, mut, pos), ddg, (wild_seq, mut_seq) = batch[0]
+    (wild, mut, pos), ddg, code = batch[0]
     pos = torch.tensor([pos])
-    return ([wild], [mut], pos), ddg.reshape((-1,1)), (wild_seq, mut_seq)
+    return ([wild], [mut], pos), ddg.reshape((-1,1)), code
 
 
 class ProteinDataLoader():

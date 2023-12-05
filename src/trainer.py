@@ -147,10 +147,11 @@ class Trainer:
         len_dataloader = len(train_proteindataloader.dataloader)
         train_proteindataloader.dataloader.sampler.set_epoch(epoch)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
-            print_peak_memory("Max GPU memory", self.local_rank)
-            print(f"{train_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+            #print_peak_memory("Max GPU memory", self.local_rank)
+            print(f"{train_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader} - {batch[-1]}")
             self.train_batch(batch)
-
+            dist.barrier()
+        
         global_t_preds, global_t_labels = self.all_gather_lab_preds(self.t_preds, self.t_labels)
         g_t_labels = global_t_labels.to("cpu")
         g_t_preds  = global_t_preds.to("cpu")
@@ -173,7 +174,7 @@ class Trainer:
         len_dataloader = len(val_proteindataloader.dataloader)
         with torch.no_grad():
             for idx, batch in enumerate(val_proteindataloader.dataloader):
-                print(f"{val_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
+                print(f"{val_proteindataloader.name}\ton GPU {self.global_rank} epoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader} - {batch[-1]}")
                 self.valid_batch(batch)
         global_v_preds, global_v_labels = self.all_gather_lab_preds(self.v_preds, self.v_labels)
         g_v_labels = global_v_labels.to("cpu")
@@ -185,11 +186,11 @@ class Trainer:
     def difference_labels_preds(self, cutoff):
         for val_no, val_dl in enumerate(self.val_dls):
             with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
-                v_diffs.write(f"mut_seq,wild_seq,pos,ddg,pred\n")
+                v_diffs.write(f"code,pos,ddg,pred\n")
             self.model.eval()
             with torch.no_grad():
                 for idx, batch in enumerate(val_dl.dataloader):
-                    X, Y, (wild_seq, mut_seq) = batch
+                    X, Y, code = batch
                     #X = [x.to(self.local_rank) for x in X]
                     Yhat = self.model(*X, self.local_rank).to(self.local_rank)
                     Y_cpu = Y.cpu().detach().item()
@@ -197,7 +198,7 @@ class Trainer:
                     pos = X[-1]
                     pos_cpu = pos.cpu().detach().item()
                     with open(self.result_dir + f"/{val_dl.name}_labels_preds.{self.global_rank}.diffs", "a") as v_diffs:
-                       v_diffs.write(f"{mut_seq},{wild_seq},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
+                       v_diffs.write(f"{code},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
 
     def train(self, model, train_dl, val_dls):
         print(f"I am rank {self.local_rank}")
@@ -234,12 +235,12 @@ class Trainer:
                   f"rmse = {g_t_rmse} / {l_t_rmse}\t"
                   f"mae = {g_t_mae} / {l_t_mae}\t"
                   f"corr = {g_t_corr} / {l_t_corr}")
-            if self.global_rank == 0:
-                with open(self.train_logfile, "a") as t_log:
-                    t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
+            #if self.global_rank == 0:
+            #    with open(self.train_logfile, "a") as t_log:
+            #        t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
             
-            if self.global_rank == 0 and epoch % self.save_every == 0:
-                self._save_snapshot(epoch)
+            #if self.global_rank == 0 and epoch % self.save_every == 0:
+            #    self._save_snapshot(epoch)
             
             for val_no, val_dl in enumerate(self.val_dls):
                 g_v_labels, g_v_preds, l_v_labels, l_v_preds = self.valid_epoch(epoch, val_dl)
@@ -260,9 +261,9 @@ class Trainer:
                       f"corr = {self.val_corrs[val_no,epoch]} / {l_v_corr}")
 
                 dist.barrier()
-                if self.global_rank == 0:
-                    with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
-                        v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
+                #if self.global_rank == 0:
+                #    with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
+                #        v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
         dist.barrier()
         self.difference_labels_preds(cutoff=0.0)
         dist.barrier()

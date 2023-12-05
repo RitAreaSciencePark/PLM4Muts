@@ -27,9 +27,10 @@ import torch.distributed  as dist
 from torch.utils.data.distributed import DistributedSampler
 
 # Global dictionaries for Models, Losses and Optimizers
-models = {"ProstT5_Milano":          ProstT5_Milano,
+models = {"ProstT5_Torino":          ProstT5_Torino,
           "ProstT5_Roma":            ProstT5_Roma,
           "MSA_Torino":              MSA_Torino,
+          "ProstT5_Milano":          ProstT5_Milano
         }
 
 losses = {"L1":  torch.nn.functional.l1_loss,
@@ -41,7 +42,7 @@ optimizers = {"Adam":  torch.optim.Adam,
              }
 
 
-def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every, output_dir):
+def main(loss_fn_name, model_name, optimizer_name, dataset_dir, lr, max_epochs, save_every, output_dir):
     ddp_setup()
     loss_fn   = losses[loss_fn_name]
     model     = models[model_name]()
@@ -49,17 +50,19 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
         optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, weight_decay=0.05)
     if optimizer_name=="Adam":
         optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
+    train_dir = dataset_dir+"/train"
+    test_dir = dataset_dir+"/test"
     train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir)
     train_df     = pd.concat(train_dfs)
-    train_name   = train_dir.rsplit('/', 1)[1]
-    val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(val_dir)
+    train_name   = dataset_dir.rsplit('/', 1)[1] + "_training"
+    val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(test_dir)
     if model_name.rsplit("_")[0]=="ProstT5":
         train_ds = ProteinDataset(train_df, train_name)
         val_dss  = [ProteinDataset(val_df, val_name) for val_df, val_name in zip(val_dfs, val_names)]
         collate_function = None
     if model_name.rsplit("_")[0]=="MSA":
         train_ds     = MSA_Dataset(train_df, train_name, train_dir, 10)
-        val_dss=[MSA_Dataset(val_df,val_name,val_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
+        val_dss=[MSA_Dataset(val_df,val_name,test_dir, 10) for val_df, val_name in zip(val_dfs, val_names)] 
         collate_function = custom_collate
 
     train_dl     = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds),custom_collate_fn=collate_function)
@@ -75,7 +78,7 @@ def main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_e
         print(f"model_name:\t{model_name}\t{type(model_name)}", flush=True)
         print(f"optimizer_name:\t{optimizer_name}\t{type(optimizer_name)}", flush=True)
         print(f"train_dir:\t{train_dir}\t{type(train_dir)}", flush=True)
-        print(f"val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
+        print(f"test_dir:\t{test_dir}\t{type(test_dir)}", flush=True)
 
     trainer.train(model=model,  train_dl=train_dl, val_dls=val_dls)
     trainer.describe()
@@ -96,8 +99,7 @@ if __name__ == "__main__":
         max_epochs     = config["max_epochs"]
         model_name     = config["model"]
         optimizer_name = config["optimizer"]
-        train_dir      = config["train_dir"]
-        val_dir        = config["val_dir"]
+        dataset_dir      = config["dataset_dir"]
         save_every     = config["save_every"] 
     else:
         output_dir     = args.output_dir
@@ -106,8 +108,7 @@ if __name__ == "__main__":
         loss_fn_name   = args.loss_fn
         model_name     = args.model
         optimizer_name = args.optimizer
-        train_dir      = args.train_dir
-        val_dir        = args.val_dir
+        dataset_dir    = args.dataset_dir
         save_every     = args.save_every
-    main(loss_fn_name, model_name, optimizer_name, train_dir, val_dir, lr, max_epochs, save_every, output_dir)
+    main(loss_fn_name, model_name, optimizer_name, dataset_dir, lr, max_epochs, save_every, output_dir)
 
