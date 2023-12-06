@@ -49,10 +49,13 @@ def read_msa(filename: str, nseq: int) -> List[Tuple[str, str,str]]:
         for seq in range(len(records)):
             records[seq] = records[seq][:1023]
             lseq = 1023
-
+    print(f"A int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
     nseq = min(int(nseq), len(records)) #select the numb of seq you are interested in
-    if(nseq * lseq > (300 * 100)):
-        nseq = (300 * 100)//(lseq + 1)
+    print(f"B int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
+    if(nseq * lseq > (100 * 100)):
+        nseq = (100 * 100)//(lseq + 1)
+    
+    print(f"C int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
     
     idx  = random.sample(list(range(0, len(records) - 1)), nseq - 1) #extract nseq-1 idx
     idxs = []

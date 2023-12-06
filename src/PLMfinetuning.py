@@ -68,9 +68,9 @@ def main(loss_fn_name, model_name, optimizer_name, dataset_dir, lr, max_epochs, 
         test_dss = [ESM_Dataset(val_df,val_name,test_dir)  for val_df, val_name in zip(val_dfs, val_names)]
         collate_function = custom_collate
     if model_name.rsplit("_")[0]=="MSA":
-        train_ds     = MSA_Dataset(train_df, train_name, train_dir, 30)
-        val_dss  = [MSA_Dataset(val_df,val_name,test_dir, 30) for val_df, val_name in zip(val_dfs, val_names)] 
-        test_dss = [MSA_Dataset(val_df,val_name,test_dir, 30) for val_df, val_name in zip(val_dfs, val_names)] 
+        train_ds     = MSA_Dataset(train_df, train_name, train_dir, 1000)
+        val_dss  = [MSA_Dataset(val_df,val_name,test_dir, 1000) for val_df, val_name in zip(val_dfs, val_names)] 
+        test_dss = [MSA_Dataset(val_df,val_name,test_dir, 1000) for val_df, val_name in zip(val_dfs, val_names)] 
         collate_function = custom_collate
 
     train_dl     = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, sampler=DistributedSampler(train_ds),custom_collate_fn=collate_function)
