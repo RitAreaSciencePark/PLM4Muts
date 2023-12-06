@@ -372,7 +372,7 @@ class Trainer:
             self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")
         dist.barrier()
 
-    def free_memory(self):
-        del self.model
+    def free_memory(self, model):
+        del model
         torch.cuda.empty_cache()
 

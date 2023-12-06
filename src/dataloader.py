@@ -63,6 +63,45 @@ def read_msa(filename: str, nseq: int) -> List[Tuple[str, str,str]]:
     pdb_list = [(records[0].description, remove_insertions(str(records[0].seq)))] #the first is included always
     return pdb_list + [(records[i].description, remove_insertions(str(records[i].seq))) for i in range(1, nseq - 1)], nseq, idxs
 
+class ESM_Dataset(Dataset):
+    def __init__(self, df, name, dataset_dir):
+        ''' 
+        Dataset class.
+        Args:
+            self.dir: directory where the files are found
+            nseq: how many sequences for each MSA are selected
+            filenames: list of all files located in the directory
+        '''
+        self.name = name
+        self.df = df
+        wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
+        mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
+        self.df["wt_len_seq"]=wt_lengths
+        self.df["mut_len_seq"]=mut_lengths
+        self.max_length = 492
+        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
+        self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
+        self.dataset_dir = dataset_dir
+
+    def __len__(self):
+        ''' How many files are present in the directory. '''
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        '''
+        Overiding of index operator in order to select a given file from the directory.
+        Args:
+        ''' 
+        wild_seq = [self.df.iloc[idx]['wt_seq']]
+        mut_seq  = [self.df.iloc[idx]['mut_seq']]
+        
+        pos = self.df.iloc[idx]['pos']
+        ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        
+        #ddg = torch.unsqueeze(ddg, 0)
+        code = self.df.iloc[idx]['code']
+        return (wild_seq, mut_seq, pos), ddg, code
+
 class MSA_Dataset(Dataset):
     def __init__(self, df, name, dataset_dir, nseq):
         ''' 
@@ -74,10 +113,13 @@ class MSA_Dataset(Dataset):
         '''
         self.name = name
         self.df = df
-        lengths = [len(s) for s in df['wt_seq'].to_list()]
-        self.df["len_seq"]=lengths
-        self.df = self.df.drop(self.df[self.df.len_seq > 550].index)
-        self.max_length = self.df["len_seq"].max() + 2
+        wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
+        mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
+        self.df["wt_len_seq"]=wt_lengths
+        self.df["mut_len_seq"]=mut_lengths
+        self.max_length = 492
+        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
+        self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         self.dataset_dir = dataset_dir
         self.nseq = nseq
 
@@ -118,9 +160,9 @@ class ProteinDataset(Dataset):
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
         self.df["wt_len_seq"]=wt_lengths
         self.df["mut_len_seq"]=mut_lengths
-        self.df = self.df.drop(self.df[self.df.wt_len_seq > 490].index)
-        self.df = self.df.drop(self.df[self.df.mut_len_seq > 490].index)
         self.max_length = 492
+        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
+        self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
 
     def __getitem__(self, idx):
@@ -159,7 +201,8 @@ def custom_collate(batch):
     assert len(batch)==1
     (wild, mut, pos), ddg, code = batch[0]
     pos = torch.tensor([pos])
-    return ([wild], [mut], pos), ddg.reshape((-1,1)), code
+    output = ([wild], [mut], pos), ddg.reshape((-1,1)), code
+    return output
 
 
 class ProteinDataLoader():
