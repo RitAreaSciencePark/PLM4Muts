@@ -1,12 +1,15 @@
 #INITIAL SETTINGS
 output_dir: "tests/test_standard_MSA"
-model: "MSA_Torino"
-learning_rate: 0.5e-5
-optimizer: "Adam"
-max_epochs: 15
-loss_fn: "MSE"
 dataset_dir: "datasets/standard"
+model: "MSA_Torino"
+learning_rate: 5.0e-6
+max_epochs: 20
+loss_fn: "L1"
 device: "cuda"
-verbose: "True"
-save_every: 2
-
+max_length: 1024
+optimizer: 
+  name: "AdamW"
+  weight_decay: 0.05
+MSA:
+  nseqs: 30
+snapshot_file: "tests/test_standard_MSA/snapshots/snapshot.pt"

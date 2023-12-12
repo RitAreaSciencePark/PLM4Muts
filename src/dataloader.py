@@ -41,33 +41,40 @@ translation = str.maketrans(deletekeys)
 def remove_insertions(sequence: str) -> str:
     return sequence.translate(translation)
 
-def read_msa(filename: str, nseq: int) -> List[Tuple[str, str,str]]:
-    records = list(SeqIO.parse(filename, "fasta"))
+def read(filename_wt, filename_mut, max_tokens):
+    records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
+    records_mut = list(SeqIO.parse(filename_mut, "fasta"))
+    lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
+    assert lseq < 1024
+    #if lseq > 1024:
+    #    for seq in range(len(records)):
+    #        records[seq] = records[seq][:1023]
+    #        lseq = 1023
+#    max_tokens = 15000
+    #if(nseqs * lseq > (100 * 100)):
+    #    nseqs = (100 * 100)//(lseq + 1)
+    #if nseqs * lseq > max_tokens:
+    nseqs = max_tokens//(lseq + 1)
+    nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
     
-    lseq = max([len(records[i].seq) for i in range(len(records))]) #lenght of longest seq of msa
-    if lseq > 1024:
-        for seq in range(len(records)):
-            records[seq] = records[seq][:1023]
-            lseq = 1023
-    print(f"A int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
-    nseq = min(int(nseq), len(records)) #select the numb of seq you are interested in
-    print(f"B int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
-    if(nseq * lseq > (100 * 100)):
-        nseq = (100 * 100)//(lseq + 1)
-    
-    print(f"C int(nseq)={int(nseq)}, len(records)={len(records)}, lseq={lseq}")
-    
-    idx  = random.sample(list(range(0, len(records) - 1)), nseq - 1) #extract nseq-1 idx
-    idxs = []
+    #idx = random.sample(list(range(1, len(records_wt))), nseqs - 1) #extract nseq-2 idx
+    idx = list(range(1, nseqs))
+    #idxs = []
     #for i in range(nseq - 1):
     #    idxs.append(records[i].id)
-    for i in idx:
-        idxs.append(records[i].id)
-    pdb_list = [(records[0].description, remove_insertions(str(records[0].seq)))] #the first is included always
-    return pdb_list + [(records[i].description, remove_insertions(str(records[i].seq))) for i in range(1, nseq - 1)], nseq, idxs
+    #for i in idx:
+    #    idxs.append(records[i].id)
+    #return [(records[i].description, remove_insertions(str(records[i].seq))) for i in range(nseqs)], nseqs, idxs
+    pdb_list_wt  = [(records_wt[0].description,  remove_insertions(str(records_wt[0].seq)))] #the first is included always
+    pdb_list_mut = [(records_mut[0].description, remove_insertions(str(records_mut[0].seq)))] #the first is included always
+    pdb_list_wt  = pdb_list_wt  + [(records_wt[i].description,  remove_insertions(str(records_wt[i].seq)))  for i in idx]
+    pdb_list_mut = pdb_list_mut + [(records_mut[i].description, remove_insertions(str(records_mut[i].seq))) for i in idx]
+    return pdb_list_wt, pdb_list_mut
+    #return pdb_list + [(records[idx[i]].description, remove_insertions(str(records[idx[i]].seq))) for i in range(1, nseqs - 1)], nseqs, idxs
+
 
 class ESM_Dataset(Dataset):
-    def __init__(self, df, name, dataset_dir):
+    def __init__(self, df, name, max_length):
         ''' 
         Dataset class.
         Args:
@@ -79,12 +86,11 @@ class ESM_Dataset(Dataset):
         self.df = df
         wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
-        self.df["wt_len_seq"]=wt_lengths
-        self.df["mut_len_seq"]=mut_lengths
-        self.max_length = 492
+        self.df["wt_len_seq"]  = wt_lengths
+        self.df["mut_len_seq"] = mut_lengths
+        self.max_length = max_length
         self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
-        self.dataset_dir = dataset_dir
 
     def __len__(self):
         ''' How many files are present in the directory. '''
@@ -106,7 +112,7 @@ class ESM_Dataset(Dataset):
         return (wild_seq, mut_seq, pos), ddg, code
 
 class MSA_Dataset(Dataset):
-    def __init__(self, df, name, dataset_dir, nseq):
+    def __init__(self, df, name, dataset_dir, max_length, max_tokens):
         ''' 
         Dataset class.
         Args:
@@ -120,11 +126,29 @@ class MSA_Dataset(Dataset):
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
         self.df["wt_len_seq"]=wt_lengths
         self.df["mut_len_seq"]=mut_lengths
-        self.max_length = 492
-        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
+        self.max_length = max_length
+        self.df = self.df.drop(self.df[self.df.wt_len_seq  > self.max_length - 2].index)
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         self.dataset_dir = dataset_dir
-        self.nseq = nseq
+        self.max_tokens = max_tokens
+        self.didx = {}
+
+    def read_msa(self, filename_wt, filename_mut):
+        records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
+        records_mut = list(SeqIO.parse(filename_mut, "fasta"))
+        lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
+        assert lseq < 1024
+        nseqs = self.max_tokens//(lseq + 1)
+        nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
+        #idx = random.sample(list(range(1, len(records_wt))), nseqs - 1) #extract nseq-1 idx
+        #self.didx.setdefault((len(records_wt),nseqs), random.sample(list(range(1, len(records_wt))), nseqs - 1)) 
+        #idx = self.didx[(len(records_wt),nseqs)]
+        idx = list(range(1, nseqs))
+        pdb_list_wt  = [(records_wt[0].description,  remove_insertions(str(records_wt[0].seq)))] #the first is included always
+        pdb_list_mut = [(records_mut[0].description, remove_insertions(str(records_mut[0].seq)))] #the first is included always
+        pdb_list_wt  = pdb_list_wt  + [(records_wt[i].description,  remove_insertions(str(records_wt[i].seq)))  for i in idx]
+        pdb_list_mut = pdb_list_mut + [(records_mut[i].description, remove_insertions(str(records_mut[i].seq))) for i in idx]
+        return pdb_list_wt, pdb_list_mut
 
     def __len__(self):
         ''' How many files are present in the directory. '''
@@ -149,38 +173,42 @@ class MSA_Dataset(Dataset):
         
         wild_msa_filename = os.path.join(self.dataset_dir, wild_msa_path)
         mut_msa_filename  = os.path.join(self.dataset_dir, mut_msa_path )
-        wild_msa, wild_n_seq, wild_idxs = read_msa(wild_msa_filename, nseq = self.nseq)
-        mut_msa,  mut_n_seq,  mut_idxs  = read_msa(mut_msa_filename,  nseq = self.nseq)
+        wild_msa, mut_msa = self.read_msa(wild_msa_filename, mut_msa_filename)
+        #mut_msa  = read_msa(mut_msa_filename,  nseqs = 1)
         #ddg = torch.unsqueeze(ddg, 0)
         code = self.df.iloc[idx]['code']
         return (wild_msa, mut_msa, pos), ddg, code
 
 class ProteinDataset(Dataset):
-    def __init__(self, df, name):
+    def __init__(self, df, name, max_length):
         self.name = name
         self.df = df
         wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
         self.df["wt_len_seq"]=wt_lengths
         self.df["mut_len_seq"]=mut_lengths
-        self.max_length = 492
-        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
-        self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
+        if max_length:
+            self.max_length = max_length
+            self.df = self.df.drop(self.df[self.df.wt_len_seq >  self.max_length - 2].index)
+            self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
+        else:
+            self.max_length = max(wt_lengths)
+        print("DEBUG: max_length =", self.max_length)
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
 
     def __getitem__(self, idx):
-        wild_seq = [self.df.iloc[idx]['wt_seq']]
-        mut_seq  = [self.df.iloc[idx]['mut_seq']]
+        wild_seq    = [self.df.iloc[idx]['wt_seq']]
+        mut_seq     = [self.df.iloc[idx]['mut_seq']]
         wild_struct = [self.df.iloc[idx]['wt_struct']]
         mut_struct  = [self.df.iloc[idx]['mut_struct']]
-        wild_seq_p = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_seq]
-        mut_seq_p  = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_seq]
-        wild_struct_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_struct]
-        mut_struct_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_struct]
-        wild_seq_p = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_seq_p]
-        mut_seq_p  = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_seq_p]
-        mut_struct_p   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_struct_p]
-        wild_struct_p   = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_struct_p]
+        wild_seq_p  = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_seq]
+        mut_seq_p   = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_seq]
+        wild_struct_p = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in wild_struct]
+        mut_struct_p  = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in mut_struct]
+        wild_seq_p    = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_seq_p]
+        mut_seq_p     = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_seq_p]
+        mut_struct_p  = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in wild_struct_p]
+        wild_struct_p = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in mut_struct_p]
         wild_seq_e = self.tokenizer.batch_encode_plus(wild_seq_p, add_special_tokens=True, max_length=self.max_length,
                                                       padding="max_length", return_tensors='pt')
         mut_seq_e  = self.tokenizer.batch_encode_plus(mut_seq_p,  add_special_tokens=True, max_length=self.max_length, 
@@ -198,15 +226,12 @@ class ProteinDataset(Dataset):
     def __len__(self):
         return len(self.df)
 
-
-
 def custom_collate(batch):
     assert len(batch)==1
     (wild, mut, pos), ddg, code = batch[0]
     pos = torch.tensor([pos])
     output = ([wild], [mut], pos), ddg.reshape((-1,1)), code
     return output
-
 
 class ProteinDataLoader():
     def __init__(self, dataset, batch_size, num_workers, shuffle, pin_memory, sampler, custom_collate_fn=None):
@@ -219,5 +244,4 @@ class ProteinDataLoader():
                                      pin_memory=pin_memory, 
                                      sampler=sampler,
                                      collate_fn=custom_collate_fn)
-
 

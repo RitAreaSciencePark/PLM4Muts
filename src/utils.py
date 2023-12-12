@@ -2,9 +2,13 @@ import pandas as pd
 import os
 import torch
 
-def ddp_setup():
-    torch.distributed.init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+def get_date_of_run():
+    """create date and time for file save uniqueness
+    example: 2022-05-07-08:31:12_PM'
+    """
+    date_of_run = datetime.now().strftime("%Y-%m-%d-%I:%M:%S_%p")
+    print(f"--> current date and time of run = {date_of_run}")
+    return date_of_run
 
 def from_cvs_files_in_dir_to_dfs_list(path):
     dir_path = path + "/MSA_3Di_databases"

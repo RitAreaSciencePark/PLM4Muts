@@ -1,0 +1,17 @@
+#INITIAL SETTINGS
+output_dir: "tests/test_standard_MSA_HP7"
+dataset_dir: "datasets/standard"
+model: "MSA_Trieste"
+learning_rate: 5.0e-6
+max_epochs: 20
+loss_fn: "L1"
+device: "cuda"
+max_length: 1024
+optimizer:
+  name: "AdamW"
+  weight_decay: 0.02
+MSA:
+  max_tokens: 16000
+  rand_MSA_seqs: True
+snapshot_file: "tests/test_standard_MSA_HP7/snapshots/snapshot.pt"
+

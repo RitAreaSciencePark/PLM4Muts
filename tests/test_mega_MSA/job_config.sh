@@ -35,4 +35,4 @@ srun -l torchrun --standalone \
 --rdzv_endpoint $head_node_ip:29500 \
 src/PLMfinetuning.py --config_file ${CURRENT_DIR}/config.yaml
 
-
+python src/PLMtesting.py --config_file ${CURRENT_DIR}/config.yaml

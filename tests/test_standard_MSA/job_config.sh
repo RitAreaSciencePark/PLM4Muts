@@ -27,7 +27,7 @@ source myenv_esm/bin/activate
 echo $(pwd)
 echo ${CUDA_VISIBLE_DEVICES}
 
-srun -l torchrun --standalone \
+srun -l torchrun --standalone  \
 --nnodes 1 \
 --nproc_per_node 8 \
 --rdzv_id $RANDOM \
@@ -35,4 +35,4 @@ srun -l torchrun --standalone \
 --rdzv_endpoint $head_node_ip:29500 \
 src/PLMfinetuning.py --config_file ${CURRENT_DIR}/config.yaml
 
-
+python src/PLMtesting.py --config_file ${CURRENT_DIR}/config.yaml
