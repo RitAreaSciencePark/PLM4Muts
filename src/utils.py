@@ -11,7 +11,7 @@ def get_date_of_run():
     return date_of_run
 
 def from_cvs_files_in_dir_to_dfs_list(path):
-    dir_path = path + "/MSA_3Di_databases"
+    dir_path = path + "/translated_databases"
     datasets = os.listdir(dir_path)
     #datasets_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in datasets ]
     datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]

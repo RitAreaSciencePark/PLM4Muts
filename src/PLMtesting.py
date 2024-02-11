@@ -25,11 +25,12 @@ from argparser import *
 from tester import *
 
 # Global dictionaries for Models, Losses and Optimizers
-models = {"ProstT5_Torino":          ProstT5_Torino,
+models = {"ProstT5_Trieste":         ProstT5_Trieste,
           "ProstT5_Roma":            ProstT5_Roma,
           "MSA_Torino":              MSA_Torino,
           "MSA_Trieste":             MSA_Trieste,
           "ESM_Torino":              ESM_Torino,
+          "ESM_Trieste":             ESM_Trieste,
           "ProstT5_Milano":          ProstT5_Milano
         }
 
@@ -44,17 +45,17 @@ optimizers = {"Adam":  torch.optim.Adam,
 
 def main(output_dir, dataset_dir, model_name, device, max_length, max_tokens, snapshot_file):
     test_dir = dataset_dir + "/test"
-    val_dfs, val_names = from_cvs_files_in_dir_to_dfs_list(test_dir)
+    test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir)
 
     if model_name.rsplit("_")[0]=="ProstT5":
-        test_dss = [ProteinDataset(df=val_df, name=val_name, max_length=max_length) for val_df, val_name in zip(val_dfs, val_names)]
+        test_dss = [ProteinDataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = None
     if model_name.rsplit("_")[0]=="ESM":
-        test_dss = [ESM_Dataset(df=val_df,    name=val_name, max_length=max_length) for val_df, val_name in zip(val_dfs, val_names)]
+        test_dss = [ESM_Dataset(df=test_df, name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = custom_collate
     if model_name.rsplit("_")[0]=="MSA":
-        test_dss = [MSA_Dataset(df=val_df,    name=val_name, dataset_dir=test_dir, max_length=max_length,
-                                max_tokens=max_tokens) for val_df, val_name in zip(val_dfs, val_names)] 
+        test_dss = [MSA_Dataset(df=test_df,    name=test_name, dataset_dir=test_dir, max_length=max_length,
+                                max_tokens=max_tokens) for test_df, test_name in zip(test_dfs, test_names)] 
         collate_function = custom_collate
 
     test_dls = [ProteinDataLoader(test_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False,sampler=None,custom_collate_fn=collate_function) for test_ds in test_dss]

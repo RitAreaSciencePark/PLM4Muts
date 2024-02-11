@@ -52,7 +52,7 @@ class ProteinDataset(Dataset):
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
         lengths = [len(s) for s in df['wt_seq'].to_list()]
         self.df["len_seq"]=lengths
-        self.df = self.df.drop(self.df[self.df.len_seq > 550].index)
+        #self.df = self.df.drop(self.df[self.df.len_seq > 550].index)
         self.max_length = self.df["len_seq"].max() + 2
 
     def __getitem__(self, idx):
@@ -155,7 +155,9 @@ def translate(dataloader, model, local_rank):
     model.eval()
     run_translate(dataloader.dataloader)
     #dist.barrier()
+    print("DEBUG3", len(dataloader.dataloader.sampler) * world_size, len(dataloader.dataloader.dataset))
     if (len(dataloader.dataloader.sampler) * world_size < len(dataloader.dataloader.dataset)):
+        print("DEBUG4")
         aux_dataset = Subset(dataloader.dataloader.dataset,
                              range(len(dataloader.dataloader.sampler) * world_size, 
                              len(dataloader.dataloader.dataset)))
@@ -164,6 +166,7 @@ def translate(dataloader, model, local_rank):
                                                      shuffle=False,
                                                      num_workers=workers, 
                                                      pin_memory=False)
+        print("DEBUG5", len(aux_dataloader), len(dataloader.dataloader))
         run_translate(aux_dataloader, len(dataloader.dataloader))
     #dist.barrier()
     return results
@@ -197,7 +200,7 @@ def main(input_file, output_file):
     ds = ProteinDataset(df, infile_name)
     Dsampler = DistributedSampler(ds,shuffle=False,drop_last=True)
     dl = ProteinDataLoader(ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=Dsampler)
-
+    print("DEBUG2", len(dl.dataloader.dataset), len(dl.df),  len(dl.dataloader))
     model = AutoModelForSeq2SeqLM.from_pretrained("Rostlab/ProstT5")
     # only GPUs support half-precision currently; if you want to run on CPU use full-precision 
     model.to(local_rank)

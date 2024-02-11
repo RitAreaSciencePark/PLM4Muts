@@ -134,6 +134,7 @@ class MSA_Dataset(Dataset):
         self.didx = {}
 
     def read_msa(self, filename_wt, filename_mut):
+        #print("DEBUG_RUGGERO", filename_wt, filename_mut)
         records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
         records_mut = list(SeqIO.parse(filename_mut, "fasta"))
         lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
@@ -143,7 +144,9 @@ class MSA_Dataset(Dataset):
         #idx = random.sample(list(range(1, len(records_wt))), nseqs - 1) #extract nseq-1 idx
         #self.didx.setdefault((len(records_wt),nseqs), random.sample(list(range(1, len(records_wt))), nseqs - 1)) 
         #idx = self.didx[(len(records_wt),nseqs)]
+        
         idx = list(range(1, nseqs))
+        #print(f"DEBUG fn=({filename_wt},{filename_mut}) nseqs={nseqs} len(idx)={len(idx)} len(records_wt)={len(records_wt)} len(records_mut)={len(records_mut)}")
         pdb_list_wt  = [(records_wt[0].description,  remove_insertions(str(records_wt[0].seq)))] #the first is included always
         pdb_list_mut = [(records_mut[0].description, remove_insertions(str(records_mut[0].seq)))] #the first is included always
         pdb_list_wt  = pdb_list_wt  + [(records_wt[i].description,  remove_insertions(str(records_wt[i].seq)))  for i in idx]

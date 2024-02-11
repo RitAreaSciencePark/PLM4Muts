@@ -1,7 +1,10 @@
-datasets/mega/train/MSA_mega/*
-datasets/mega/test/MSA_s669/*
-datasets/standard/train/MSA_standard/*
-datasets/standard/test/MSA_s669/*
+datasets/*
+runs/*
+tests/*
+myenv_dgx/*
+myenv_esm/*
+myenv_Lucrezia/*
+Lucrezia/*
 *.error
 *.out
 *.pt

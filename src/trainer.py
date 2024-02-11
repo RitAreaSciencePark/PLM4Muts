@@ -58,6 +58,7 @@ class Trainer:
         loss_fn: torch.nn.functional, 
         output_dir: str,
         max_epochs: int,
+        seeds: tuple
     ) -> None:
         self.max_epochs  = max_epochs
         self.optimizer   = optimizer
@@ -67,6 +68,7 @@ class Trainer:
         self.local_rank  = int(os.environ["LOCAL_RANK"])
         self.global_rank = int(os.environ["RANK"])
         self.epochs_run  = 0
+        self.seeds       = seeds
 
     def _load_snapshot(self, model, snapshot_path):
         loc = f"cuda:{self.local_rank}"
@@ -75,13 +77,14 @@ class Trainer:
         epoch = snapshot["EPOCHS_RUN"]
         print(f"Resuming training from snapshot at Epoch {epoch}")
 
-    def _save_snapshot(self, epoch):
+    def _save_snapshot(self, filename, epoch):
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "EPOCHS_RUN": epoch,
         }
-        torch.save(snapshot, self.snapshot_file)
-        print(f"Epoch {epoch+1} | Training snapshot saved at {self.snapshot_file}")
+        snapshot_file = self.snapshot_dir + filename
+        torch.save(snapshot, snapshot_file)
+        print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
 
     def initialize_files(self):
         #run_date = get_date_of_run()
@@ -94,17 +97,23 @@ class Trainer:
                 os.makedirs(self.result_dir)
             if not(os.path.exists(self.snapshot_dir) and os.path.isdir(self.snapshot_dir)):
                 os.makedirs(self.snapshot_dir)            
-        self.snapshot_file = self.snapshot_dir + "/snapshot.pt"
-        self.train_logfile =  self.result_dir  + "/train_metrics.log"
-        self.val_logfiles  = [self.result_dir  + f"/{val.name}_metrics.log" for val in self.val_dls] 
-       
+        #self.snapshot_file  = self.snapshot_dir + "/snapshot.pt"
+        self.train_logfile  =   self.result_dir  + "/train_metrics.log"
+        self.val_logfiles   = [ self.result_dir  + f"/{val.name}_metrics.log" for val in self.val_dls] 
+        self.test_logfiles  = [ self.result_dir  + f"/{test.name}_metrics.log" for test in self.test_dls] 
+        self.seeds_file  =   self.result_dir  + "/seeds.log"
         
-        if self.local_rank == 0:
+        if self.global_rank == 0:
             with open(self.train_logfile, "w") as tr_log:
                 tr_log.write("epoch,rmse,mae,corr\n")
+            with open(self.seeds_file, "w") as seeds_f:
+                seeds_f.write(f"seeds = {self.seeds}")
             for val_logfile in self.val_logfiles:
                 with open(val_logfile, "w") as v_log:
                     v_log.write("epoch,rmse,mae,corr\n")
+            for test_logfile in self.test_logfiles:
+                with open(test_logfile, "w") as t_log:
+                    t_log.write("epoch,rmse,mae,corr\n")
 
     def train_batch(self,  batch):
         X, Y, _ = batch
@@ -184,40 +193,40 @@ class Trainer:
         del self.v_labels
         return g_v_labels, g_v_preds, l_v_labels, l_v_preds
 
-#    def difference_labels_preds(self, cutoff):
-#        world_size = dist.get_world_size()
-#        self.model.eval()
-#        for val_no, val_dl in enumerate(self.val_dls):
-#            tmp_filenames = [self.result_dir + f"/{val_dl.name}_labels_preds.{i}.diffs" for i in range(world_size)]
-#            output_file   =  self.result_dir + f"/{val_dl.name}_labels_preds.diffs"
-#            with open(tmp_filenames[self.global_rank], "w") as v_diffs:
-#                v_diffs.write(f"code,pos,ddg,pred\n")
-#            with torch.no_grad():
-#                for idx, batch in enumerate(val_dl.dataloader):
-#                    X, Y, code = batch
-#                    Yhat = self.model(*X, self.local_rank).to(self.local_rank)
-#                    Y_cpu = Y.cpu().detach().item()
-#                    Yhat_cpu = Yhat.cpu().detach().item()
-#                    pos = X[-1]
-#                    pos_cpu = pos.cpu().detach().item()
-#                    with open(tmp_filenames[self.global_rank], "a") as v_diffs:
-#                       v_diffs.write(f"{code},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
-#            dist.barrier()
-#            if self.global_rank==0:
-#                dfs=[None] * world_size
-#                for i in range(world_size):
-#                    dfs[i]=pd.read_csv(tmp_filenames[i])
-#                res_df = pd.concat(dfs, axis=0)
-#                print(res_df)
-#                res_df.columns=['code','pos','ddg','pred']
-#                res_df = res_df.sort_values(by=['code'])
-#                res_df.to_csv(output_file, index=False)
-#                for i in range(world_size):
-#                    if os.path.exists(tmp_filenames[i]):
-#                        os.remove(tmp_filenames[i])
-#            dist.barrier() 
+    def difference_labels_preds(self, model, dls, filename):
+        world_size = dist.get_world_size()
+        model.eval()
+        for no, dl in enumerate(dls):
+            tmp_filenames = [self.result_dir + f"/{dl.name}_" + filename + f".{i}.diffs" for i in range(world_size)]
+            output_file   =  self.result_dir + f"/{dl.name}_" + filename + ".diffs"
+            with open(tmp_filenames[self.global_rank], "w") as diffs:
+                diffs.write(f"code,pos,ddg,pred\n")
+            with torch.no_grad():
+                for idx, batch in enumerate(dl.dataloader):
+                    X, Y, code = batch
+                    Yhat = model(*X, self.local_rank).to(self.local_rank)
+                    Y_cpu = Y.cpu().detach().item()
+                    Yhat_cpu = Yhat.cpu().detach().item()
+                    pos = X[-1]
+                    pos_cpu = pos.cpu().detach().item()
+                    with open(tmp_filenames[self.global_rank], "a") as diffs:
+                       diffs.write(f"{code},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
+            dist.barrier()
+            if self.global_rank==0:
+                dfs = [None] * world_size
+                for i in range(world_size):
+                    dfs[i]=pd.read_csv(tmp_filenames[i])
+                res_df = pd.concat(dfs, axis=0)
+                #print(res_df)
+                res_df.columns=['code','pos','ddg','pred']
+                res_df = res_df.sort_values(by=['code'])
+                res_df.to_csv(output_file, index=False)
+                for i in range(world_size):
+                    if os.path.exists(tmp_filenames[i]):
+                        os.remove(tmp_filenames[i])
+            dist.barrier() 
 
-    def train(self, model, train_dl, val_dls):
+    def train(self, model, train_dl, val_dls, test_dls):
         print(f"I am rank {self.local_rank}")
         self.model_name = model.name
         self.model = model.to(self.local_rank)
@@ -226,15 +235,20 @@ class Trainer:
 #            print("Loading snapshot")
 #            self._load_snapshot(self.snapshot_file)
         self.train_dl = train_dl
-        self.val_dls = val_dls
+        self.val_dls  =  val_dls
+        self.test_dls = test_dls
         self.initialize_files()
-        self.train_rmse  = torch.zeros(self.max_epochs)
-        self.train_mae   = torch.zeros(self.max_epochs)
-        self.train_corr  = torch.zeros(self.max_epochs)
-        self.val_rmses   = torch.zeros(len(self.val_dls),self.max_epochs)
-        self.val_maes    = torch.zeros(len(self.val_dls),self.max_epochs)
-        self.val_corrs   = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.train_rmse   = torch.zeros(self.max_epochs)
+        self.train_mae    = torch.zeros(self.max_epochs)
+        self.train_corr   = torch.zeros(self.max_epochs)
+        self.val_rmses    = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.val_maes     = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.val_corrs    = torch.zeros(len(self.val_dls),self.max_epochs)
+        self.test_rmses   = torch.zeros(len(self.test_dls),self.max_epochs)
+        self.test_maes    = torch.zeros(len(self.test_dls),self.max_epochs)
+        self.test_corrs   = torch.zeros(len(self.test_dls),self.max_epochs)
         old_val_score = 1000
+        save_snapshot = False
         for epoch in range(self.epochs_run, self.max_epochs):
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
             g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -274,13 +288,37 @@ class Trainer:
             dist.barrier()
             if self.global_rank == 0:
                 print(f"Validation ongoing on MAE for {self.val_dls[0].name}", flush=True)
+                self._save_snapshot("/checkpoint.pt", epoch)
             #print(f"DEBUGI:{epoch} {self.val_corrs[0,epoch]} {self.val_corrs[1,epoch]} {self.val_corrs[:,epoch].mean()} {old_corr}")
             if self.val_maes[0,epoch] < old_val_score: #self.val_corrs[:,epoch].mean() > old_corr:
                 old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
+                #self.difference_labels_preds(self.model, self.val_dls, "AAA")
+                save_snapshot = True
                 if self.global_rank == 0:
                     #print(f"DEBUGM:{epoch} {self.val_corrs[0,epoch]} {self.val_corrs[1,epoch]} {self.val_corrs[:,epoch].mean()} {old_corr}")
-                    self._save_snapshot(epoch)
+                    self._save_snapshot("/snapshot.pt", epoch)
             #dist.barrier()
+            for test_no, test_dl in enumerate(self.test_dls):
+                g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.valid_epoch(epoch, test_dl)
+                g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
+                g_t_mae  = torch.mean(torch.abs(g_t_labels - g_t_preds)   )
+                g_t_rmse =  torch.sqrt(g_t_mse)
+                g_t_corr, _ = pearsonr(g_t_labels.tolist(),  g_t_preds.tolist())
+                l_t_mse  = torch.mean(         (l_t_labels - l_t_preds)**2)
+                l_t_mae  = torch.mean(torch.abs(l_t_labels - l_t_preds)   )
+                l_t_rmse = torch.sqrt(l_t_mse)
+                l_t_corr, _ = pearsonr(l_t_labels.tolist(), l_t_preds.tolist())
+                self.test_maes[ test_no,epoch] = g_t_mae
+                self.test_corrs[test_no,epoch] = g_t_corr
+                self.test_rmses[test_no,epoch] = g_t_rmse
+                print(f"{test_dl.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\t"
+                      f"rmse = {self.test_rmses[test_no,epoch]} / {l_t_rmse}\t"
+                      f"mae = {self.test_maes[test_no,epoch]} / {l_t_mae}\t"
+                      f"corr = {self.test_corrs[test_no,epoch]} / {l_t_corr}")
+            if save_snapshot: #self.val_corrs[:,epoch].mean() > old_corr:
+                #old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
+                self.difference_labels_preds(self.model, self.test_dls, "AAA")
+                save_snapshot = False
         
         #dist.barrier()
         #self.difference_labels_preds(cutoff=0.0)
@@ -292,15 +330,21 @@ class Trainer:
                 for val_no, val_dl in enumerate(self.val_dls):
                     with open(self.result_dir + f"/{val_dl.name}_metrics.log", "a") as v_log:
                         v_log.write(f"{epoch+1},{self.val_rmses[val_no,epoch]},{self.val_maes[val_no,epoch]},{self.val_corrs[val_no,epoch]}\n")
+                for test_no, test_dl in enumerate(self.test_dls):
+                    with open(self.result_dir + f"/{test_dl.name}_metrics.log", "a") as t_log:
+                        t_log.write(f"{epoch+1},{self.test_rmses[test_no,epoch]},{self.test_maes[test_no,epoch]},{self.test_corrs[test_no,epoch]}\n")
         dist.barrier()
         
 
-    def plot(self, dataframe, train_name, val_names, ylabel, title):
-        colors = cm.rainbow(torch.linspace(0, 1, len(val_names)))
+    def plot(self, dataframe, train_name, val_names,test_names, ylabel, title):
+        colors_val = cm.rainbow(torch.linspace(0, 1, len(val_names)))
+        colors_test = cm.viridis(torch.linspace(0, 1, len(test_names)))
         plt.figure(figsize=(8,6))
-        plt.plot(dataframe["epoch"],     dataframe[train_name], label=train_name, color="black",   linestyle="-.")
+        plt.plot(dataframe["epoch"],     dataframe[train_name],  label=train_name, color="black",   linestyle=":")
         for i, val_name in enumerate(val_names):
-            plt.plot(dataframe["epoch"], dataframe[val_name],   label=val_name,   color=colors[i], linestyle="-")
+            plt.plot(dataframe["epoch"], dataframe[val_name],    label=val_name,   color=colors_val[i], linestyle="-.")
+        for i, test_name in enumerate(test_names):
+            plt.plot(dataframe["epoch"], dataframe[test_name],   label=test_name,  color=colors_test[i], linestyle="-")
         plt.xlabel("epoch")
         plt.ylabel(ylabel)
         plt.title(title)
@@ -314,6 +358,9 @@ class Trainer:
             val_rmse_names  = [ s.name + "_rmse" for s in self.val_dls]
             val_mae_names   = [ s.name + "_mae"  for s in self.val_dls]
             val_corr_names  = [ s.name + "_corr" for s in self.val_dls]
+            test_rmse_names  = [ s.name + "_rmse" for s in self.test_dls]
+            test_mae_names   = [ s.name + "_mae"  for s in self.test_dls]
+            test_corr_names  = [ s.name + "_corr" for s in self.test_dls]
             train_rmse_name = self.train_dl.name + '_rmse'
             train_mae_name  = self.train_dl.name + '_mae'
             train_corr_name = self.train_dl.name + '_corr'
@@ -321,29 +368,35 @@ class Trainer:
             train_mae_dict  = { train_mae_name:  self.train_mae}
             train_corr_dict = { train_corr_name: self.train_corr}
 
-            val_rmse_df   = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  self.val_rmses)))
-            val_mae_df    = pd.DataFrame.from_dict(dict(zip(val_mae_names,   self.val_maes)))
-            val_corr_df   = pd.DataFrame.from_dict(dict(zip(val_corr_names,  self.val_corrs)))
-            train_rmse_df = pd.DataFrame.from_dict(train_rmse_dict)
-            train_mae_df  = pd.DataFrame.from_dict(train_mae_dict)
-            train_corr_df = pd.DataFrame.from_dict(train_corr_dict)
+            val_rmse_df    = pd.DataFrame.from_dict(dict(zip(val_rmse_names,  self.val_rmses)))
+            val_mae_df     = pd.DataFrame.from_dict(dict(zip(val_mae_names,   self.val_maes)))
+            val_corr_df    = pd.DataFrame.from_dict(dict(zip(val_corr_names,  self.val_corrs)))
+            test_rmse_df   = pd.DataFrame.from_dict(dict(zip(test_rmse_names, self.test_rmses)))
+            test_mae_df    = pd.DataFrame.from_dict(dict(zip(test_mae_names,  self.test_maes)))
+            test_corr_df   = pd.DataFrame.from_dict(dict(zip(test_corr_names, self.test_corrs)))
+            train_rmse_df  = pd.DataFrame.from_dict(train_rmse_dict)
+            train_mae_df   = pd.DataFrame.from_dict(train_mae_dict)
+            train_corr_df  = pd.DataFrame.from_dict(train_corr_dict)
              
-            train_rmse_df["epoch"] = train_rmse_df.index + 1
-            train_mae_df["epoch"]  = train_mae_df.index  + 1
-            train_corr_df["epoch"] = train_corr_df.index + 1
-            val_corr_df["epoch"]   = val_corr_df.index   + 1
-            val_mae_df["epoch"]    = val_mae_df.index    + 1
-            val_rmse_df["epoch"]   = val_rmse_df.index   + 1
+            train_rmse_df["epoch"]  = train_rmse_df.index + 1
+            train_mae_df["epoch"]   = train_mae_df.index  + 1
+            train_corr_df["epoch"]  = train_corr_df.index + 1
+            val_corr_df["epoch"]    = val_corr_df.index   + 1
+            val_mae_df["epoch"]     = val_mae_df.index    + 1
+            val_rmse_df["epoch"]    = val_rmse_df.index   + 1
+            test_corr_df["epoch"]   = test_corr_df.index   + 1
+            test_mae_df["epoch"]    = test_mae_df.index    + 1
+            test_rmse_df["epoch"]   = test_rmse_df.index   + 1
 
-            df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df]],
+            df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df, test_rmse_df, test_mae_df, test_corr_df]],
                axis=1, join="inner").reset_index()
 
             print(df, flush=True)
 
             df.to_csv( self.result_dir + f"/epochs_statistics.csv", index=False)
-            self.plot(df, train_rmse_name, val_rmse_names, ylabel="rsme", title="Model: {self.model_name}")
-            self.plot(df, train_mae_name,  val_mae_names,  ylabel="mae",  title="Model: {self.model_name}")
-            self.plot(df, train_corr_name, val_corr_names, ylabel="corr", title="Model: {self.model_name}")
+            self.plot(df, train_rmse_name, val_rmse_names, test_rmse_names, ylabel="rsme", title=f"Model: {self.model_name}")
+            self.plot(df, train_mae_name,  val_mae_names,  test_mae_names,  ylabel="mae",  title=f"Model: {self.model_name}")
+            self.plot(df, train_corr_name, val_corr_names, test_corr_names, ylabel="corr", title=f"Model: {self.model_name}")
         dist.barrier()
 
     def free_memory(self, model):
