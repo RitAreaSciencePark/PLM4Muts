@@ -115,6 +115,66 @@ class ESM_Torino(nn.Module):
         outputs = self.classifier(outputs)
         return outputs
 
+class MSA_Baseline(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.name="MSA_Baseline"
+        self.msa_transformer, msa_alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
+        for i,param in enumerate(self.msa_transformer.parameters()):
+            param.requires_grad = True
+            #print("DEBUG", i, param)
+        self.msa_batch_converter = msa_alphabet.get_batch_converter()
+        self.fc1 = nn.Linear(1536,HIDDEN_UNITS)
+        self.fc2 = nn.Linear(HIDDEN_UNITS,1)
+        self.relu=nn.ReLU(inplace=True)
+        nn.init.xavier_normal_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_normal_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
+        self.const1 = torch.nn.Parameter(torch.ones((1,768)), requires_grad=False)
+        self.const2 = torch.nn.Parameter(torch.ones((1,768)), requires_grad=False)
+        self.const3 = torch.nn.Parameter(torch.ones((1,768)), requires_grad=False)
+        self.const4 = torch.nn.Parameter(torch.ones((1,768)), requires_grad=False)
+        self.dropout = nn.Dropout(0.2)
+
+    def forward(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
+        wild_msa_batch_labels, wild_msa_batch_strs, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
+        mut_msa_batch_labels,  mut_msa_batch_strs,  mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
+        batch_size = wild_msa_batch_tokens.shape[0]
+        N = wild_msa_batch_tokens.shape[1]
+        M = mut_msa_batch_tokens.shape[1]
+        L = wild_msa_batch_tokens.shape[2]
+        assert batch_size == 1
+        
+        wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
+        mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
+        pos = pos.to(local_rank)
+        wild_msa_reps = self.msa_transformer(wild_msa_batch_tokens, repr_layers=[12])['representations'][12]
+        mut_msa_reps  = self.msa_transformer(mut_msa_batch_tokens,  repr_layers=[12])['representations'][12]
+        #wild_msa_logits = wild_msa['logits']
+        #wild_msa_reps   = wild_msa['representations'][12]
+        #mut_msa_logits = mut_msa['logits']
+        #mut_msa_reps   = mut_msa['representations'][12]
+        
+        wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
+        mut_msa_reps  =  mut_msa_reps.reshape(batch_size, M, L, 768)
+        
+        wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
+        mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
+        
+        wild_msa_reps_m = wild_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        mut_msa_reps_m  =  mut_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        
+        msa_reps_p = self.const1 * wild_msa_reps_p - self.const2 *  mut_msa_reps_p
+        msa_reps_m = self.const3 * wild_msa_reps_m - self.const4 *  mut_msa_reps_m
+
+        outputs = torch.cat((msa_reps_p, msa_reps_m), dim=1)
+        outputs = self.relu(self.fc1(outputs))
+        outputs = self.dropout(outputs)
+        return self.fc2(outputs)
+
+
 
 class MSA_Trieste(nn.Module):
 

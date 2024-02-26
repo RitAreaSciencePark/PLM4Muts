@@ -29,6 +29,7 @@ models = {"ProstT5_Trieste":         ProstT5_Trieste,
           "ProstT5_Roma":            ProstT5_Roma,
           "MSA_Torino":              MSA_Torino,
           "MSA_Trieste":             MSA_Trieste,
+          "MSA_Baseline":            MSA_Baseline,
           "ESM_Torino":              ESM_Torino,
           "ESM_Trieste":             ESM_Trieste,
           "ProstT5_Milano":          ProstT5_Milano

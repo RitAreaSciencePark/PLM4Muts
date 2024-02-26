@@ -31,6 +31,7 @@ models = {"ProstT5_Trieste":         ProstT5_Trieste,
           "ProstT5_Roma":            ProstT5_Roma,
           "MSA_Torino":              MSA_Torino,
           "MSA_Trieste":             MSA_Trieste,
+          "MSA_Baseline":        MSA_Baseline,
           "ESM_Torino":              ESM_Torino,
           "ESM_Trieste":             ESM_Trieste,
           "ProstT5_Milano":          ProstT5_Milano
@@ -64,6 +65,13 @@ def main(output_dir,dataset_dir,
 
     loss_fn   = losses[loss_fn_name]
     model     = models[model_name]()
+    if int(os.environ["RANK"]) == 0:
+        for param_tensor in model.msa_transformer.parameters():
+            print("DBG1a", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
+        for param_tensor in model.fc1.parameters():
+            print("DBG1b", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
+        for param_tensor in model.fc2.parameters():
+            print("DBG1c", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
     if optimizer_name=="SGD":
         optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
     if optimizer_name=="AdamW":
@@ -129,6 +137,13 @@ def main(output_dir,dataset_dir,
     trainer.train(model=model, train_dl=train_dl, val_dls=val_dls, test_dls=test_dls)
     trainer.describe()
     dist.barrier()
+    if int(os.environ["RANK"]) == 0:
+        for param_tensor in model.msa_transformer.parameters():
+            print("DBG2a", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
+        for param_tensor in model.fc1.parameters():
+            print("DBG2b", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])  
+        for param_tensor in model.fc2.parameters():
+            print("DBG2c", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])    
     trainer.free_memory(model)
     dist.destroy_process_group()
 
