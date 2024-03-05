@@ -87,7 +87,6 @@ class Trainer:
         print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
 
     def initialize_files(self):
-        #run_date = get_date_of_run()
         self.result_dir    = self.output_dir + "/results"
         self.snapshot_dir  = self.output_dir + "/snapshots"
         if self.local_rank == 0:
@@ -97,7 +96,6 @@ class Trainer:
                 os.makedirs(self.result_dir)
             if not(os.path.exists(self.snapshot_dir) and os.path.isdir(self.snapshot_dir)):
                 os.makedirs(self.snapshot_dir)            
-        #self.snapshot_file  = self.snapshot_dir + "/snapshot.pt"
         self.train_logfile  =   self.result_dir  + "/train_metrics.log"
         self.val_logfiles   = [ self.result_dir  + f"/{val.name}_metrics.log" for val in self.val_dls] 
         self.test_logfiles  = [ self.result_dir  + f"/{test.name}_metrics.log" for test in self.test_dls] 
@@ -132,7 +130,6 @@ class Trainer:
         self.t_preds.extend(Y_hat.cpu().detach())
 
     def all_gather_lab_preds(self, preds, labels):
-        #size is the world size
         size = dist.get_world_size()
         preds = torch.tensor(preds).to(self.local_rank)
         labels = torch.tensor(labels).to(self.local_rank)
@@ -155,10 +152,7 @@ class Trainer:
         len_dataloader = len(train_proteindataloader.dataloader)
         train_proteindataloader.dataloader.sampler.set_epoch(epoch)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
-            #print_peak_memory("Max GPU memory", self.local_rank)
-            #print(f"{train_proteindataloader.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}\t{batch[-1]}", flush=True)
             self.train_batch(batch)
-        
         global_t_preds, global_t_labels = self.all_gather_lab_preds(self.t_preds, self.t_labels)
         g_t_labels = global_t_labels.to("cpu")
         g_t_preds  = global_t_preds.to("cpu")
@@ -182,7 +176,6 @@ class Trainer:
         len_dataloader = len(val_proteindataloader.dataloader)
         with torch.no_grad():
             for idx, batch in enumerate(val_proteindataloader.dataloader):
-                #print(f"{val_proteindataloader.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\tbatch_idx:{idx+1}/{len_dataloader}\t{batch[-1]}", flush=True)
                 self.valid_batch(batch)
         global_v_preds, global_v_labels = self.all_gather_lab_preds(self.v_preds, self.v_labels)
         g_v_labels = global_v_labels.to("cpu")
@@ -217,7 +210,6 @@ class Trainer:
                 for i in range(world_size):
                     dfs[i]=pd.read_csv(tmp_filenames[i])
                 res_df = pd.concat(dfs, axis=0)
-                #print(res_df)
                 res_df.columns=['code','pos','ddg','pred']
                 res_df = res_df.sort_values(by=['code'])
                 res_df.to_csv(output_file, index=False)
@@ -231,9 +223,6 @@ class Trainer:
         self.model_name = model.name
         self.model = model.to(self.local_rank)
         self.model = DDP(self.model, device_ids=[self.local_rank], find_unused_parameters=True)
-#        if os.path.exists(self.snapshot_file):
-#            print("Loading snapshot")
-#            self._load_snapshot(self.snapshot_file)
         self.train_dl = train_dl
         self.val_dls  =  val_dls
         self.test_dls = test_dls
@@ -289,15 +278,11 @@ class Trainer:
             if self.global_rank == 0:
                 print(f"Validation ongoing on MAE for {self.val_dls[0].name}", flush=True)
                 self._save_snapshot("/checkpoint.pt", epoch)
-            #print(f"DEBUGI:{epoch} {self.val_corrs[0,epoch]} {self.val_corrs[1,epoch]} {self.val_corrs[:,epoch].mean()} {old_corr}")
             if self.val_maes[0,epoch] < old_val_score: #self.val_corrs[:,epoch].mean() > old_corr:
                 old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
-                #self.difference_labels_preds(self.model, self.val_dls, "AAA")
                 save_snapshot = True
                 if self.global_rank == 0:
-                    #print(f"DEBUGM:{epoch} {self.val_corrs[0,epoch]} {self.val_corrs[1,epoch]} {self.val_corrs[:,epoch].mean()} {old_corr}")
                     self._save_snapshot("/snapshot.pt", epoch)
-            #dist.barrier()
             for test_no, test_dl in enumerate(self.test_dls):
                 g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.valid_epoch(epoch, test_dl)
                 g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -317,11 +302,9 @@ class Trainer:
                       f"corr = {self.test_corrs[test_no,epoch]} / {l_t_corr}")
             if save_snapshot: #self.val_corrs[:,epoch].mean() > old_corr:
                 #old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
-                self.difference_labels_preds(self.model, self.test_dls, "AAA")
+                #self.difference_labels_preds(self.model, self.test_dls, "FineTuning")
                 save_snapshot = False
         
-        #dist.barrier()
-        #self.difference_labels_preds(cutoff=0.0)
         dist.barrier()
         if self.global_rank == 0:
             for epoch in range(0, self.max_epochs):

@@ -1,10 +1,6 @@
 datasets/*
-runs/*
-tests/*
 myenv_dgx/*
-myenv_esm/*
-myenv_Lucrezia/*
-Lucrezia/*
+results/*
 *.error
 *.out
 *.pt

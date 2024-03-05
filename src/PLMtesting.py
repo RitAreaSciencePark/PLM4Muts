@@ -24,38 +24,21 @@ from utils  import *
 from argparser import *
 from tester import *
 
-# Global dictionaries for Models, Losses and Optimizers
-models = {"ProstT5_Trieste":         ProstT5_Trieste,
-          "ProstT5_Roma":            ProstT5_Roma,
-          "MSA_Torino":              MSA_Torino,
-          "MSA_Trieste":             MSA_Trieste,
-          "MSA_Baseline":            MSA_Baseline,
-          "ESM_Torino":              ESM_Torino,
-          "ESM_Trieste":             ESM_Trieste,
-          "ProstT5_Milano":          ProstT5_Milano
-        }
 
-losses = {"L1":  torch.nn.functional.l1_loss,
-          "MSE": torch.nn.functional.mse_loss,
-         }
-
-optimizers = {"Adam":  torch.optim.Adam,
-              "AdamW": torch.optim.AdamW, 
-             }
-
-
-def main(output_dir, dataset_dir, model_name, device, max_length, max_tokens, snapshot_file):
+def main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_file):
     test_dir = dataset_dir + "/test"
-    test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir)
 
     if model_name.rsplit("_")[0]=="ProstT5":
-        test_dss = [ProteinDataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/translated_databases")
+        test_dss = [ProstT5_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = None
-    if model_name.rsplit("_")[0]=="ESM":
-        test_dss = [ESM_Dataset(df=test_df, name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
+    if model_name.rsplit("_")[0]=="ESM2":
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
+        test_dss = [ESM2_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = custom_collate
     if model_name.rsplit("_")[0]=="MSA":
-        test_dss = [MSA_Dataset(df=test_df,    name=test_name, dataset_dir=test_dir, max_length=max_length,
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
+        test_dss = [MSA_Dataset(df=test_df,name=test_name, dataset_dir=test_dir, max_length=max_length,
                                 max_tokens=max_tokens) for test_df, test_name in zip(test_dfs, test_names)] 
         collate_function = custom_collate
 
@@ -71,16 +54,13 @@ def main(output_dir, dataset_dir, model_name, device, max_length, max_tokens, sn
     tester.test(test_model=test_model, test_dls=test_dls, snapshot_file=snapshot_file)
 
 if __name__ == "__main__":
-    # Define the args from argparser
     args = argparser_tester()
     config_file = args.config_file
-    # load config file
     if os.path.exists(config_file):
         config         = load_config(config_file)
         output_dir     = config["output_dir"]
         dataset_dir    = config["dataset_dir"]
         model_name     = config["model"]
-        device         = config["device"]
         max_length     = config["max_length"]
         snapshot_file  = config["snapshot_file"]
         max_tokens     = config["MSA"]["max_tokens"]
@@ -88,10 +68,9 @@ if __name__ == "__main__":
         output_dir     = args.output_dir
         dataset_dir    = args.dataset_dir
         model_name     = args.model
-        device         = args.device
         max_length     = args.max_length
         snapshot_file  = args.snapshot_file
         max_tokens     = args.max_tokens
-    main(output_dir, dataset_dir, model_name, device, max_length, max_tokens, snapshot_file)
+    main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_file)
 
 

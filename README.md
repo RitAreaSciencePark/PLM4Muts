@@ -9,3 +9,5 @@ pip3 install matplotlib
 pip3 install pandas
 pip3 install scipy
 pip install protobuf
+pip install onnx onnxruntime
+pip install biopython

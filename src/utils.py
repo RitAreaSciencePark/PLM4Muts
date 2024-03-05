@@ -1,6 +1,23 @@
 import pandas as pd
 import os
 import torch
+from models.models import *
+
+# Global dictionaries for Models, Losses and Optimizers
+models = {"ESM2_Finetuning":    ESM2_Finetuning,
+          "MSA_Baseline":       MSA_Baseline,
+          "MSA_Finetuning":     MSA_Finetuning,
+          "ProstT5_Finetuning": ProstT5_Finetuning,
+        }
+
+losses = {"L1":  torch.nn.functional.l1_loss,
+          "MSE": torch.nn.functional.mse_loss,
+         }
+
+optimizers = {"Adam":  torch.optim.Adam,
+              "AdamW": torch.optim.AdamW,
+              "SGD":   torch.optim.SGD,
+             }
 
 def get_date_of_run():
     """create date and time for file save uniqueness
@@ -10,10 +27,9 @@ def get_date_of_run():
     print(f"--> current date and time of run = {date_of_run}")
     return date_of_run
 
-def from_cvs_files_in_dir_to_dfs_list(path):
-    dir_path = path + "/translated_databases"
+def from_cvs_files_in_dir_to_dfs_list(main_dir, datasets_dir="/databases"):
+    dir_path = main_dir + datasets_dir
     datasets = os.listdir(dir_path)
-    #datasets_names = [ s.rsplit('/', 1)[1].rsplit('.', 1)[0]  for s in datasets ]
     datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]
     dfs = [None] * len(datasets)
     for i,d in enumerate(datasets):

@@ -26,38 +26,19 @@ from argparser import *
 import torch.distributed  as dist
 from torch.utils.data.distributed import DistributedSampler
 
-# Global dictionaries for Models, Losses and Optimizers
-models = {"ProstT5_Trieste":         ProstT5_Trieste,
-          "ProstT5_Roma":            ProstT5_Roma,
-          "MSA_Torino":              MSA_Torino,
-          "MSA_Trieste":             MSA_Trieste,
-          "MSA_Baseline":        MSA_Baseline,
-          "ESM_Torino":              ESM_Torino,
-          "ESM_Trieste":             ESM_Trieste,
-          "ProstT5_Milano":          ProstT5_Milano
-        }
-
-losses = {"L1":  torch.nn.functional.l1_loss,
-          "MSE": torch.nn.functional.mse_loss,
-         }
-
-optimizers = {"Adam":  torch.optim.Adam,
-              "AdamW": torch.optim.AdamW, 
-              "SGD":   torch.optim.SGD,
-             }
-
 
 def main(output_dir,dataset_dir, 
-         model_name, max_epochs, loss_fn_name, device, max_length,    
-         lr, optimizer_name, weight_decay, momentum,
+         model_name, max_epochs, loss_fn_name, max_length, 
+         lr, seeds, optimizer_name, weight_decay, momentum,
          max_tokens):
 
     ddp_setup()
-    #seeds = (10,   11,   12)
-    #seeds = (100,  110,  120)
-    seeds = (1000, 1100, 1200)
+    if seeds==None:
+        seeds = (10,   11,   12)
+        #seeds = (100,  110,  120)
+        #seeds = (1000, 1100, 1200)
     # fix the seed for reproducibility
-    seed = seeds[0] * (seeds[1] + seeds[2] * dist.get_rank())
+    seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
     print(f"seeds={seeds}")
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -65,15 +46,8 @@ def main(output_dir,dataset_dir,
 
     loss_fn   = losses[loss_fn_name]
     model     = models[model_name]()
-    if int(os.environ["RANK"]) == 0:
-        for param_tensor in model.msa_transformer.parameters():
-            print("DBG1a", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
-        for param_tensor in model.fc1.parameters():
-            print("DBG1b", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
-        for param_tensor in model.fc2.parameters():
-            print("DBG1c", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
     if optimizer_name=="SGD":
-        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+        optimizer = optimizers[optimizer_name](params=model.parameters(),lr=lr,momentum=momentum,weight_decay=weight_decay)
     if optimizer_name=="AdamW":
         optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, weight_decay=weight_decay)
     if optimizer_name=="Adam":
@@ -81,25 +55,35 @@ def main(output_dir,dataset_dir,
     train_dir = dataset_dir + "/train"
     val_dir   = dataset_dir + "/validation"
     test_dir  = dataset_dir + "/test"
-    train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir)
-    train_df     = pd.concat(train_dfs)
-    train_name   = dataset_dir.rsplit('/', 1)[1] + "_training"
-    val_dfs,   val_names = from_cvs_files_in_dir_to_dfs_list(val_dir)
-    test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir)
     
     if model_name.rsplit("_")[0]=="ProstT5":
-        train_ds =  ProteinDataset(df=train_df,name=train_name,max_length=max_length)
-        val_dss  = [ProteinDataset(df=val_df, name=val_name,   max_length=max_length) for val_df, val_name in zip(val_dfs, val_names)]
-        test_dss = [ProteinDataset(df=test_df,name=test_name,  max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
+        train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir, datasets_dir="/translated_databases")
+        train_df     = pd.concat(train_dfs)
+        train_name   = dataset_dir.rsplit('/', 1)[1] + "_training"
+        val_dfs,   val_names = from_cvs_files_in_dir_to_dfs_list(val_dir, datasets_dir="/translated_databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/translated_databases")
+        train_ds=ProstT5_Dataset(df=train_df,name=train_name,max_length=max_length)
+        val_dss=[ProstT5_Dataset(df=val_df,name=val_name,max_length=max_length) for val_df,val_name in zip(val_dfs,val_names)]
+        test_dss=[ProstT5_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = None
 
-    if model_name.rsplit("_")[0]=="ESM": 
-        train_ds =  ESM_Dataset(df=train_df, name=train_name, max_length=max_length)
-        val_dss  = [ESM_Dataset(df=val_df, name=val_name, max_length=max_length) for val_df, val_name in zip(val_dfs, val_names)]
-        test_dss = [ESM_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
+    if model_name.rsplit("_")[0]=="ESM2": 
+        train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir, datasets_dir="/databases")
+        train_df     = pd.concat(train_dfs)
+        train_name   = dataset_dir.rsplit('/', 1)[1] + "_training"
+        val_dfs,   val_names = from_cvs_files_in_dir_to_dfs_list(val_dir, datasets_dir="/databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
+        train_ds=ESM2_Dataset(df=train_df,name=train_name,max_length=max_length)
+        val_dss=[ESM2_Dataset(df=val_df,name=val_name,max_length=max_length) for val_df,val_name in zip(val_dfs,val_names)]
+        test_dss=[ESM2_Dataset(df=test_df,name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = custom_collate
 
     if model_name.rsplit("_")[0]=="MSA":
+        train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir, datasets_dir="/databases")
+        train_df     = pd.concat(train_dfs)
+        train_name   = dataset_dir.rsplit('/', 1)[1] + "_training"
+        val_dfs,   val_names = from_cvs_files_in_dir_to_dfs_list(val_dir, datasets_dir="/databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
         train_ds =  MSA_Dataset(df=train_df, name=train_name, dataset_dir=train_dir, max_length=max_length, 
                                 max_tokens=max_tokens)
 
@@ -124,6 +108,7 @@ def main(output_dir,dataset_dir,
         print(f"output_dir:\t{output_dir}\t{type(output_dir)}", flush=True)
         print(f"loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
         print(f"learning rate:\t{lr}\t{type(lr)}", flush=True)
+        print(f"seeds:\t{seeds}\t{type(seeds)}", flush=True)
         print(f"max_epochs:\t{max_epochs}\t{type(max_epochs)}", flush=True)
         print(f"model_name:\t{model_name}\t{type(model_name)}", flush=True)
         print(f"optimizer_name:\t{optimizer_name}\t{type(optimizer_name)}", flush=True)
@@ -137,21 +122,12 @@ def main(output_dir,dataset_dir,
     trainer.train(model=model, train_dl=train_dl, val_dls=val_dls, test_dls=test_dls)
     trainer.describe()
     dist.barrier()
-    if int(os.environ["RANK"]) == 0:
-        for param_tensor in model.msa_transformer.parameters():
-            print("DBG2a", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])
-        for param_tensor in model.fc1.parameters():
-            print("DBG2b", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])  
-        for param_tensor in model.fc2.parameters():
-            print("DBG2c", param_tensor.shape, "\t", param_tensor.requires_grad, "\t", param_tensor[0])    
     trainer.free_memory(model)
     dist.destroy_process_group()
 
 if __name__ == "__main__":
-    # Define the args from argparser
     args = argparser_trainer()
     config_file = args.config_file
-    # load config file
     if os.path.exists(config_file):
         config = load_config(config_file)
         output_dir     = config["output_dir"]
@@ -159,9 +135,9 @@ if __name__ == "__main__":
         model_name     = config["model"]
         max_epochs     = config["max_epochs"]
         loss_fn_name   = config["loss_fn"]
-        device         = config["device"]
         max_length     = config["max_length"]
         lr             = config["learning_rate"]
+        seeds          = config["seeds"]
         optimizer_name = config["optimizer"]["name"]
         weight_decay   = config["optimizer"]["weight_decay"]
         momentum       = config["optimizer"]["momentum"]
@@ -172,15 +148,16 @@ if __name__ == "__main__":
         model_name     = args.model
         max_epochs     = args.max_epochs
         loss_fn_name   = args.loss_fn
-        device         = args.device
         max_length     = args.max_length
         lr             = args.learning_rate
+        seeds          = args.seeds
         optimizer_name = args.optimizer
         weight_decay   = args.weight_decay
         max_tokens     = args.max_tokens
         momentum       = args.momentum
+
     main(output_dir,dataset_dir, 
-         model_name, max_epochs, loss_fn_name, device, max_length, 
-         lr, optimizer_name, weight_decay, momentum,
+         model_name, max_epochs, loss_fn_name, max_length, 
+         lr, seeds, optimizer_name, weight_decay, momentum,
          max_tokens)
 

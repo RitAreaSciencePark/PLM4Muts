@@ -34,25 +34,13 @@ def ddp_setup():
     torch.distributed.init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
-
-#def from_cvs_files_in_dir_to_dfs_list(path):
-#    dir_path = path + "/data"
-#    datasets = os.listdir(dir_path)
-#    datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]
-#    dfs = [None] * len(datasets)
-#    for i,d in enumerate(datasets):
-#        d_path = os.path.join(dir_path, d)
-#        dfs[i] = pd.read_csv(d_path, sep=',')
-#    return dfs, datasets_names
-
-class ProteinDataset(Dataset):
+class ProstT5Dataset(Dataset):
     def __init__(self, df, name):
         self.name = name
         self.df = df
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
         lengths = [len(s) for s in df['wt_seq'].to_list()]
         self.df["len_seq"]=lengths
-        #self.df = self.df.drop(self.df[self.df.len_seq > 550].index)
         self.max_length = self.df["len_seq"].max() + 2
 
     def __getitem__(self, idx):
@@ -65,23 +53,23 @@ class ProteinDataset(Dataset):
         code = self.df.iloc[idx]['code']
         wt_msa  = self.df.iloc[idx]['wt_msa']
         mut_msa = self.df.iloc[idx]['mut_msa']
-
-        min_len = min([ len(s) for s in seqs])
+        prefix_s2t = "<AA2fold>"
+        min_len = int(min([ len(s) for s in seqs])+1)
+        max_len = int(max([ len(s) for s in seqs])+1)
         seqs_p  = [" ".join(list(re.sub(r"[UZOB]", "X", seq))) for seq in seqs]
-        seqs_p  = [ "<AA2fold>" + " " + s if s.isupper() else "<fold2AA>" + " " + s for s in seqs_p]
+        seqs_p  = [ prefix_s2t + " " + s if s.isupper() else prefix_s2t + " " + s for s in seqs_p]
         embeddings = self.tokenizer.batch_encode_plus(seqs_p, 
                                                       add_special_tokens=True, 
-                                                      max_length=self.max_length,
-                                                      padding="max_length", 
+                                                      padding="longest", 
                                                       return_tensors='pt')
-        return embeddings, (min_len, self.max_length), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa,mut_msa)
+
+        return embeddings, (min_len, max_len), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa,mut_msa)
 
     def __len__(self):
         return len(self.df)
 
 class OutputDatatype():
     def __init__(self, wt_seq, wt_struct, mut_seq, mut_struct, ddg, pdb_id, pos, code, wt_msa, mut_msa): 
-        # wt_seq,mut_seq,ddg,pdb_id,mut_info,pos,code
         self.wt_seq = wt_seq
         self.wt_struct = wt_struct
         self.mut_seq = mut_seq
@@ -122,6 +110,9 @@ def translate(dataloader, model, local_rank):
     batch_size = 1
     world_size = dist.get_world_size()
     tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
+    noGood = "ARNDBCEQZGHILKMFPSTWYVXOU"
+    bad_words = tokenizer( [" ".join(list(noGood))], add_special_tokens=False).input_ids
+
     def run_translate(loader, base_progress=0):
         len_loader = len(loader)
         with torch.no_grad():
@@ -138,11 +129,10 @@ def translate(dataloader, model, local_rank):
                                      max_length=int(max_len), # max length of generated text
                                      min_length=int(min_len), # minimum length of the generated text
                                      early_stopping=True, # stop early if end-of-text token is generated
-                                     #num_return_sequences=1, # return only a single sequence
+                                     length_penalty=1.0, # import for correct normalization of scores
+                                     bad_words_ids=bad_words, # avoid generation of tokens from other vocabulary
                                      **gen_kwargs_aa2fold
                                      )
-                # model.module.generate()
-                # Decode and remove white-spaces between tokens
                 decoded_translations = tokenizer.batch_decode(translations, skip_special_tokens=True)
                 structures = [ "".join(ts.split(" ")) for ts in decoded_translations ]
                 wt_struct  = structures[0]
@@ -151,13 +141,9 @@ def translate(dataloader, model, local_rank):
                 if (base_progress!=0 and global_rank==0) or base_progress==0:
                     results.append(row)
 
-    # switch to evaluate mode
     model.eval()
     run_translate(dataloader.dataloader)
-    #dist.barrier()
-    print("DEBUG3", len(dataloader.dataloader.sampler) * world_size, len(dataloader.dataloader.dataset))
     if (len(dataloader.dataloader.sampler) * world_size < len(dataloader.dataloader.dataset)):
-        print("DEBUG4")
         aux_dataset = Subset(dataloader.dataloader.dataset,
                              range(len(dataloader.dataloader.sampler) * world_size, 
                              len(dataloader.dataloader.dataset)))
@@ -166,9 +152,7 @@ def translate(dataloader, model, local_rank):
                                                      shuffle=False,
                                                      num_workers=workers, 
                                                      pin_memory=False)
-        print("DEBUG5", len(aux_dataloader), len(dataloader.dataloader))
         run_translate(aux_dataloader, len(dataloader.dataloader))
-    #dist.barrier()
     return results
 
 class ProteinDataLoader():
@@ -188,21 +172,23 @@ def main(input_file, output_file):
     local_rank  = int(os.environ["LOCAL_RANK"])
     global_rank = int(os.environ["RANK"])
     world_size = dist.get_world_size()
+    seeds = (10,   11,   12)
+    seed = seeds[0] * (seeds[1] + seeds[2] * dist.get_rank())
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     df     = pd.read_csv(input_file, sep=',')
     in_dir       = input_file.rsplit('/', 1)[0]
     infile_name  = input_file.rsplit('/', 1)[1]
     out_dir      = output_file.rsplit('/', 1)[0]
     outfile_name = output_file.rsplit('/', 1)[1]
-    print("DEBUG", in_dir, infile_name, out_dir, outfile_name)
     if not os.path.exists(out_dir):
         if global_rank==0:
             os.makedirs(out_dir)
-    ds = ProteinDataset(df, infile_name)
+    ds = ProstT5Dataset(df, infile_name)
     Dsampler = DistributedSampler(ds,shuffle=False,drop_last=True)
     dl = ProteinDataLoader(ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=Dsampler)
-    print("DEBUG2", len(dl.dataloader.dataset), len(dl.df),  len(dl.dataloader))
     model = AutoModelForSeq2SeqLM.from_pretrained("Rostlab/ProstT5")
-    # only GPUs support half-precision currently; if you want to run on CPU use full-precision 
     model.to(local_rank)
     model = DDP(model, device_ids=[local_rank])
     result=translate(dl, model, local_rank)
@@ -222,34 +208,11 @@ def main(input_file, output_file):
             if os.path.exists(tmp_filenames[i]):
                 os.remove(tmp_filenames[i])
 
-    #tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
-    #with torch.no_grad():
-    #    for idx, batch in enumerate(dl.dataloader):
-    #        seq_e, (min_len, max_len), pos, seq, code = batch
-    #        seq_e = seq_e.to(local_rank)
-    #        print(f"{dl.name}\ton GPU {global_rank}\tbatch_idx:{idx+1}/{len_dataloader}", flush=True)
-    #        print(seq_e.input_ids.shape, seq_e.attention_mask.shape, max_len, min_len)
-    #        translations = model.generate( 
-    #              seq_e.input_ids.squeeze(0), 
-    #              attention_mask=seq_e.attention_mask.squeeze(0), 
-    #              max_length=int(max_len), # max length of generated text
-    #              min_length=int(min_len), # minimum length of the generated text
-    #              early_stopping=True, # stop early if end-of-text token is generated
-    #              #num_return_sequences=1, # return only a single sequence
-    #              **gen_kwargs_aa2fold
-    #        )
-    #        # Decode and remove white-spaces between tokens
-    #        decoded_translations = tokenizer.batch_decode(translations, skip_special_tokens=True)
-    #        structures = [ "".join(ts.split(" ")) for ts in decoded_translations ]
-    #        print()
-            
-            # predicted 3Di strings
     dist.barrier()
     dist.destroy_process_group()
 
 
 if __name__ == "__main__":
-    # Define the args from argparser
     args = argparser_translator()
     input_file  = args.input_file
     output_file = args.output_file
