@@ -11,3 +11,4 @@ pip3 install scipy
 pip install protobuf
 pip install onnx onnxruntime
 pip install biopython
+pip install onnxscript

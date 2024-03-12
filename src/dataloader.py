@@ -1,32 +1,32 @@
-import argparse
+#import argparse
 from Bio import SeqIO
-import csv
-import esm
+#import csv
+#import esm
 import itertools
-import math
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import numpy as np
+#import math
+#import matplotlib.pyplot as plt
+#from matplotlib import cm
+#import numpy as np
 import pandas as pd
 import os
-import random
+#import random
 import re
 import scipy
-from scipy import stats
-from scipy.stats import pearsonr
+#from scipy import stats
+#from scipy.stats import pearsonr
 import string
-import time
+#import time
 import torch
 import torch.distributed  as dist
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
-import torch.nn.functional as F
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.cuda.amp import autocast
-import torch.multiprocessing as mp
+#import torch.nn.functional as F
+#from torch.nn.parallel import DistributedDataParallel as DDP
+#from torch.cuda.amp import autocast
+#import torch.multiprocessing as mp
 from transformers import T5Tokenizer
-from typing import List, Tuple
-import warnings
+#from typing import List, Tuple
+#import warnings
 
 torch.cuda.empty_cache()
 
@@ -75,7 +75,7 @@ class MSA_Dataset(Dataset):
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         self.dataset_dir = dataset_dir
         self.max_tokens = max_tokens
-        self.didx = {}
+#        self.didx = {}
 
     def read_msa(self, filename_wt, filename_mut):
         records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))

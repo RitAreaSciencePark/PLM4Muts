@@ -23,18 +23,47 @@ class ESM2_Finetuning(nn.Module):
         nn.init.xavier_normal_(self.fc2.weight)
         nn.init.zeros_(self.fc2.bias)
     
-    def forward(self, wild_seq_esm, mut_seq_esm, pos, local_rank):
+    def preprocess(self, wild_seq_esm, mut_seq_esm, pos, local_rank):
         wild_seq_esm = [('', ''.join(wild_seq_esm[0]))]
         mut_seq_esm  = [('', ''.join(mut_seq_esm[0] ))]
-        wild_esm_batch_labels, wild_esm_batch_strs, wild_esm_batch_tokens = self.esm_batch_converter(wild_seq_esm) 
-        mut_esm_batch_labels,  mut_esm_batch_strs,  mut_esm_batch_tokens  = self.esm_batch_converter(mut_seq_esm) 
-        batch_size = wild_esm_batch_tokens.shape[0]
-        L = wild_esm_batch_tokens.shape[1]
-        assert batch_size == 1
-        
+        wild_esm_batch_labels, wild_esm_batch_strs, wild_esm_batch_tokens = self.esm_batch_converter(wild_seq_esm)
+        mut_esm_batch_labels,  mut_esm_batch_strs,  mut_esm_batch_tokens  = self.esm_batch_converter(mut_seq_esm)
         wild_esm_batch_tokens = wild_esm_batch_tokens.to(local_rank)
         mut_esm_batch_tokens  =  mut_esm_batch_tokens.to(local_rank)
         pos = pos.to(local_rank)
+        return wild_esm_batch_tokens, mut_esm_batch_tokens, pos
+
+    def onnx_model_args(self, local_rank):
+        input_names = ["wt", "mut", "pos"]
+        output_names = ["ddg"]
+        wt  = torch.tensor([[ 0, 15, 15, 15, 14,  4, 13,  6,  9, 19, 18, 11,  4, 16, 12, 10,  6, 10,
+                              9, 10, 18,  9, 20, 18, 10,  9,  4, 17,  9,  5,  4,  9,  4, 15, 13,  5,
+                             16,  5,  6, 15,  9, 14,  6,  2]]).to(local_rank)
+
+        mut = torch.tensor([[ 0, 15, 15, 15, 14,  4, 13,  6,  9, 19, 18, 11,  4, 16, 12, 10,  6, 10,
+                              9, 10, 18,  9, 20, 18,  5,  9,  4, 17,  9,  5,  4,  9,  4, 15, 13,  5,
+                             16,  5,  6, 15,  9, 14,  6,  2]]).to(local_rank)
+
+        pos  = torch.tensor([23]).to(local_rank)
+        dynamic_axes = {"wt":{ 1: "L"}, "mut":{ 1: "L"}}
+        return (wt, mut, pos), (input_names, output_names, dynamic_axes)
+
+
+    def forward(self, wild_esm_batch_tokens, mut_esm_batch_tokens, pos):
+        batch_size   = wild_esm_batch_tokens.shape[0]
+        batch_size_m = mut_esm_batch_tokens.shape[0]
+        L   = wild_esm_batch_tokens.shape[1]
+        L_m = mut_esm_batch_tokens.shape[1]
+        assert batch_size == 1
+        assert batch_size_m == 1
+        assert L_m == L
+        # wild_esm_batch_tokens.shape = torch.Size([1, 151]) = torch.Size([batch_size, L]) 
+        # wild_esm_batch_tokens.dtype = torch.int64
+        # mut_esm_batch_tokens.shape  = torch.Size([1, 151]) = torch.Size([batch_size_m, L_m])
+        # mut_esm_batch_tokens.dtype  = torch.int64
+        # pos.shape = torch.Size([1])
+        # pos.dtype = torch.int64
+        
         wild_esm_reps =self.esm_transformer(wild_esm_batch_tokens, repr_layers=[33])['representations'][33]
         mut_esm_reps  =self.esm_transformer(mut_esm_batch_tokens,  repr_layers=[33])['representations'][33]
         
@@ -79,7 +108,8 @@ class MSA_Baseline(nn.Module):
         M = mut_msa_batch_tokens.shape[1]
         L = wild_msa_batch_tokens.shape[2]
         assert batch_size == 1
-        
+        print("DEBUG1",wild_seq_msa.shape, mut_seq_msa.shape, pos.shape)
+        print("DEBUG2",wild_seq_msa.dtype, mut_msa_batch_tokens.dtype, pos.dtype)
         wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
         mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
         pos = pos.to(local_rank)
@@ -120,23 +150,51 @@ class MSA_Finetuning(nn.Module):
         nn.init.xavier_normal_(self.fc2.weight)
         nn.init.zeros_(self.fc2.bias)
 
-    def forward(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
+    def onnx_model_args(self, local_rank):
+        input_names = ["wt", "mut", "pos"]
+        output_names = ["ddg"]
+        wt  = torch.tensor([[[ 0, 10, 14, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
+                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]]).to(local_rank)
+        
+        mut = torch.tensor([[[ 0, 10, 17, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
+                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]]).to(local_rank)
+        
+        pos  = torch.tensor([1]).to(local_rank)
+        dynamic_axes = {"wt":{ 1: "N", 2: "L"}, "mut":{ 1: "N", 2: "L"}}
+        return (wt, mut, pos), (input_names, output_names, dynamic_axes) 
+
+    def preprocess(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
         wild_msa_batch_labels, wild_msa_batch_strs, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
         mut_msa_batch_labels,  mut_msa_batch_strs,  mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
-        batch_size = wild_msa_batch_tokens.shape[0]
-        N = wild_msa_batch_tokens.shape[1]
-        M = mut_msa_batch_tokens.shape[1]
-        L = wild_msa_batch_tokens.shape[2]
-        assert batch_size == 1
         
         wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
         mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
         pos = pos.to(local_rank)
+        return wild_msa_batch_tokens, mut_msa_batch_tokens, pos
+
+    def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
+        batch_size   = wild_msa_batch_tokens.shape[0]
+        batch_size_m = mut_msa_batch_tokens.shape[0]
+        N   = wild_msa_batch_tokens.shape[1]
+        N_m = mut_msa_batch_tokens.shape[1]
+        L   = wild_msa_batch_tokens.shape[2]
+        L_m = wild_msa_batch_tokens.shape[2]
+        assert batch_size == 1
+        assert batch_size_m == 1
+        assert N == N_m
+        assert L == L_m
+        
+        # wild_msa_batch_tokens.shape = torch.Size([1, 98, 163]) = torch.Size([batch_size, N, L])
+        # wild_msa_batch_tokens.dtype = torch.int64
+        # mut_msa_batch_tokens.shape  = torch.Size([1, 98, 163]) = torch.Size([batch_size_m, N_m, L_m])
+        # mut_msa_batch_tokens.dtype  = torch.int64
+        # pos.shape = torch.Size([1])
+        # pos.dtype = torch.int64
         wild_msa_reps = self.msa_transformer(wild_msa_batch_tokens, repr_layers=[12])['representations'][12]
         mut_msa_reps  = self.msa_transformer(mut_msa_batch_tokens,  repr_layers=[12])['representations'][12]
         
         wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
-        mut_msa_reps  =  mut_msa_reps.reshape(batch_size, M, L, 768)
+        mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
         
         wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
         mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
@@ -167,14 +225,43 @@ class ProstT5_Finetuning(nn.Module):
         nn.init.xavier_normal_(self.fc2.weight)
         nn.init.zeros_(self.fc2.bias)
 
-    def forward(self, input_ids, attention_mask, pos, local_rank):
+    def onnx_model_args(self, local_rank):
+        input_names = ["input_ids", "attention_mask", "pos"]
+        output_names = ["ddg"]
+        input_ids = torch.tensor([[   [149,  14,   4,  13,  13,   5,  21,   9,  14,   8,  19,   7,   8,   7],
+                                      [149,  14,   4,  13,  13,   5,  21,   9,  14,   3,  19,   7,   8,   7],
+                                      [148, 135, 128, 135, 138, 141, 139, 135, 146, 135, 128, 135, 138, 131],
+                                      [148, 135, 128, 135, 138, 141, 139, 135, 146, 135, 128, 135, 138, 131]
+                                 ]]).to(local_rank)
+
+        attention_mask = torch.tensor([[[1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1],
+                                        [1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1],
+                                        [1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1],
+                                        [1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1]
+                                      ]]).to(local_rank)
+
+        pos  = torch.tensor([8]).to(local_rank)
+        dynamic_axes = {"input_ids":{ 1: "N", 2: "L"}, "attention_mask":{ 1: "N", 2: "L"}}
+        return (input_ids, attention_mask, pos), (input_names, output_names, dynamic_axes)
+
+    def preprocess(self, input_ids, attention_mask, pos, local_rank):
+        pos = pos.to(local_rank)
+        input_ids = input_ids.to(local_rank)
+        attention_mask = attention_mask.to(local_rank)
+        return input_ids, attention_mask, pos
+
+    def forward(self, input_ids, attention_mask, pos):
+        #torch.set_printoptions(threshold=10_000)
         batch_size = input_ids.shape[0]
         assert batch_size == 1
         N = input_ids.shape[1]
         L = input_ids.shape[2]
-        pos = pos.to(local_rank)
-        input_ids = input_ids.to(local_rank)
-        attention_mask = attention_mask.to(local_rank)
+        # input_ids.shape      = torch.Size([1, 4, 231]) = torch.Size([batch_size, N, L])
+        # input_ids.dtype = torch.int64
+        # attention_mask.shape = torch.Size([1, 4, 231]) = torch.Size([batch_size, N, L])
+        # attention_mask.dtype = torch.int64
+        # pos.shape = torch.Size([1])
+        # pos.dtype = torch.int64
         input_ids = input_ids.reshape((-1, L))
         attention_mask = attention_mask.reshape((-1, L))
         seqs_reps = self.prostt5(input_ids, attention_mask=attention_mask).last_hidden_state

@@ -1,26 +1,26 @@
-import argparse
-from Bio import SeqIO
-import csv
-import esm
+#import argparse
+#from Bio import SeqIO
+#import csv
+#import esm
 import itertools
-import math
+#import math
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 import pandas as pd
 import os
-import random
+#import random
 import re
 import scipy
 from scipy import stats
 from scipy.stats import pearsonr
 import string
-import time
+#import time
 import torch
 import torch.nn.functional as F
-from transformers import T5Tokenizer
-from typing import List, Tuple
-import warnings
+#from transformers import T5Tokenizer
+#from typing import List, Tuple
+#import warnings
 
 torch.cuda.empty_cache()
 
@@ -84,7 +84,8 @@ class Tester:
                 for idx, batch in enumerate(test_dl.dataloader):
                     print(f"dataset:{test_dl.name}\tGPU:{self.local_rank}\tbatch_idx:{idx+1}/{len_dataloader}\ttest:{batch[-1]}", flush=True)
                     testX, testY, code = batch
-                    testYhat = self.test_model(*testX, self.local_rank).to(self.local_rank)
+                    testX = self.test_model.preprocess(*testX, self.local_rank)
+                    testYhat = self.test_model(*testX)
                     testY_cpu = testY.cpu().detach()
                     testYhat_cpu = testYhat.cpu().detach()
                     pos = testX[-1]

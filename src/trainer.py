@@ -1,7 +1,7 @@
-import argparse
-from Bio import SeqIO
-import csv
-import esm
+#import argparse
+#from Bio import SeqIO
+#import csv
+#import esm
 import itertools
 import math
 import matplotlib.pyplot as plt
@@ -23,22 +23,40 @@ from torch.utils.data.distributed import DistributedSampler
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.cuda.amp import autocast
-import torch.multiprocessing as mp
-from transformers import T5Tokenizer
-from typing import List, Tuple
-import warnings
-from utils import get_date_of_run
-import yaml
+#import torch.multiprocessing as mp
+#from transformers import T5Tokenizer
+#from typing import List, Tuple
+#import warnings
+#from utils import get_date_of_run
+#import yaml
 torch.cuda.empty_cache()
 #warnings.filterwarnings("ignore")
 
 
 
 #data-preprocessing step
-deletekeys = dict.fromkeys(string.ascii_lowercase)
-deletekeys["."] = None
-deletekeys["*"] = None
-translation = str.maketrans(deletekeys)
+#deletekeys = dict.fromkeys(string.ascii_lowercase)
+#deletekeys["."] = None
+#deletekeys["*"] = None
+#translation = str.maketrans(deletekeys)
+
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = float('inf')
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+
 
 def ddp_setup():
     torch.distributed.init_process_group(backend="nccl")
@@ -74,17 +92,21 @@ class Trainer:
         loc = f"cuda:{self.local_rank}"
         snapshot = torch.load(snapshot_path, map_location=loc)
         model.module.load_state_dict(snapshot["MODEL_STATE"])
-        epoch = snapshot["EPOCHS_RUN"]
-        print(f"Resuming training from snapshot at Epoch {epoch}")
+        self.epochs_run = snapshot["EPOCHS_RUN"]
+        print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
-    def _save_snapshot(self, filename, epoch):
-        snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
-            "EPOCHS_RUN": epoch,
-        }
+    def _save_snapshot(self, filename, epoch, save_onnx):
         snapshot_file = self.snapshot_dir + filename
-        torch.save(snapshot, snapshot_file)
-        print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
+        snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch}
+        torch.save(snapshot, snapshot_file + ".pt")
+        print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}.pt")
+        if save_onnx==True:
+
+            x, (input_names, output_names, dynamic_axes) = self.model.module.onnx_model_args(self.local_rank) 
+            torch.onnx.export(self.model.module, x, snapshot_file +".onnx", 
+                              export_params=True, opset_version=14, do_constant_folding=True,
+                              input_names=input_names, output_names=output_names, dynamic_axes=dynamic_axes)
+            print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}.onnx")
 
     def initialize_files(self):
         self.result_dir    = self.output_dir + "/results"
@@ -115,9 +137,10 @@ class Trainer:
 
     def train_batch(self,  batch):
         X, Y, _ = batch
-        Y = Y.to(self.local_rank)
+        X = self.model.module.preprocess(*X, self.local_rank)
         with autocast(dtype=torch.bfloat16):
-            Y_hat = self.model(*X, self.local_rank).to(self.local_rank)
+            Y_hat = self.model(*X)
+            Y = Y.to(self.local_rank)
             loss   = self.loss_fn(Y_hat, Y)
         torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.1)
         self.optimizer.zero_grad()
@@ -164,7 +187,8 @@ class Trainer:
 
     def valid_batch(self, batch):
         X, Y, _ = batch
-        Yhat = self.model(*X, self.local_rank).to(self.local_rank)
+        X = self.model.module.preprocess(*X, self.local_rank)
+        Yhat = self.model(*X)
         Y_cpu = Y.cpu().detach()
         Yhat_cpu = Yhat.cpu().detach()
         self.v_labels.extend(Y_cpu)
@@ -197,7 +221,8 @@ class Trainer:
             with torch.no_grad():
                 for idx, batch in enumerate(dl.dataloader):
                     X, Y, code = batch
-                    Yhat = model(*X, self.local_rank).to(self.local_rank)
+                    X = model.module.preprocess(*X, self.local_rank)
+                    Yhat = model(*X)
                     Y_cpu = Y.cpu().detach().item()
                     Yhat_cpu = Yhat.cpu().detach().item()
                     pos = X[-1]
@@ -219,7 +244,7 @@ class Trainer:
             dist.barrier() 
 
     def train(self, model, train_dl, val_dls, test_dls):
-        print(f"I am rank {self.local_rank}")
+        print(f"I am rank {self.local_rank}", flush=True)
         self.model_name = model.name
         self.model = model.to(self.local_rank)
         self.model = DDP(self.model, device_ids=[self.local_rank], find_unused_parameters=True)
@@ -236,8 +261,12 @@ class Trainer:
         self.test_rmses   = torch.zeros(len(self.test_dls),self.max_epochs)
         self.test_maes    = torch.zeros(len(self.test_dls),self.max_epochs)
         self.test_corrs   = torch.zeros(len(self.test_dls),self.max_epochs)
-        old_val_score = 1000
-        save_snapshot = False
+        # Early Stopping
+        patience  = 5
+        min_delta = 0.005
+        counter   = 0
+        min_validation_loss = float('inf')
+        # Start epoch loop
         for epoch in range(self.epochs_run, self.max_epochs):
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
             g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -254,8 +283,14 @@ class Trainer:
             print(f"{self.train_dl.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\t"
                   f"rmse = {g_t_rmse} / {l_t_rmse}\t"
                   f"mae = {g_t_mae} / {l_t_mae}\t"
-                  f"corr = {g_t_corr} / {l_t_corr}")
+                  f"corr = {g_t_corr} / {l_t_corr}", flush=True)
             
+            dist.barrier()
+            if self.global_rank == 0:
+                print(f"Validation ongoing on Correlation for {self.val_dls[0].name}", flush=True)
+                self._save_snapshot("/checkpoint", epoch, save_onnx=False)
+            dist.barrier()
+
             for val_no, val_dl in enumerate(self.val_dls):
                 g_v_labels, g_v_preds, l_v_labels, l_v_preds = self.valid_epoch(epoch, val_dl)
                 g_v_mse  = torch.mean(         (g_v_labels - g_v_preds)**2)
@@ -270,19 +305,19 @@ class Trainer:
                 self.val_corrs[val_no,epoch] = g_v_corr
                 self.val_rmses[val_no,epoch] = g_v_rmse
                 print(f"{val_dl.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\t"
-                      f"rmse = {self.val_rmses[val_no,epoch]} / {l_v_rmse}\t"
-                      f"mae = {self.val_maes[val_no,epoch]} / {l_v_mae}\t"
-                      f"corr = {self.val_corrs[val_no,epoch]} / {l_v_corr}")
+                      f"rmse = {self.val_rmses[val_no,epoch]} ({l_v_rmse})\t"
+                      f"mae = {self.val_maes[val_no,epoch]} ({l_v_mae})\t"
+                      f"corr = {self.val_corrs[val_no,epoch]} ({l_v_corr})", flush=True)
 
             dist.barrier()
-            if self.global_rank == 0:
-                print(f"Validation ongoing on MAE for {self.val_dls[0].name}", flush=True)
-                self._save_snapshot("/checkpoint.pt", epoch)
-            if self.val_maes[0,epoch] < old_val_score: #self.val_corrs[:,epoch].mean() > old_corr:
-                old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
-                save_snapshot = True
+            if self.val_maes[0,epoch] < min_validation_loss: 
                 if self.global_rank == 0:
-                    self._save_snapshot("/snapshot.pt", epoch)
+                    print(f"Early Stopping counter set to 0 at epoch {epoch+1}: Cur_Val_MAE={self.val_maes[0,epoch]}<{min_validation_loss}=Prev_Val_MAE", flush=True)
+                    self._save_snapshot(f"/{self.model_name}", epoch, save_onnx=True)
+                min_validation_loss = self.val_maes[0,epoch] 
+                counter = 0
+            dist.barrier()
+
             for test_no, test_dl in enumerate(self.test_dls):
                 g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.valid_epoch(epoch, test_dl)
                 g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -297,13 +332,21 @@ class Trainer:
                 self.test_corrs[test_no,epoch] = g_t_corr
                 self.test_rmses[test_no,epoch] = g_t_rmse
                 print(f"{test_dl.name}\tGPU:{self.global_rank}\tepoch:{epoch+1}/{self.max_epochs}\t"
-                      f"rmse = {self.test_rmses[test_no,epoch]} / {l_t_rmse}\t"
-                      f"mae = {self.test_maes[test_no,epoch]} / {l_t_mae}\t"
-                      f"corr = {self.test_corrs[test_no,epoch]} / {l_t_corr}")
-            if save_snapshot: #self.val_corrs[:,epoch].mean() > old_corr:
-                #old_val_score = self.val_maes[0,epoch] #old_corr = self.val_corrs[:,epoch].mean()
-                #self.difference_labels_preds(self.model, self.test_dls, "FineTuning")
-                save_snapshot = False
+                      f"rmse = {self.test_rmses[test_no,epoch]} ({l_t_rmse})\t"
+                      f"mae = {self.test_maes[test_no,epoch]} ({l_t_mae})\t"
+                      f"corr = {self.test_corrs[test_no,epoch]} ({l_t_corr})", flush=True)
+
+            dist.barrier()
+            if self.val_maes[0,epoch] > (min_validation_loss + min_delta):
+                counter += 1
+                if self.global_rank == 0:
+                    print(f"Early Stopping counter increased at epoch {epoch+1} to {counter}: Cur_Val_MAE={self.val_maes[0,epoch]}>{min_validation_loss + min_delta}=Prev_Val_MAE ({min_validation_loss}) + min_delta ({min_delta})", flush=True)
+            if self.global_rank == 0:
+                print(f"Early Stopping counter at epoch {epoch+1}: {counter}/{patience}", flush=True)
+            if counter >= patience:
+                if self.global_rank == 0:
+                    print(f"Early Stopping at epoch {epoch+1}: counter={counter} >= {patience}=patience", flush=True)
+                break
         
         dist.barrier()
         if self.global_rank == 0:
