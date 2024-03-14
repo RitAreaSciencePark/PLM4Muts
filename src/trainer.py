@@ -96,17 +96,18 @@ class Trainer:
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _save_snapshot(self, filename, epoch, save_onnx):
-        snapshot_file = self.snapshot_dir + filename
+        snapshot_file = self.snapshot_dir + filename + ".pt"
         snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch}
-        torch.save(snapshot, snapshot_file + ".pt")
-        print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}.pt")
+        torch.save(snapshot, snapshot_file)
+        print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
         if save_onnx==True:
+            onnx_file = self.snapshot_dir +"/onnx"+ filename +".onnx"
 
             x, (input_names, output_names, dynamic_axes) = self.model.module.onnx_model_args(self.local_rank) 
-            torch.onnx.export(self.model.module, x, snapshot_file +".onnx", 
+            torch.onnx.export(self.model.module, x, onnx_file, 
                               export_params=True, opset_version=14, do_constant_folding=True,
                               input_names=input_names, output_names=output_names, dynamic_axes=dynamic_axes)
-            print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}.onnx")
+            print(f"Epoch {epoch+1} | Training snapshot saved at {onnx_file}")
 
     def initialize_files(self):
         self.result_dir    = self.output_dir + "/results"
@@ -118,6 +119,7 @@ class Trainer:
                 os.makedirs(self.result_dir)
             if not(os.path.exists(self.snapshot_dir) and os.path.isdir(self.snapshot_dir)):
                 os.makedirs(self.snapshot_dir)            
+                os.makedirs(self.snapshot_dir + "/onnx")            
         self.train_logfile  =   self.result_dir  + "/train_metrics.log"
         self.val_logfiles   = [ self.result_dir  + f"/{val.name}_metrics.log" for val in self.val_dls] 
         self.test_logfiles  = [ self.result_dir  + f"/{test.name}_metrics.log" for test in self.test_dls] 
@@ -266,6 +268,7 @@ class Trainer:
         min_delta = 0.005
         counter   = 0
         min_validation_loss = float('inf')
+        self.stopped_epoch = self.max_epochs
         # Start epoch loop
         for epoch in range(self.epochs_run, self.max_epochs):
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
@@ -346,11 +349,12 @@ class Trainer:
             if counter >= patience:
                 if self.global_rank == 0:
                     print(f"Early Stopping at epoch {epoch+1}: counter={counter} >= {patience}=patience", flush=True)
+                self.stopped_epoch = epoch + 1
                 break
         
         dist.barrier()
         if self.global_rank == 0:
-            for epoch in range(0, self.max_epochs):
+            for epoch in range(0, self.stopped_epoch):
                 with open(self.train_logfile, "a") as t_log:
                     t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
                 for val_no, val_dl in enumerate(self.val_dls):
@@ -417,6 +421,8 @@ class Trainer:
             df = pd.concat([frame.set_index("epoch") for frame in [train_rmse_df, train_mae_df, train_corr_df, val_rmse_df, val_mae_df, val_corr_df, test_rmse_df, test_mae_df, test_corr_df]],
                axis=1, join="inner").reset_index()
 
+            #print(df, flush=True)
+            df = df[:self.stopped_epoch]
             print(df, flush=True)
 
             df.to_csv( self.result_dir + f"/epochs_statistics.csv", index=False)
