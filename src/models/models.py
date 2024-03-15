@@ -100,24 +100,51 @@ class MSA_Baseline(nn.Module):
         for param in self.msa_transformer.parameters():
             param.requires_grad = False
 
-    def forward(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
+    def onnx_model_args(self, local_rank):
+        input_names = ["wt", "mut", "pos"]
+        output_names = ["ddg"]
+        wt  = torch.tensor([[[ 0, 10, 14, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
+                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]]).to(local_rank)
+        
+        mut = torch.tensor([[[ 0, 10, 17, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
+                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]]).to(local_rank)
+        
+        pos  = torch.tensor([1]).to(local_rank)
+        dynamic_axes = {"wt":{ 1: "N", 2: "L"}, "mut":{ 1: "N", 2: "L"}}
+        return (wt, mut, pos), (input_names, output_names, dynamic_axes) 
+
+    def preprocess(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
         wild_msa_batch_labels, wild_msa_batch_strs, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
         mut_msa_batch_labels,  mut_msa_batch_strs,  mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
-        batch_size = wild_msa_batch_tokens.shape[0]
-        N = wild_msa_batch_tokens.shape[1]
-        M = mut_msa_batch_tokens.shape[1]
-        L = wild_msa_batch_tokens.shape[2]
-        assert batch_size == 1
-        print("DEBUG1",wild_seq_msa.shape, mut_seq_msa.shape, pos.shape)
-        print("DEBUG2",wild_seq_msa.dtype, mut_msa_batch_tokens.dtype, pos.dtype)
+        
         wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
         mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
         pos = pos.to(local_rank)
+        return wild_msa_batch_tokens, mut_msa_batch_tokens, pos
+
+    def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
+        batch_size   = wild_msa_batch_tokens.shape[0]
+        batch_size_m = mut_msa_batch_tokens.shape[0]
+        N   = wild_msa_batch_tokens.shape[1]
+        N_m = mut_msa_batch_tokens.shape[1]
+        L   = wild_msa_batch_tokens.shape[2]
+        L_m = wild_msa_batch_tokens.shape[2]
+        assert batch_size == 1
+        assert batch_size_m == 1
+        assert N == N_m
+        assert L == L_m
+        
+        # wild_msa_batch_tokens.shape = torch.Size([1, 98, 163]) = torch.Size([batch_size, N, L])
+        # wild_msa_batch_tokens.dtype = torch.int64
+        # mut_msa_batch_tokens.shape  = torch.Size([1, 98, 163]) = torch.Size([batch_size_m, N_m, L_m])
+        # mut_msa_batch_tokens.dtype  = torch.int64
+        # pos.shape = torch.Size([1])
+        # pos.dtype = torch.int64
         wild_msa_reps = self.msa_transformer(wild_msa_batch_tokens, repr_layers=[12])['representations'][12]
         mut_msa_reps  = self.msa_transformer(mut_msa_batch_tokens,  repr_layers=[12])['representations'][12]
         
         wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
-        mut_msa_reps  =  mut_msa_reps.reshape(batch_size, M, L, 768)
+        mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
         
         wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
         mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
@@ -132,6 +159,7 @@ class MSA_Baseline(nn.Module):
         outputs = self.relu(self.fc1(outputs))
         outputs = self.dropout(outputs)
         return self.fc2(outputs)
+
 
 
 class MSA_Finetuning(nn.Module):
