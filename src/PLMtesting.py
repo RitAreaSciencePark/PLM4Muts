@@ -58,12 +58,24 @@ if __name__ == "__main__":
     config_file = args.config_file
     if os.path.exists(config_file):
         config         = load_config(config_file)
-        output_dir     = config["output_dir"]
         dataset_dir    = config["dataset_dir"]
-        model_name     = config["model"]
-        max_length     = config["max_length"]
         snapshot_file  = config["snapshot_file"]
-        max_tokens     = config["MSA"]["max_tokens"]
+        try:
+            output_dir = config["output_dir"]
+        except:
+            output_dir = "default_result/"
+        try:
+            model_name = config["model"]
+        except:
+            model_name = "MSA_Finetuning"
+        try:
+            max_length = config["max_length"]
+        except:
+            max_length = 1024
+        try:
+            max_tokens = config["MSA"]["max_tokens"]
+        except:
+            max_tokens = 16000
     else:
         output_dir     = args.output_dir
         dataset_dir    = args.dataset_dir

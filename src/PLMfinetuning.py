@@ -4,6 +4,7 @@
 #from matplotlib import cm
 #import numpy as np
 import os
+from pathlib import Path
 #import pandas as pd
 import random
 #import re
@@ -33,13 +34,12 @@ def main(output_dir,dataset_dir,
          max_tokens):
 
     ddp_setup()
-    if seeds==None:
-        seeds = (10,   11,   12)
-        #seeds = (100,  110,  120)
-        #seeds = (1000, 1100, 1200)
+    #seeds = (10,   11,   12)
+    #seeds = (100,  110,  120)
+    #seeds = (1000, 1100, 1200)
     # fix the seed for reproducibility
     seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
-    print(f"seeds={seeds}")
+    print(f"seed={seed} on GPU {dist.get_rank()}")
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -127,24 +127,90 @@ def main(output_dir,dataset_dir,
 
 if __name__ == "__main__":
     args = argparser_trainer()
-    config_file = args.config_file
-    if os.path.exists(config_file):
-        config = load_config(config_file)
-        output_dir     = config["output_dir"]
-        dataset_dir    = config["dataset_dir"]
-        model_name     = config["model"]
-        max_epochs     = config["max_epochs"]
-        loss_fn_name   = config["loss_fn"]
-        max_length     = config["max_length"]
-        lr             = config["learning_rate"]
-        seeds          = config["seeds"]
-        optimizer_name = config["optimizer"]["name"]
-        weight_decay   = config["optimizer"]["weight_decay"]
-        momentum       = config["optimizer"]["momentum"]
-        max_tokens     = config["MSA"]["max_tokens"]
-    else:
+    path = args.Path
+    target_path = Path(path)
+    print(f"Loading {target_path} ...")
+    if not os.path.exists(target_path):
+        print(f"The path {target_path} doesn't exist")
+        raise SystemExit(1)
+
+    if os.path.isfile(target_path):
+        print(f"Opening configure file {target_path}")
+        config = load_config(target_path)
+        try:
+            dataset_dir = config["dataset_dir"]
+            dataset_path = Path(dataset_dir)
+            if not os.path.exists(dataset_path):
+                print(f"The path {dataset_path} doesn't exist")
+                raise SystemExit(1)
+            if not os.path.isdir(dataset_path):
+                print(f"The path {dataset_path} is not a directory")
+                raise SystemExit(1)
+        except:
+            print(f"The dataset directory doesn't exist")
+            raise SystemExit(1)
+        try:
+            output_dir = config["output_dir"]
+        except:
+            output_dir = os.getcwd()
+            print(f"Setting the default output directory: {output_dir}")
+        try:    
+            model_name = config["model"]
+        except:
+            model_name = "MSA_Finetuning"
+            print(f"Setting the default model: {model_name}")
+        try:
+            max_epochs = config["max_epochs"]
+            print(f"Setting the default max number of training epochs: {max_epochs}")
+        except:
+            max_epochs = 3
+        try:
+            loss_fn_name = config["loss_fn"]
+        except:
+            loss_fn_name = "L1"
+            print(f"Setting the default {loss_fn_name} loss")
+        try:
+            max_length = config["max_length"]
+        except:
+            max_length = 1024
+            print(f"Setting the default max length of the aminoacid sequence: {max_length}")
+        try:
+            lr = config["learning_rate"]
+        except:
+            lr = 5.0e-6
+            print(f"Setting the default learning rate: {lr}")
+        try:
+            seeds = config["seeds"]
+        except:
+            seeds = [10, 11, 12]
+            print(f"Setting the default seeds: {seeds}")
+        try:
+            optimizer_name = config["optimizer"]["name"]
+        except:
+            optimizer_name = "AdamW"
+            print(f"Setting the default optimizer: {optimizer_name}")
+        try:
+            weight_decay = config["optimizer"]["weight_decay"]
+        except:
+            weight_decay = 0.01
+            if optimizer_name == "AdamW" or optimizer_name == "SGD":
+                print(f"Setting the default weight decay: {weight_decay}")
+        try:
+            momentum = config["optimizer"]["momentum"]
+        except:
+            momentum = 0.
+            if optimizer_name == "SGD":
+                print(f"Setting the default momentum: {momentum}")
+        try:
+            max_tokens = config["MSA"]["max_tokens"]
+        except:
+            max_tokens = 16000
+            if model_name == "MSA_Finetuning" or model_name == "MSA_Baseline":
+                print(f"Setting the default max number of tokens for MSA: {max_tokens}")
+
+    elif os.path.isdir(target_path):
+        dataset_dir    = path
         output_dir     = args.output_dir
-        dataset_dir    = args.dataset_dir
         model_name     = args.model
         max_epochs     = args.max_epochs
         loss_fn_name   = args.loss_fn
@@ -155,6 +221,10 @@ if __name__ == "__main__":
         weight_decay   = args.weight_decay
         max_tokens     = args.max_tokens
         momentum       = args.momentum
+    
+    else:
+        print(f"The path {target_path} is not valid")
+        raise SystemExit(1)
 
     main(output_dir,dataset_dir, 
          model_name, max_epochs, loss_fn_name, max_length, 

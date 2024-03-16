@@ -167,13 +167,13 @@ class ProteinDataLoader():
                                      sampler=sampler)
 
 
-def main(input_file, output_file):
+def main(input_file, output_file, seeds):
     ddp_setup()
     local_rank  = int(os.environ["LOCAL_RANK"])
     global_rank = int(os.environ["RANK"])
     world_size = dist.get_world_size()
-    seeds = (10,   11,   12)
     seed = seeds[0] * (seeds[1] + seeds[2] * dist.get_rank())
+    print(f"seed={seed} on GPU {dist.get_rank()}")
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -216,4 +216,5 @@ if __name__ == "__main__":
     args = argparser_translator()
     input_file  = args.input_file
     output_file = args.output_file
-    main(input_file, output_file)
+    seeds = args.seeds
+    main(input_file, output_file, seeds)
