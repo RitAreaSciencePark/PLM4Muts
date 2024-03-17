@@ -4,6 +4,7 @@
 #from matplotlib import cm
 #import numpy as np
 import os
+from pathlib import Path
 #import pandas as pd
 #import random
 #import re
@@ -56,26 +57,61 @@ def main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_f
 if __name__ == "__main__":
     args = argparser_tester()
     config_file = args.config_file
-    if os.path.exists(config_file):
-        config         = load_config(config_file)
-        dataset_dir    = config["dataset_dir"]
-        snapshot_file  = config["snapshot_file"]
+    config_path = Path(config_file)
+    print(f"Trying to load configure file {config_path} ...")
+    if not os.path.exists(config_path):
+        print(f"The path {config_path} doesn't exist")
+
+    if os.path.isfile(config_path):
+        print(f"Opening configure file {config_file}")
+        config = load_config(config_file)
+        try:
+            dataset_dir = config["dataset_dir"]
+            dataset_path = Path(dataset_dir)
+            if not os.path.exists(dataset_path):
+                print(f"The dataset path {dataset_path} doesn't exist")
+                raise SystemExit(1)
+            if not os.path.isdir(dataset_path):
+                print(f"The dataset path {dataset_path} is not a directory")
+                raise SystemExit(1)
+        except:
+            print(f"The dataset directory doesn't exist")
+            raise SystemExit(1)
+
+        try:
+            snapshot_file = config["snapshot_file"]
+            snapshot_path = Path(snapshot_file)
+            if not os.path.exists(snapshot_path):
+                print(f"The snapshot path {snapshot_path} doesn't exist")
+                raise SystemExit(1)
+            if not os.path.isfile(snapshot_path):
+                print(f"The snapshot path {snapshot_path} is not a file")
+                raise SystemExit(1)
+        except:
+            print(f"The snapshot file doesn't exist")
+            raise SystemExit(1)
+
         try:
             output_dir = config["output_dir"]
         except:
-            output_dir = "default_result/"
-        try:
+            output_dir = os.getcwd()
+            print(f"Setting the default output directory: {output_dir}")
+        try:    
             model_name = config["model"]
         except:
-            model_name = "MSA_Finetuning"
+            print(f"Error while setting the model in config file {config_file}")
+            raise SystemExit(1)
         try:
             max_length = config["max_length"]
         except:
             max_length = 1024
+            print(f"Setting the default max length of the aminoacid sequence: {max_length}")
         try:
             max_tokens = config["MSA"]["max_tokens"]
         except:
             max_tokens = 16000
+            if model_name == "MSA_Finetuning" or model_name == "MSA_Baseline":
+                print(f"Setting the default max number of tokens for MSA: {max_tokens}")
     else:
         output_dir     = args.output_dir
         dataset_dir    = args.dataset_dir
@@ -83,6 +119,22 @@ if __name__ == "__main__":
         max_length     = args.max_length
         snapshot_file  = args.snapshot_file
         max_tokens     = args.max_tokens
+        dataset_path = Path(dataset_dir)
+        if not os.path.exists(dataset_path):
+            print(f"The dataset path {dataset_path} doesn't exist")
+            raise SystemExit(1)
+        if not os.path.isdir(dataset_path):
+            print(f"The dataset path {dataset_path} is not a directory")
+            raise SystemExit(1)
+        snapshot_path = Path(snapshot_file)
+        if not os.path.exists(snapshot_path):
+            print(f"The snapshot path {snapshot_path} doesn't exist")
+            raise SystemExit(1)
+        if not os.path.isfile(snapshot_file):
+            print(f"The snapshot path {snapshot_path} is not a file")
+            raise SystemExit(1)
+ 
+
     main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_file)
 
 

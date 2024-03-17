@@ -29,6 +29,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from typing import List, Tuple
 import warnings
 from torch.utils.data import Subset
+from pathlib import Path
 
 def ddp_setup():
     torch.distributed.init_process_group(backend="nccl")
@@ -214,7 +215,24 @@ def main(input_file, output_file, seeds):
 
 if __name__ == "__main__":
     args = argparser_translator()
-    input_file  = args.input_file
-    output_file = args.output_file
+    try:
+        input_file  = args.input_file
+        input_path = Path(input_file)
+        if not os.path.exists(input_path):
+            print(f"The input path {input_path} doesn't exist.")
+            raise SystemExit(1)
+        if not os.path.isfile(input_path):
+            print(f"The input path {input_path} is not a file.")
+            raise SystemExit(1)
+    except:
+        print(f"Error in input file.")
+        raise SystemExit(1)
+    try:
+        output_file  = args.output_file
+    except:
+        print(f"Error in output file.")
+        raise SystemExit(1)
     seeds = args.seeds
     main(input_file, output_file, seeds)
+
+

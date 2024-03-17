@@ -127,7 +127,7 @@ def main(output_dir,dataset_dir,
 
 if __name__ == "__main__":
     args = argparser_trainer()
-    path = args.Path
+    path = args.FILE
     target_path = Path(path)
     print(f"Loading {target_path} ...")
     if not os.path.exists(target_path):
@@ -141,10 +141,10 @@ if __name__ == "__main__":
             dataset_dir = config["dataset_dir"]
             dataset_path = Path(dataset_dir)
             if not os.path.exists(dataset_path):
-                print(f"The path {dataset_path} doesn't exist")
+                print(f"The dataset path {dataset_path} doesn't exist")
                 raise SystemExit(1)
             if not os.path.isdir(dataset_path):
-                print(f"The path {dataset_path} is not a directory")
+                print(f"The dataset path {dataset_path} is not a directory")
                 raise SystemExit(1)
         except:
             print(f"The dataset directory doesn't exist")

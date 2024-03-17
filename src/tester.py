@@ -52,9 +52,9 @@ class Tester:
         loc = f"cuda:{self.local_rank}"
         snapshot = torch.load(snapshot_path, map_location=loc)
         #model.module.load_state_dict(snapshot["MODEL_STATE"])
-        model.load_state_dict(snapshot["MODEL_STATE"])
         self.epoch = snapshot["EPOCHS_RUN"]
-        print(f"Resuming training from snapshot at Epoch {self.epoch+1}", flush=True)
+        print(f"Resuming the training from snapshot at Epoch {self.epoch}", flush=True)
+        model.load_state_dict(snapshot["MODEL_STATE"])
 
 
     def test(self, test_model, test_dls, snapshot_file):

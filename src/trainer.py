@@ -93,11 +93,12 @@ class Trainer:
         snapshot = torch.load(snapshot_path, map_location=loc)
         model.module.load_state_dict(snapshot["MODEL_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
-        print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+        model_name = snapshot["MODEL_NAME"]
+        print(f"Resuming the model {model_name} training from snapshot at Epoch {self.epochs_run+1}", flush=True)
 
     def _save_snapshot(self, filename, epoch, save_onnx):
         snapshot_file = self.snapshot_dir + filename + ".pt"
-        snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch}
+        snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch, "MODEL_NAME":self.model.module.name}
         torch.save(snapshot, snapshot_file)
         print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
         if save_onnx==True:
