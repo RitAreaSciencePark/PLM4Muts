@@ -49,6 +49,7 @@ def argparser_translator():
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input_file",  type=str,  help="Input file")
     parser.add_argument("--output_file", default=os.getcwd() + "/translation/td.csv", type=str, help="Output file")
+    parser.add_argument("--max_length",  default='490',     type=int,   help="Max length of the aminoacid sequence")
     parser.add_argument("--seeds",       default=[10,11,12], type=list,  help="List of three integers for random seeds")
     args = parser.parse_args()
     return args

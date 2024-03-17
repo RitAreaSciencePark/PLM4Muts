@@ -36,13 +36,21 @@ def ddp_setup():
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 class ProstT5Dataset(Dataset):
-    def __init__(self, df, name):
+    def __init__(self, df, name, max_length):
         self.name = name
         self.df = df
+        wt_lengths  = [len(s) for s in df['wt_seq'].to_list()]
+        mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
+        self.df["wt_len_seq"]=wt_lengths
+        self.df["mut_len_seq"]=mut_lengths
+        if max_length:
+            self.max_length = max_length
+            self.df = self.df.drop(self.df[self.df.wt_len_seq >  self.max_length - 2].index)
+            self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
+        else:
+            self.max_length = max(wt_lengths)
+
         self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
-        lengths = [len(s) for s in df['wt_seq'].to_list()]
-        self.df["len_seq"]=lengths
-        self.max_length = self.df["len_seq"].max() + 2
 
     def __getitem__(self, idx):
         seqs     = [self.df.iloc[idx]['wt_seq'], self.df.iloc[idx]['mut_seq']]
@@ -123,7 +131,7 @@ def translate(dataloader, model, local_rank):
                 embeddings = embeddings.to(local_rank)
                 print(f"{dataloader.name}\ton GPU {global_rank}\tbatch_idx:{idx+1}/{len_loader}: {code[0]}", 
                       flush=True)
-                print(embeddings.input_ids.shape, embeddings.attention_mask.shape, min_len.item(), max_len.item())
+                #print(embeddings.input_ids.shape, embeddings.attention_mask.shape, min_len.item(), max_len.item())
                 translations = model.module.generate(
                                      input_ids=embeddings.input_ids.squeeze(0),
                                      attention_mask=embeddings.attention_mask.squeeze(0),
@@ -168,7 +176,7 @@ class ProteinDataLoader():
                                      sampler=sampler)
 
 
-def main(input_file, output_file, seeds):
+def main(input_file, output_file, max_length, seeds):
     ddp_setup()
     local_rank  = int(os.environ["LOCAL_RANK"])
     global_rank = int(os.environ["RANK"])
@@ -186,7 +194,8 @@ def main(input_file, output_file, seeds):
     if not os.path.exists(out_dir):
         if global_rank==0:
             os.makedirs(out_dir)
-    ds = ProstT5Dataset(df, infile_name)
+    dist.barrier()
+    ds = ProstT5Dataset(df, infile_name, max_length)
     Dsampler = DistributedSampler(ds,shuffle=False,drop_last=True)
     dl = ProteinDataLoader(ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=Dsampler)
     model = AutoModelForSeq2SeqLM.from_pretrained("Rostlab/ProstT5")
@@ -197,6 +206,7 @@ def main(input_file, output_file, seeds):
     df=pd.DataFrame.from_records([r.to_dict() for r in result])
     tmp_filenames = [out_dir + str(f"/tmp_translate.{i}.csv") for i in range(world_size)]
     df.to_csv(tmp_filenames[global_rank], index=False)
+    dist.barrier()
     if global_rank==0:
         dfs=[None]*world_size
         for i in range(world_size):
@@ -232,7 +242,8 @@ if __name__ == "__main__":
     except:
         print(f"Error in output file.")
         raise SystemExit(1)
+    max_length = args.max_length
     seeds = args.seeds
-    main(input_file, output_file, seeds)
+    main(input_file, output_file, max_length, seeds)
 
 
