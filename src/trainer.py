@@ -98,7 +98,7 @@ class Trainer:
 
     def _save_snapshot(self, filename, epoch, save_onnx):
         snapshot_file = self.snapshot_dir + filename + ".pt"
-        snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch, "MODEL_NAME":self.model.module.name}
+        snapshot = {"MODEL_STATE": self.model.module.state_dict(), "EPOCHS_RUN": epoch+1, "MODEL_NAME":self.model.module.name}
         torch.save(snapshot, snapshot_file)
         print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
         if save_onnx==True:
