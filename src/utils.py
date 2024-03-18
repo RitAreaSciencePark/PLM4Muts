@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import torch
 from models.models import *
+import datetime
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"ESM2_Finetuning":    ESM2_Finetuning,
@@ -20,11 +21,7 @@ optimizers = {"Adam":  torch.optim.Adam,
              }
 
 def get_date_of_run():
-    """create date and time for file save uniqueness
-    example: 2022-05-07-08:31:12_PM'
-    """
-    date_of_run = datetime.now().strftime("%Y-%m-%d-%I:%M:%S_%p")
-    print(f"--> current date and time of run = {date_of_run}")
+    date_of_run = datetime.datetime.now()#.strftime("%Y-%m-%d-%I:%M:%S_%p")
     return date_of_run
 
 def from_cvs_files_in_dir_to_dfs_list(main_dir, datasets_dir="/databases"):

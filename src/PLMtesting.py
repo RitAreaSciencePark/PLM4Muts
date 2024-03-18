@@ -58,12 +58,11 @@ if __name__ == "__main__":
     args = argparser_tester()
     config_file = args.config_file
     config_path = Path(config_file)
-    print(f"Trying to load configure file {config_path} ...")
     if not os.path.exists(config_path):
         print(f"The path {config_path} doesn't exist")
 
     if os.path.isfile(config_path):
-        print(f"Opening configure file {config_file}")
+        print(f"Opening the configuration file {config_file}")
         config = load_config(config_file)
         try:
             dataset_dir = config["dataset_dir"]
@@ -113,27 +112,8 @@ if __name__ == "__main__":
             if model_name == "MSA_Finetuning" or model_name == "MSA_Baseline":
                 print(f"Setting the default max number of tokens for MSA: {max_tokens}")
     else:
-        output_dir     = args.output_dir
-        dataset_dir    = args.dataset_dir
-        model_name     = args.model
-        max_length     = args.max_length
-        snapshot_file  = args.snapshot_file
-        max_tokens     = args.max_tokens
-        dataset_path = Path(dataset_dir)
-        if not os.path.exists(dataset_path):
-            print(f"The dataset path {dataset_path} doesn't exist")
-            raise SystemExit(1)
-        if not os.path.isdir(dataset_path):
-            print(f"The dataset path {dataset_path} is not a directory")
-            raise SystemExit(1)
-        snapshot_path = Path(snapshot_file)
-        if not os.path.exists(snapshot_path):
-            print(f"The snapshot path {snapshot_path} doesn't exist")
-            raise SystemExit(1)
-        if not os.path.isfile(snapshot_file):
-            print(f"The snapshot path {snapshot_path} is not a file")
-            raise SystemExit(1)
- 
+        print(f"The path {config_path} is not valid")
+        raise SystemExit(1)
 
     main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_file)
 
