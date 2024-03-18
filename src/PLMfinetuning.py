@@ -39,10 +39,10 @@ def main(output_dir,dataset_dir,
     #seeds = (1000, 1100, 1200)
     # fix the seed for reproducibility
     seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
-    print(f"seed={seed} on GPU {dist.get_rank()}")
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
+    print(f"seed={seed} on GPU {dist.get_rank()}")
 
     loss_fn   = losses[loss_fn_name]
     model     = models[model_name]()
@@ -104,22 +104,37 @@ def main(output_dir,dataset_dir,
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
     trainer   = Trainer(max_epochs=max_epochs, loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler, output_dir=output_dir, seeds=seeds)
+    
+    dist.barrier()
     if int(os.environ["RANK"]) == 0:
-        print(f"output_dir:\t{output_dir}\t{type(output_dir)}", flush=True)
-        print(f"loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
-        print(f"learning rate:\t{lr}\t{type(lr)}", flush=True)
-        print(f"seeds:\t{seeds}\t{type(seeds)}", flush=True)
-        print(f"max_epochs:\t{max_epochs}\t{type(max_epochs)}", flush=True)
-        print(f"model_name:\t{model_name}\t{type(model_name)}", flush=True)
-        print(f"optimizer_name:\t{optimizer_name}\t{type(optimizer_name)}", flush=True)
-        print(f"train_dir:\t{train_dir}\t{type(train_dir)}", flush=True)
-        print(f"val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
-        print(f"test_dir:\t{test_dir}\t{type(test_dir)}", flush=True)
-        print(f"max_length:\t{max_length}\t{type(max_length)}", flush=True)
-        print(f"max_tokens:\t{max_tokens}\t{type(max_tokens)}", flush=True)
-        print(f"weight_decay:\t{weight_decay}\t{type(weight_decay)}", flush=True)
-        print(f"momentum:\t{momentum}\t{type(momentum)}", flush=True)
+        print(f"[Info] output_dir:\t{output_dir}\t{type(output_dir)}", flush=True)
+        print(f"[Info] loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}", flush=True)
+        print(f"[Info] learning rate:\t{lr}\t{type(lr)}", flush=True)
+        print(f"[Info] seeds:\t{seeds}\t{type(seeds)}", flush=True)
+        print(f"[Info] max_epochs:\t{max_epochs}\t{type(max_epochs)}", flush=True)
+        print(f"[Info] model_name:\t{model_name}\t{type(model_name)}", flush=True)
+        print(f"[Info] optimizer_name:\t{optimizer_name}\t{type(optimizer_name)}", flush=True)
+        print(f"[Info] train_dir:\t{train_dir}\t{type(train_dir)}", flush=True)
+        print(f"[Info] val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
+        print(f"[Info] test_dir:\t{test_dir}\t{type(test_dir)}", flush=True)
+        print(f"[Info] max_length:\t{max_length}\t{type(max_length)}", flush=True)
+        print(f"[Info] max_tokens:\t{max_tokens}\t{type(max_tokens)}", flush=True)
+        print(f"[Info] weight_decay:\t{weight_decay}\t{type(weight_decay)}", flush=True)
+        print(f"[Info] momentum:\t{momentum}\t{type(momentum)}", flush=True)
+        ft_start_time = get_date_of_run()
+        ft_start_time_str = ft_start_time.strftime("%Y-%m-%d-%I:%M:%S_%p")
+        print(f"[Info] Model Finetuning started at: {ft_start_time_str}")
+    dist.barrier()
     trainer.train(model=model, train_dl=train_dl, val_dls=val_dls, test_dls=test_dls)
+    dist.barrier()
+    if int(os.environ["RANK"]) == 0:
+        ft_end_time = get_date_of_run()
+        ft_end_time_str = ft_end_time.strftime("%Y-%m-%d-%I:%M:%S_%p")
+        print(f"[Info] Model Finetuning completed at: {ft_start_time_str}")
+        ft_duration = ft_end_time - ft_start_time
+        print(f"[Info] Total time for Fine-tuning: {ft_duration}")
+
+    dist.barrier()
     trainer.describe()
     dist.barrier()
     trainer.free_memory(model)
@@ -127,15 +142,14 @@ def main(output_dir,dataset_dir,
 
 if __name__ == "__main__":
     args = argparser_trainer()
-    path = args.FILE
-    target_path = Path(path)
-    print(f"Loading {target_path} ...")
+    target = args.config_file
+    target_path = Path(target)
     if not os.path.exists(target_path):
         print(f"The path {target_path} doesn't exist")
         raise SystemExit(1)
 
     if os.path.isfile(target_path):
-        print(f"Opening configure file {target_path}")
+        print(f"Opening the configuration file {target_path}")
         config = load_config(target_path)
         try:
             dataset_dir = config["dataset_dir"]
@@ -161,9 +175,9 @@ if __name__ == "__main__":
             print(f"Setting the default model: {model_name}")
         try:
             max_epochs = config["max_epochs"]
-            print(f"Setting the default max number of training epochs: {max_epochs}")
         except:
             max_epochs = 3
+            print(f"Setting the default max number of training epochs: {max_epochs}")
         try:
             loss_fn_name = config["loss_fn"]
         except:
@@ -208,20 +222,6 @@ if __name__ == "__main__":
             if model_name == "MSA_Finetuning" or model_name == "MSA_Baseline":
                 print(f"Setting the default max number of tokens for MSA: {max_tokens}")
 
-    elif os.path.isdir(target_path):
-        dataset_dir    = path
-        output_dir     = args.output_dir
-        model_name     = args.model
-        max_epochs     = args.max_epochs
-        loss_fn_name   = args.loss_fn
-        max_length     = args.max_length
-        lr             = args.learning_rate
-        seeds          = args.seeds
-        optimizer_name = args.optimizer
-        weight_decay   = args.weight_decay
-        max_tokens     = args.max_tokens
-        momentum       = args.momentum
-    
     else:
         print(f"The path {target_path} is not valid")
         raise SystemExit(1)
