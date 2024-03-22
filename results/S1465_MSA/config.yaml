@@ -1,0 +1,17 @@
+#INITIAL SETTINGS
+output_dir: "results/S1465_MSA"
+dataset_dir: "datasets/S1465"
+model: "MSA_Finetuning"
+learning_rate: 5.0e-6
+max_epochs: 20
+loss_fn: "L1"
+max_length: 1024
+seeds: [10, 11, 12]
+optimizer:
+  name: "AdamW"
+  weight_decay: 0.01
+  momentum: 0.
+MSA:
+  max_tokens: 16000
+snapshot_file: "results/S1465_MSA/snapshots/MSA_Finetuning.pt"
+
