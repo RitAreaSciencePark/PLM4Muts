@@ -113,7 +113,7 @@ class Trainer:
     def initialize_files(self):
         self.result_dir    = self.output_dir + "/results"
         self.snapshot_dir  = self.output_dir + "/snapshots"
-        if self.local_rank == 0:
+        if self.global_rank == 0:
             if not(os.path.exists(self.output_dir) and os.path.isdir(self.output_dir)):
                 os.makedirs(self.output_dir)
             if not(os.path.exists(self.result_dir) and os.path.isdir(self.result_dir)):

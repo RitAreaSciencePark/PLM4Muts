@@ -80,15 +80,25 @@ class MSA_Dataset(Dataset):
     def read_msa(self, filename_wt, filename_mut):
         records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
         records_mut = list(SeqIO.parse(filename_mut, "fasta"))
-        lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
+        if (len(records_wt)>len(records_mut)):
+            lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
+        else:
+            lseq = max([len(records_mut[i].seq) for i in range(len(records_mut))]) #lenght of longest seq of msa
         assert lseq < 1024
         nseqs = self.max_tokens//(lseq + 1)
-        nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
+        if (len(records_wt)>len(records_mut)):
+            nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
+        else:
+            nseqs = min(int(nseqs), len(records_mut)) #select the numb of seq you are interested in
         idx = list(range(1, nseqs))
         pdb_list_wt  = [(records_wt[0].description, remove_insertions(str(records_wt[0].seq)))]#the first is included always
         pdb_list_mut = [(records_mut[0].description,remove_insertions(str(records_mut[0].seq)))]#the first is included always
-        pdb_list_wt  = pdb_list_wt  + [(records_wt[i].description,  remove_insertions(str(records_wt[i].seq)))  for i in idx]
-        pdb_list_mut = pdb_list_mut + [(records_mut[i].description, remove_insertions(str(records_mut[i].seq))) for i in idx]
+        if (len(records_wt)>len(records_mut)):
+            msa_list = [(records_wt[i].description, remove_insertions(str(records_wt[i].seq))) for i in idx]
+        else:
+             msa_list = [(records_mut[i].description, remove_insertions(str(records_mut[i].seq))) for i in idx]
+        pdb_list_wt  = pdb_list_wt  + msa_list
+        pdb_list_mut = pdb_list_mut + msa_list
         return pdb_list_wt, pdb_list_mut
 
     def __len__(self):

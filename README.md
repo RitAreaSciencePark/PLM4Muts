@@ -34,7 +34,7 @@ Python 3.8.10
 ```
 $> python3 -m venv PLM4Muts_venv
 $> source PLM4Muts_venv/bin/activate
-$> pip install -r requirements.txt  
+$> python3 -m -r requirements.txt  
 ```
 
 

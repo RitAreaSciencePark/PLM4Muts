@@ -118,9 +118,12 @@ def main(output_dir,dataset_dir,
         print(f"[Info] val_dir:\t{val_dir}\t{type(val_dir)}", flush=True)
         print(f"[Info] test_dir:\t{test_dir}\t{type(test_dir)}", flush=True)
         print(f"[Info] max_length:\t{max_length}\t{type(max_length)}", flush=True)
-        print(f"[Info] max_tokens:\t{max_tokens}\t{type(max_tokens)}", flush=True)
-        print(f"[Info] weight_decay:\t{weight_decay}\t{type(weight_decay)}", flush=True)
-        print(f"[Info] momentum:\t{momentum}\t{type(momentum)}", flush=True)
+        if model_name.rsplit("_")[0]=="MSA":
+            print(f"[Info] max_tokens:\t{max_tokens}\t{type(max_tokens)}", flush=True)
+        if optimizer_name=="AdamW" or optimizer_name=="SGD":
+            print(f"[Info] weight_decay:\t{weight_decay}\t{type(weight_decay)}", flush=True)
+            if optimizer_name=="SGD":
+                print(f"[Info] momentum:\t{momentum}\t{type(momentum)}", flush=True)
         ft_start_time = get_date_of_run()
         ft_start_time_str = ft_start_time.strftime("%Y-%m-%d-%I:%M:%S_%p")
         print(f"[Info] Model Finetuning started at: {ft_start_time_str}")
