@@ -61,7 +61,7 @@ class ProstT5Dataset(Dataset):
         pos  = self.df.iloc[idx]['pos']
         code = self.df.iloc[idx]['code']
         wt_msa  = self.df.iloc[idx]['wt_msa']
-        mut_msa = self.df.iloc[idx]['mut_msa']
+        #mut_msa = self.df.iloc[idx]['mut_msa']
         prefix_s2t = "<AA2fold>"
         min_len = int(min([ len(s) for s in seqs])+1)
         max_len = int(max([ len(s) for s in seqs])+1)
@@ -72,13 +72,13 @@ class ProstT5Dataset(Dataset):
                                                       padding="longest", 
                                                       return_tensors='pt')
 
-        return embeddings, (min_len, max_len), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa,mut_msa)
+        return embeddings, (min_len, max_len), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa)#,mut_msa)
 
     def __len__(self):
         return len(self.df)
 
 class OutputDatatype():
-    def __init__(self, wt_seq, wt_struct, mut_seq, mut_struct, ddg, pdb_id, pos, code, wt_msa, mut_msa): 
+    def __init__(self, wt_seq, wt_struct, mut_seq, mut_struct, ddg, pdb_id, pos, code, wt_msa):#, mut_msa): 
         self.wt_seq = wt_seq
         self.wt_struct = wt_struct
         self.mut_seq = mut_seq
@@ -88,7 +88,7 @@ class OutputDatatype():
         self.pos = pos
         self.code = code
         self.wt_msa = wt_msa
-        self.mut_msa = mut_msa
+        #self.mut_msa = mut_msa
 
     def to_dict(self):
         return {
@@ -100,8 +100,8 @@ class OutputDatatype():
             'pdb_id': self.pdb_id,
             'pos' : self.pos,
             'code': self.code,
-            'wt_msa': self.wt_msa,
-            'mut_msa': self.mut_msa,
+            'wt_msa': self.wt_msa #,
+           # 'mut_msa': self.mut_msa,
         }
 
 def translate(dataloader, model, local_rank):
@@ -127,7 +127,7 @@ def translate(dataloader, model, local_rank):
         with torch.no_grad():
             for idx, batch in enumerate(loader):
                 idx = base_progress + idx
-                embeddings, (min_len, max_len), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa,mut_msa) = batch
+                embeddings, (min_len, max_len), (wt_seq,mut_seq,ddg,pdb_id,pos,code,wt_msa) = batch#,mut_msa) = batch
                 embeddings = embeddings.to(local_rank)
                 print(f"{dataloader.name}\ton GPU {global_rank}\tbatch_idx:{idx+1}/{len_loader}: {code[0]}", 
                       flush=True)
@@ -146,7 +146,7 @@ def translate(dataloader, model, local_rank):
                 structures = [ "".join(ts.split(" ")) for ts in decoded_translations ]
                 wt_struct  = structures[0]
                 mut_struct = structures[1]
-                row=OutputDatatype(wt_seq[0],wt_struct,mut_seq[0],mut_struct,ddg.item(),pdb_id[0],pos[0].item(),code[0], wt_msa[0], mut_msa[0])
+                row=OutputDatatype(wt_seq[0],wt_struct,mut_seq[0],mut_struct,ddg.item(),pdb_id[0],pos[0].item(),code[0], wt_msa[0])#, mut_msa[0])
                 if (base_progress!=0 and global_rank==0) or base_progress==0:
                     results.append(row)
 
@@ -212,7 +212,7 @@ def main(input_file, output_file, max_length, seeds):
         for i in range(world_size):
             dfs[i]=pd.read_csv(tmp_filenames[i])
         res_df = pd.concat(dfs)
-        res_df.columns=['wt_seq','wt_struct','mut_seq','mut_struct','ddg','pdb_id','pos','code','wt_msa','mut_msa']
+        res_df.columns=['wt_seq','wt_struct','mut_seq','mut_struct','ddg','pdb_id','pos','code','wt_msa']#,'mut_msa']
         res_df = res_df.sort_values(by=['code'])
         res_df.to_csv(output_file, index=False)
         for i in range(world_size):

@@ -48,7 +48,6 @@ class ESM2_Finetuning(nn.Module):
         dynamic_axes = {"wt":{ 1: "L"}, "mut":{ 1: "L"}}
         return (wt, mut, pos), (input_names, output_names, dynamic_axes)
 
-
     def forward(self, wild_esm_batch_tokens, mut_esm_batch_tokens, pos):
         batch_size   = wild_esm_batch_tokens.shape[0]
         batch_size_m = mut_esm_batch_tokens.shape[0]
@@ -63,21 +62,17 @@ class ESM2_Finetuning(nn.Module):
         # mut_esm_batch_tokens.dtype  = torch.int64
         # pos.shape = torch.Size([1])
         # pos.dtype = torch.int64
-        
-        wild_esm_reps =self.esm_transformer(wild_esm_batch_tokens, repr_layers=[33])['representations'][33]
-        mut_esm_reps  =self.esm_transformer(mut_esm_batch_tokens,  repr_layers=[33])['representations'][33]
-        
-        wild_esm_reps = wild_esm_reps.reshape(batch_size, L, -1)
-        mut_esm_reps  =  mut_esm_reps.reshape(batch_size, L, -1)
-        
+        wild_esm_reps =self.esm_transformer(wild_esm_batch_tokens, repr_layers=[33])['representations'][33].reshape(batch_size, L, -1)
+        mut_esm_reps  =self.esm_transformer(mut_esm_batch_tokens,  repr_layers=[33])['representations'][33].reshape(batch_size, L, -1)
+        #wild_esm_reps = wild_esm_reps.reshape(batch_size, L, -1)
+        #mut_esm_reps  =  mut_esm_reps.reshape(batch_size, L, -1)
         wild_esm_reps_p = wild_esm_reps[:, pos+1, :].reshape((batch_size,-1))
         mut_esm_reps_p  =  mut_esm_reps[:, pos+1, :].reshape((batch_size,-1))
-        
         wild_esm_reps_m = wild_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
         mut_esm_reps_m  =  mut_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
-        esm_reps_p = wild_esm_reps_p - mut_esm_reps_p
-        esm_reps_m = wild_esm_reps_m - mut_esm_reps_m
-        outputs = torch.cat((esm_reps_p, esm_reps_m), dim=1)
+        #esm_reps_p = wild_esm_reps_p - mut_esm_reps_p
+        #esm_reps_m = wild_esm_reps_m - mut_esm_reps_m
+        outputs = torch.cat((wild_esm_reps_p - mut_esm_reps_p, wild_esm_reps_m - mut_esm_reps_m), dim=1)
         outputs = self.relu(self.fc1(outputs))
         outputs = self.dropout(outputs)
         return self.fc2(outputs)
@@ -114,13 +109,12 @@ class MSA_Baseline(nn.Module):
         return (wt, mut, pos), (input_names, output_names, dynamic_axes) 
 
     def preprocess(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
-        wild_msa_batch_labels, wild_msa_batch_strs, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
-        mut_msa_batch_labels,  mut_msa_batch_strs,  mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
-        
-        wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
-        mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
-        pos = pos.to(local_rank)
-        return wild_msa_batch_tokens, mut_msa_batch_tokens, pos
+        _, _, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
+        _, _, mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
+        #wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
+        #mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
+        #pos = pos.to(local_rank)
+        return wild_msa_batch_tokens.to(local_rank), mut_msa_batch_tokens.to(local_rank), pos.to(local_rank)
 
     def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
         batch_size   = wild_msa_batch_tokens.shape[0]
@@ -133,34 +127,26 @@ class MSA_Baseline(nn.Module):
         assert batch_size_m == 1
         assert N == N_m
         assert L == L_m
-        
         # wild_msa_batch_tokens.shape = torch.Size([1, 98, 163]) = torch.Size([batch_size, N, L])
         # wild_msa_batch_tokens.dtype = torch.int64
         # mut_msa_batch_tokens.shape  = torch.Size([1, 98, 163]) = torch.Size([batch_size_m, N_m, L_m])
         # mut_msa_batch_tokens.dtype  = torch.int64
         # pos.shape = torch.Size([1])
         # pos.dtype = torch.int64
-        wild_msa_reps = self.msa_transformer(wild_msa_batch_tokens, repr_layers=[12])['representations'][12]
-        mut_msa_reps  = self.msa_transformer(mut_msa_batch_tokens,  repr_layers=[12])['representations'][12]
-        
-        wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
-        mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
-        
+        wild_msa_reps=self.msa_transformer(wild_msa_batch_tokens,repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
+        mut_msa_reps =self.msa_transformer(mut_msa_batch_tokens, repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
+        #wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
+        #mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
         wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
         mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
-        
         wild_msa_reps_m = wild_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
         mut_msa_reps_m  =  mut_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
-        
-        msa_reps_p = wild_msa_reps_p - mut_msa_reps_p
-        msa_reps_m = wild_msa_reps_m - mut_msa_reps_m
-
-        outputs = torch.cat((msa_reps_p, msa_reps_m), dim=1)
+        #msa_reps_p = wild_msa_reps_p - mut_msa_reps_p
+        #msa_reps_m = wild_msa_reps_m - mut_msa_reps_m
+        outputs = torch.cat((wild_msa_reps_p - mut_msa_reps_p, wild_msa_reps_m - mut_msa_reps_m), dim=1)
         outputs = self.relu(self.fc1(outputs))
         outputs = self.dropout(outputs)
         return self.fc2(outputs)
-
-
 
 class MSA_Finetuning(nn.Module):
 
@@ -192,13 +178,12 @@ class MSA_Finetuning(nn.Module):
         return (wt, mut, pos), (input_names, output_names, dynamic_axes) 
 
     def preprocess(self, wild_seq_msa, mut_seq_msa, pos, local_rank):
-        wild_msa_batch_labels, wild_msa_batch_strs, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
-        mut_msa_batch_labels,  mut_msa_batch_strs,  mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
-        
-        wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
-        mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
-        pos = pos.to(local_rank)
-        return wild_msa_batch_tokens, mut_msa_batch_tokens, pos
+        _, _, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
+        _, _, mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
+        #wild_msa_batch_tokens = wild_msa_batch_tokens.to(local_rank)
+        #mut_msa_batch_tokens  =  mut_msa_batch_tokens.to(local_rank)
+        #pos = pos.to(local_rank)
+        return wild_msa_batch_tokens.to(local_rank), mut_msa_batch_tokens.to(local_rank), pos.to(local_rank)
 
     def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
         batch_size   = wild_msa_batch_tokens.shape[0]
@@ -211,29 +196,23 @@ class MSA_Finetuning(nn.Module):
         assert batch_size_m == 1
         assert N == N_m
         assert L == L_m
-        
         # wild_msa_batch_tokens.shape = torch.Size([1, 98, 163]) = torch.Size([batch_size, N, L])
         # wild_msa_batch_tokens.dtype = torch.int64
         # mut_msa_batch_tokens.shape  = torch.Size([1, 98, 163]) = torch.Size([batch_size_m, N_m, L_m])
         # mut_msa_batch_tokens.dtype  = torch.int64
         # pos.shape = torch.Size([1])
         # pos.dtype = torch.int64
-        wild_msa_reps = self.msa_transformer(wild_msa_batch_tokens, repr_layers=[12])['representations'][12]
-        mut_msa_reps  = self.msa_transformer(mut_msa_batch_tokens,  repr_layers=[12])['representations'][12]
-        
-        wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
-        mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
-        
+        wild_msa_reps=self.msa_transformer(wild_msa_batch_tokens,repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
+        mut_msa_reps =self.msa_transformer(mut_msa_batch_tokens, repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
+        #wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
+        #mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
         wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
         mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
-        
         wild_msa_reps_m = wild_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
         mut_msa_reps_m  =  mut_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
-        
-        msa_reps_p = wild_msa_reps_p - mut_msa_reps_p
-        msa_reps_m = wild_msa_reps_m - mut_msa_reps_m
-
-        outputs = torch.cat((msa_reps_p, msa_reps_m), dim=1)
+        #msa_reps_p = wild_msa_reps_p - mut_msa_reps_p
+        #msa_reps_m = wild_msa_reps_m - mut_msa_reps_m
+        outputs = torch.cat((wild_msa_reps_p - mut_msa_reps_p, wild_msa_reps_m - mut_msa_reps_m), dim=1)
         outputs = self.relu(self.fc1(outputs))
         outputs = self.dropout(outputs)
         return self.fc2(outputs)
@@ -273,10 +252,10 @@ class ProstT5_Finetuning(nn.Module):
         return (input_ids, attention_mask, pos), (input_names, output_names, dynamic_axes)
 
     def preprocess(self, input_ids, attention_mask, pos, local_rank):
-        pos = pos.to(local_rank)
-        input_ids = input_ids.to(local_rank)
-        attention_mask = attention_mask.to(local_rank)
-        return input_ids, attention_mask, pos
+        #pos = pos.to(local_rank)
+        #input_ids = input_ids.to(local_rank)
+        #attention_mask = attention_mask.to(local_rank)
+        return input_ids.to(local_rank), attention_mask.to(local_rank), pos.to(local_rank)
 
     def forward(self, input_ids, attention_mask, pos):
         #torch.set_printoptions(threshold=10_000)

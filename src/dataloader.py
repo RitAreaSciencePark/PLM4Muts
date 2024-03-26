@@ -1,32 +1,18 @@
-#import argparse
 from Bio import SeqIO
-#import csv
-#import esm
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 import itertools
-#import math
-#import matplotlib.pyplot as plt
-#from matplotlib import cm
-#import numpy as np
 import pandas as pd
 import os
-#import random
 import re
 import scipy
-#from scipy import stats
-#from scipy.stats import pearsonr
 import string
-#import time
 import torch
 import torch.distributed  as dist
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
-#import torch.nn.functional as F
-#from torch.nn.parallel import DistributedDataParallel as DDP
-#from torch.cuda.amp import autocast
-#import torch.multiprocessing as mp
 from transformers import T5Tokenizer
-#from typing import List, Tuple
-#import warnings
+from collections import namedtuple
 
 torch.cuda.empty_cache()
 
@@ -75,28 +61,20 @@ class MSA_Dataset(Dataset):
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         self.dataset_dir = dataset_dir
         self.max_tokens = max_tokens
-#        self.didx = {}
 
-    def read_msa(self, filename_wt, filename_mut):
+    def read_msa(self, filename_wt, mut_seq, code):
         records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
-        records_mut = list(SeqIO.parse(filename_mut, "fasta"))
-        if (len(records_wt)>len(records_mut)):
-            lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
-        else:
-            lseq = max([len(records_mut[i].seq) for i in range(len(records_mut))]) #lenght of longest seq of msa
+        records_mut = [SeqRecord(Seq(mut_seq), description=code, )]
+        #MSA = namedtuple("MSA", "description seq")
+        #records_mut = [MSA(code, mut_seq)]
+        lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
         assert lseq < 1024
         nseqs = self.max_tokens//(lseq + 1)
-        if (len(records_wt)>len(records_mut)):
-            nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
-        else:
-            nseqs = min(int(nseqs), len(records_mut)) #select the numb of seq you are interested in
+        nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
         idx = list(range(1, nseqs))
         pdb_list_wt  = [(records_wt[0].description, remove_insertions(str(records_wt[0].seq)))]#the first is included always
         pdb_list_mut = [(records_mut[0].description,remove_insertions(str(records_mut[0].seq)))]#the first is included always
-        if (len(records_wt)>len(records_mut)):
-            msa_list = [(records_wt[i].description, remove_insertions(str(records_wt[i].seq))) for i in idx]
-        else:
-             msa_list = [(records_mut[i].description, remove_insertions(str(records_mut[i].seq))) for i in idx]
+        msa_list = [(records_wt[i].description, remove_insertions(str(records_wt[i].seq))) for i in idx]
         pdb_list_wt  = pdb_list_wt  + msa_list
         pdb_list_mut = pdb_list_mut + msa_list
         return pdb_list_wt, pdb_list_mut
@@ -105,16 +83,16 @@ class MSA_Dataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        wild_seq = [self.df.iloc[idx]['wt_seq']]
-        mut_seq  = [self.df.iloc[idx]['mut_seq']]
+        #wild_seq = [self.df.iloc[idx]['wt_seq']]
+        mut_seq  = self.df.iloc[idx]['mut_seq']
         wild_msa_path = self.df.iloc[idx]['wt_msa']
-        mut_msa_path  = self.df.iloc[idx]['mut_msa']
-        pos = self.df.iloc[idx]['pos']
-        ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
-        wild_msa_filename = os.path.join(self.dataset_dir, wild_msa_path)
-        mut_msa_filename  = os.path.join(self.dataset_dir, mut_msa_path )
-        wild_msa, mut_msa = self.read_msa(wild_msa_filename, mut_msa_filename)
+        #mut_msa_path  = self.df.iloc[idx]['mut_msa']
         code = self.df.iloc[idx]['code']
+        pos  = self.df.iloc[idx]['pos']
+        ddg  = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        wild_msa_filename = os.path.join(self.dataset_dir, wild_msa_path)
+        #mut_msa_filename  = os.path.join(self.dataset_dir, mut_msa_path )
+        wild_msa, mut_msa = self.read_msa(wild_msa_filename, mut_seq, code)
         return (wild_msa, mut_msa, pos), ddg, code
 
 class ProstT5_Dataset(Dataset):

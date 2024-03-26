@@ -14,8 +14,8 @@ results/S3730_MSA_2DGX/results/
 
 PLM4Muts_venv/
 
-datasets/S157479/
-datasets/S3730/
+datasets/S157479_old/
+datasets/S3730_old/
 *.error
 *.out
 *.pt
