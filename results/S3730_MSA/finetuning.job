@@ -15,7 +15,7 @@
 #SBATCH --exclusive 
 CURRENT_DIR=${SLURM_SUBMIT_DIR}
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
+head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address | grep -o '10\.128\.[0-9]*\.[0-9]*')
 echo "head_node=" ${head_node} " - head_node_ip=" $head_node_ip
 export OMP_NUM_THREADS=128
 cd ../..
@@ -31,4 +31,4 @@ srun -l torchrun --standalone  \
 --rdzv_endpoint $head_node_ip:29500 \
 src/PLMfinetuning.py  ${CURRENT_DIR}/config.yaml
 
-python src/PLMtesting.py  ${CURRENT_DIR}/config.yaml
+srun python3 src/PLMtesting.py  ${CURRENT_DIR}/config.yaml

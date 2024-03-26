@@ -12,6 +12,6 @@ optimizer:
   weight_decay: 0.01
   momentum: 0.
 MSA:
-  max_tokens: 16000
+  max_tokens: 15500
 snapshot_file: "results/S157479_MSA/snapshots/MSA_Finetuning.pt"
 
