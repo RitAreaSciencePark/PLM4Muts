@@ -54,9 +54,9 @@ def main(output_dir,dataset_dir,
         #val_df       = pd.concat(val_dfs)
         #val_name     = dataset_dir.rsplit('/', 1)[1] 
         #test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/translated_databases")
-        train_ds=ProstT5_Dataset( df=train_df,name=train_name,max_length=max_length)
-        val_ds  =ProstT5_Dataset( df=val_df,  name=val_name,  max_length=max_length) 
-        test_dss=[ProstT5_Dataset(df=test_df,name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
+        train_ds= ProstT5_Dataset(df=train_df,name=train_name,max_length=max_length)
+        val_ds  = ProstT5_Dataset(df=val_df,  name=val_name,  max_length=max_length) 
+        test_dss=[ProstT5_Dataset(df=test_df, name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = None
 
     if model_name.rsplit("_")[0]=="ESM2": 
@@ -67,9 +67,9 @@ def main(output_dir,dataset_dir,
         #val_df       = pd.concat(val_dfs)
         #val_name     = dataset_dir.rsplit('/', 1)[1] 
         #test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/databases")
-        train_ds=ESM2_Dataset(df=train_df,name=train_name,max_length=max_length)
-        val_ds=[ESM2_Dataset(df=val_df,name=val_name,max_length=max_length) for val_df,val_name in zip(val_dfs,val_names)]
-        test_dss=[ESM2_Dataset(df=test_df,name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
+        train_ds= ESM2_Dataset(df=train_df,name=train_name,max_length=max_length)
+        val_ds  = ESM2_Dataset(df=val_df,  name=val_name,  max_length=max_length)
+        test_dss=[ESM2_Dataset(df=test_df, name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = custom_collate
 
     if model_name.rsplit("_")[0]=="MSA":
