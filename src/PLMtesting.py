@@ -11,15 +11,15 @@ def main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_f
     test_dir = dataset_dir + "/test"
 
     if model_name.rsplit("_")[0]=="ProstT5":
-        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/translated_databases")
-        test_dss = [ProstT5_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/translated_databases")
+        test_dss=[ProstT5_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = None
     if model_name.rsplit("_")[0]=="ESM2":
-        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/databases")
         test_dss = [ESM2_Dataset(df=test_df,name=test_name,max_length=max_length) for test_df, test_name in zip(test_dfs, test_names)]
         collate_function = custom_collate
     if model_name.rsplit("_")[0]=="MSA":
-        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, datasets_dir="/databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/databases")
         test_dss = [MSA_Dataset(df=test_df,name=test_name, dataset_dir=test_dir, max_length=max_length,
                                 max_tokens=max_tokens) for test_df, test_name in zip(test_dfs, test_names)] 
         collate_function = custom_collate

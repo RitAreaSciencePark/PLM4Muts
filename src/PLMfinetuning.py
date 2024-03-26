@@ -36,58 +36,37 @@ def main(output_dir,dataset_dir,
     val_dir   = dataset_dir + "/validation"
     test_dir  = dataset_dir + "/test"
     
-    train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, database_dir="/databases")
+    if model_name.rsplit("_")[0]=="ProstT5":
+        train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, databases_dir="/translated_databases")
+        val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, databases_dir="/translated_databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/translated_databases")
+    else:
+        train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, databases_dir="/databases")
+        val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, databases_dir="/databases")
+        test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/databases")
+
     train_df     = pd.concat(train_dfs)
     train_name   = train_names[0]
-    #train_name   = dataset_dir.rsplit('/', 1)[1] #+ "_training"
-    val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, database_dir="/databases")
     val_df     = pd.concat(val_dfs)
     val_name = val_names[0]
-    #val_name     = dataset_dir.rsplit('/', 1)[1] 
-    test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/databases")
     
     if model_name.rsplit("_")[0]=="ProstT5":
-        #train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir, database_dir="/translated_databases")
-        #train_df     = pd.concat(train_dfs)
-        #train_name   = dataset_dir.rsplit('/', 1)[1] #+ "_training"
-        #val_dfs, _   = from_cvs_files_in_dir_to_dfs_list(val_dir, database_dir="/translated_databases")
-        #val_df       = pd.concat(val_dfs)
-        #val_name     = dataset_dir.rsplit('/', 1)[1] 
-        #test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/translated_databases")
         train_ds= ProstT5_Dataset(df=train_df,name=train_name,max_length=max_length)
         val_ds  = ProstT5_Dataset(df=val_df,  name=val_name,  max_length=max_length) 
         test_dss=[ProstT5_Dataset(df=test_df, name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = None
 
     if model_name.rsplit("_")[0]=="ESM2": 
-        #train_dfs, _ = from_cvs_files_in_dir_to_dfs_list(train_dir, database_dir="/databases")
-        #train_df     = pd.concat(train_dfs)
-        #train_name   = dataset_dir.rsplit('/', 1)[1] #+ "_training"
-        #val_dfs, _   = from_cvs_files_in_dir_to_dfs_list(val_dir, database_dir="/databases")
-        #val_df       = pd.concat(val_dfs)
-        #val_name     = dataset_dir.rsplit('/', 1)[1] 
-        #test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/databases")
         train_ds= ESM2_Dataset(df=train_df,name=train_name,max_length=max_length)
         val_ds  = ESM2_Dataset(df=val_df,  name=val_name,  max_length=max_length)
         test_dss=[ESM2_Dataset(df=test_df, name=test_name, max_length=max_length) for test_df,test_name in zip(test_dfs,test_names)]
         collate_function = custom_collate
 
     if model_name.rsplit("_")[0]=="MSA":
-        #train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, database_dir="/databases")
-        #train_df     = pd.concat(train_dfs)
-        #train_name   = train_names[0]
-        #train_name   = dataset_dir.rsplit('/', 1)[1] #+ "_training"
-        #val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, database_dir="/databases")
-        #val_df     = pd.concat(val_dfs)
-        #val_name = val_names[0]
-        #val_name     = dataset_dir.rsplit('/', 1)[1] 
-        #test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, database_dir="/databases")
         train_ds = MSA_Dataset(df=train_df, name=train_name, dataset_dir=train_dir, max_length=max_length, max_tokens=max_tokens)
         val_ds   = MSA_Dataset(df=val_df,   name=val_name,   dataset_dir=val_dir,   max_length=max_length, max_tokens=max_tokens) 
-        
         test_dss = [MSA_Dataset(df=test_df,   name=test_name,   dataset_dir=test_dir, max_length=max_length, 
                                 max_tokens=max_tokens) for test_df, test_name in zip(test_dfs, test_names)] 
-        
         collate_function = custom_collate
 
     train_dl = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False,

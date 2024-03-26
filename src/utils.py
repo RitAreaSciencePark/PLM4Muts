@@ -24,8 +24,8 @@ def get_date_of_run():
     date_of_run = datetime.datetime.now()#.strftime("%Y-%m-%d-%I:%M:%S_%p")
     return date_of_run
 
-def from_cvs_files_in_dir_to_dfs_list(main_dir, database_dir="/databases"):
-    dir_path = main_dir + database_dir
+def from_cvs_files_in_dir_to_dfs_list(main_dir, databases_dir="/databases"):
+    dir_path = main_dir + databases_dir
     datasets = os.listdir(dir_path)
     datasets_names = [ s.rsplit('.', 1)[0]  for s in datasets ]
     dfs = [None] * len(datasets)
