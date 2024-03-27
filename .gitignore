@@ -1,21 +1,19 @@
-results/S1465_MSA/snapshots/
-results/S1465_ESM2/snapshots/
-results/S1465_ProstT5/snapshots/
-results/S157479_MSA/snapshots/
-results/S3730_MSA/snapshots/
-results/S3730_MSA_2DGX/snapshots/
+runs/S1465_MSA/snapshots/
+runs/S1465_ESM2/snapshots/
+runs/S1465_ProstT5/snapshots/
+runs/S157479_MSA/snapshots/
+runs/S3730_MSA/snapshots/
+runs/S3730_MSA_2DGX/snapshots/
 
-results/S1465_ESM2/results/
-results/S1465_MSA/results/
-results/S1465_ProstT5/results/
-results/S157479_MSA/results/
-results/S3730_MSA/results/
-results/S3730_MSA_2DGX/results/
+runs/S1465_ESM2/results/
+runs/S1465_MSA/results/
+runs/S1465_ProstT5/results/
+runs/S157479_MSA/results/
+runs/S3730_MSA/results/
+runs/S3730_MSA_2DGX/results/
 
 PLM4Muts_venv/
 
-datasets/S157479_old/
-datasets/S3730_old/
 *.error
 *.out
 *.pt
