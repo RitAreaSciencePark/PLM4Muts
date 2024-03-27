@@ -1,5 +1,5 @@
 ```
-srun --nodes=1 --ntasks-per-node=1 -A lade --ntasks-per-socket=1  --sockets-per-node=1 --gpus=1 --gpus-per-node=1 --gpus-per-socket=1 --cpus-per-task=32 -p DGX   -w dgx002 --time=4:01:00  --pty bash
+srun --nodes=1 --ntasks-per-node=1 -A lade --mem=40GB --ntasks-per-socket=1  --sockets-per-node=1 --gpus=1 --gpus-per-node=1 --gpus-per-socket=1 --cpus-per-task=32 -p DGX   -w dgx002 --time=4:01:00  --pty bash
 ```
 
 ```
@@ -34,7 +34,7 @@ Python 3.8.10
 ```
 $> python3 -m venv PLM4Muts_venv
 $> source PLM4Muts_venv/bin/activate
-$> python3 -m -r requirements.txt  
+$> pip install -r requirements.txt  
 ```
 
 
