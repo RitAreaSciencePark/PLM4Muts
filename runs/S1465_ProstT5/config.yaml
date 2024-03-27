@@ -1,5 +1,5 @@
 #INITIAL SETTINGS
-output_dir: "results/S1465_ProstT5"
+output_dir: "runs/S1465_ProstT5"
 dataset_dir: "datasets/S1465"
 model: "ProstT5_Finetuning"
 learning_rate: 5.0e-5
@@ -13,5 +13,5 @@ optimizer:
   momentum: 0.
 MSA:
   max_tokens: 16000
-snapshot_file: "results/S1465_ProstT5/snapshots/ProstT5_Finetuning.pt"
+snapshot_file: "runs/S1465_ProstT5/snapshots/ProstT5_Finetuning.pt"
 

@@ -1,5 +1,5 @@
 #INITIAL SETTINGS
-output_dir: "results/S3730_MSA"
+output_dir: "runs/S3730_MSA"
 dataset_dir: "datasets/S3730"
 model: "MSA_Finetuning"
 learning_rate: 5.0e-6
@@ -13,5 +13,5 @@ optimizer:
   momentum: 0.
 MSA:
   max_tokens: 16000
-snapshot_file: "results/S3730_MSA/snapshots/MSA_Finetuning.pt"
+snapshot_file: "runs/S3730_MSA/snapshots/MSA_Finetuning.pt"
 

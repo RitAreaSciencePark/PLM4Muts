@@ -1,6 +1,6 @@
 #INITIAL SETTINGS
-output_dir: "results/S157479_MSA"
-dataset_dir: "datasets/S157479"
+output_dir: "runs/S157479_MSA"
+dataset_dir: "runs/S157479"
 model: "MSA_Finetuning"
 learning_rate: 5.0e-6
 max_epochs: 20
@@ -13,5 +13,5 @@ optimizer:
   momentum: 0.
 MSA:
   max_tokens: 15500
-snapshot_file: "results/S157479_MSA/snapshots/MSA_Finetuning.pt"
+snapshot_file: "runs/S157479_MSA/snapshots/MSA_Finetuning.pt"
 

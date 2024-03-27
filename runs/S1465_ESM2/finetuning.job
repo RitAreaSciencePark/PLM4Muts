@@ -6,8 +6,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:8
 #SBATCH --time=12:00:00
-#SBATCH -o test.%A.out
-#SBATCH -e test.%A.error
+#SBATCH -o run.%A.out
+#SBATCH -e run.%A.error
 #SBATCH -A lade
 #SBATCH --wait-all-nodes=1
 #SBATCH --cpus-per-task=128
