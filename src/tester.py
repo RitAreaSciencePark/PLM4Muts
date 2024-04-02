@@ -59,31 +59,33 @@ class Tester:
             self._load_snapshot(test_model, snapshot_file)
         self.test_model.eval()
         for test_no, test_dl in enumerate(self.test_dls):
-            self.t_preds, self.t_labels = [], []
             len_dataloader = len(test_dl.dataloader)
+            local_t_preds, local_t_labels = torch.zeros(len_dataloader), torch.zeros(len_dataloader)
             diff_file   =  self.result_dir + f"/{test_dl.name}_labels_preds.diffs"
             with open(diff_file, "w") as t_diffs:
                 t_diffs.write(f"code,pos,ddg,pred\n")
             with torch.no_grad():
                 for idx, batch in enumerate(test_dl.dataloader):
-                    print(f"dataset:{test_dl.name}\tGPU:{self.local_rank}\tbatch_idx:{idx+1}/{len_dataloader}\ttest:{batch[-1]}", flush=True)
                     testX, testY, code = batch
-                    testX = self.test_model.preprocess(*testX, self.local_rank)
-                    testYhat = self.test_model(*testX)
-                    testY_cpu = testY.cpu().detach()
-                    testYhat_cpu = testYhat.cpu().detach()
-                    pos = testX[-1]
-                    pos_cpu = pos.cpu().detach().item()
+                    print(f"dataset:{test_dl.name}\tGPU:{self.local_rank}\tbatch_idx:{idx+1}/{len_dataloader}\ttest:{code}", flush=True)
+                    testX, testY, code = batch
+                    first_cpu, second_cpu, pos_cpu = self.test_model.preprocess(*testX)
+                    first_gpu  =  first_cpu.to(self.local_rank)
+                    second_gpu = second_cpu.to(self.local_rank)
+                    pos_gpu    =    pos_cpu.to(self.local_rank)
+
+                    testYhat_gpu = self.test_model(first_gpu, second_gpu, pos_gpu)
+                    testY_cpu    =    testY.detach().to("cpu").item()
+                    testYhat_cpu = testYhat_gpu.detach().to("cpu").item()
+                    pos_cpu      =  pos_gpu.detach().to("cpu").item()
                     with open(diff_file, "a") as t_diffs:
-                       t_diffs.write(f"{code},{pos_cpu},{testY_cpu.item()},{testYhat_cpu.item()}\n")
-                    self.t_labels.extend(testY_cpu)
-                    self.t_preds.extend(testYhat_cpu)
-            l_t_labels = torch.tensor(self.t_labels).to("cpu")
-            l_t_preds  = torch.tensor(self.t_preds).to("cpu")
-            l_t_mse  = torch.mean(         (l_t_labels - l_t_preds)**2)
-            l_t_mae  = torch.mean(torch.abs(l_t_labels - l_t_preds)   )
+                       t_diffs.write(f"{code},{pos_cpu},{testY_cpu},{testYhat_cpu}\n")
+                    local_t_preds[idx]  = testYhat_cpu
+                    local_t_labels[idx] = testY_cpu
+            l_t_mse  = torch.mean(         (local_t_labels - local_t_preds)**2)
+            l_t_mae  = torch.mean(torch.abs(local_t_labels - local_t_preds)   )
             l_t_rmse = torch.sqrt(l_t_mse)
-            l_t_corr, pvalue = pearsonr(l_t_labels.tolist(), l_t_preds.tolist())
+            l_t_corr, pvalue = pearsonr(local_t_labels.tolist(), local_t_preds.tolist())
             self.test_maes[test_no]  = l_t_mae
             self.test_corrs[test_no] = l_t_corr
             self.test_rmses[test_no] = l_t_rmse

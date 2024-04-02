@@ -14,8 +14,6 @@ from torch.utils.data.distributed import DistributedSampler
 from transformers import T5Tokenizer
 from collections import namedtuple
 
-torch.cuda.empty_cache()
-
 #data-preprocessing step
 deletekeys = dict.fromkeys(string.ascii_lowercase)
 deletekeys["."] = None
@@ -62,19 +60,24 @@ class MSA_Dataset(Dataset):
         self.dataset_dir = dataset_dir
         self.max_tokens = max_tokens
 
-    def read_msa(self, filename_wt, mut_seq, code):
-        records_wt  = list(SeqIO.parse(filename_wt,  "fasta"))
-        records_mut = [SeqRecord(Seq(mut_seq), description=code, )]
+    def read_msa(self, filename_msa, wild_seq, mut_seq, code):
+        prot = code.split("-")[0]
+        records_msa = list(SeqIO.parse(filename_msa,  "fasta"))
+        records_mut = [SeqRecord(Seq(mut_seq),  description=code,)]
+        records_wt  = [SeqRecord(Seq(wild_seq), description=prot,)]
         #MSA = namedtuple("MSA", "description seq")
         #records_mut = [MSA(code, mut_seq)]
-        lseq = max([len(records_wt[i].seq) for i in range(len(records_wt))]) #lenght of longest seq of msa
+        lmsa = len(records_msa)
+        lseq = max([len(records_msa[i].seq) for i in range(lmsa)]) #lenght of longest seq of msa
         assert lseq < 1024
-        nseqs = self.max_tokens//(lseq + 1)
-        nseqs = min(int(nseqs), len(records_wt)) #select the numb of seq you are interested in
+        assert 2 * lseq + 2 < self.max_tokens
+        nseqs = int(self.max_tokens//(lseq + 1))
+        nseqs = min(nseqs, lmsa) #select the numb of seq you are interested in
+        #print(f"DEBUG effetive number of tokens Ntok={nseqs*(lseq+1)}, nseqs={nseqs}, lseq={lseq}, code={code}",flush=True)
         idx = list(range(1, nseqs))
-        pdb_list_wt  = [(records_wt[0].description, remove_insertions(str(records_wt[0].seq)))]#the first is included always
-        pdb_list_mut = [(records_mut[0].description,remove_insertions(str(records_mut[0].seq)))]#the first is included always
-        msa_list = [(records_wt[i].description, remove_insertions(str(records_wt[i].seq))) for i in idx]
+        pdb_list_wt  = [(records_wt[0].description, remove_insertions(str(records_wt[0].seq) ))]
+        pdb_list_mut = [(records_mut[0].description,remove_insertions(str(records_mut[0].seq)))]
+        msa_list     = [(records_msa[i].description,remove_insertions(str(records_msa[i].seq))) for i in idx]
         pdb_list_wt  = pdb_list_wt  + msa_list
         pdb_list_mut = pdb_list_mut + msa_list
         return pdb_list_wt, pdb_list_mut
@@ -83,16 +86,16 @@ class MSA_Dataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        #wild_seq = [self.df.iloc[idx]['wt_seq']]
+        wild_seq = self.df.iloc[idx]['wt_seq']
         mut_seq  = self.df.iloc[idx]['mut_seq']
-        wild_msa_path = self.df.iloc[idx]['wt_msa']
+        msa_path = self.df.iloc[idx]['wt_msa']
         #mut_msa_path  = self.df.iloc[idx]['mut_msa']
         code = self.df.iloc[idx]['code']
         pos  = self.df.iloc[idx]['pos']
         ddg  = torch.FloatTensor([self.df.iloc[idx]['ddg']])
-        wild_msa_filename = os.path.join(self.dataset_dir, wild_msa_path)
+        msa_filename = os.path.join(self.dataset_dir, msa_path)
         #mut_msa_filename  = os.path.join(self.dataset_dir, mut_msa_path )
-        wild_msa, mut_msa = self.read_msa(wild_msa_filename, mut_seq, code)
+        wild_msa, mut_msa = self.read_msa(msa_filename, wild_seq, mut_seq, code)
         return (wild_msa, mut_msa, pos), ddg, code
 
 class ProstT5_Dataset(Dataset):
@@ -121,7 +124,7 @@ class ProstT5_Dataset(Dataset):
         attention_mask = seqs_e.attention_mask
         pos = self.df.iloc[idx]['pos']
         ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
-        code = self.df.iloc[idx]['code']
+        code = str(self.df.iloc[idx]['code'])
         return (input_ids, attention_mask, pos), ddg, code
 
     def __len__(self):

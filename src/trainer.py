@@ -66,20 +66,26 @@ class Trainer:
         print(f"Epoch {epoch+1} | Training snapshot saved at {snapshot_file}")
         if save_onnx==True:
             onnx_file = self.snapshot_dir +"/onnx"+ filename +".onnx"
-            x, (input_names, output_names, dynamic_axes) = self.model.module.onnx_model_args(self.local_rank) 
-            torch.onnx.export(self.model.module, x, onnx_file, 
+            (first_cpu,second_cpu,pos_cpu), (input_names,output_names,dynamic_axes) = self.model.module.onnx_model_args()
+            first_gpu  =  first_cpu.to(self.local_rank)
+            second_gpu = second_cpu.to(self.local_rank)
+            pos_gpu    =    pos_cpu.to(self.local_rank)
+            torch.onnx.export(self.model.module, (first_gpu, second_gpu, pos_gpu), onnx_file, 
                               export_params=True, opset_version=14, do_constant_folding=True,
                               input_names=input_names, output_names=output_names, dynamic_axes=dynamic_axes)
             print(f"Epoch {epoch+1} | Training snapshot saved at {onnx_file}")
+            del first_gpu 
+            del second_gpu
+            del pos_gpu
 
     def initialize_files(self):
-        self.result_dir    = self.output_dir + "/results"
-        self.snapshot_dir  = self.output_dir + "/snapshots"
-        self.train_logfile =   self.result_dir  + f"/train_{self.train_dl.name}_metrics.log"
-        self.val_logfile   =   self.result_dir  + f"/val_{self.val_dl.name}_metrics.log"
-        self.test_logfiles = [ self.result_dir  + f"/test_{test.name}_metrics.log" for test in self.test_dls] 
-        self.seeds_file    =   self.result_dir  + "/seeds.log"
-        self.early_file    =   self.result_dir  + "/early_stopping_epoch.log"
+        self.result_dir    =  self.output_dir + "/results"
+        self.snapshot_dir  =  self.output_dir + "/snapshots"
+        self.train_logfile =  self.result_dir + f"/train_{self.train_dl.name}_metrics.log"
+        self.val_logfile   =  self.result_dir + f"/val_{self.val_dl.name}_metrics.log"
+        self.test_logfiles = [self.result_dir + f"/test_{test.name}_metrics.log" for test in self.test_dls] 
+        self.seeds_file    =  self.result_dir + "/seeds.log"
+        self.early_file    =  self.result_dir + "/early_stopping_epoch.log"
         if self.global_rank == 0:
             if not(os.path.exists(self.output_dir) and os.path.isdir(self.output_dir)):
                 os.makedirs(self.output_dir)
@@ -99,112 +105,104 @@ class Trainer:
                     t_log.write("epoch,rmse,mae,corr\n")
 
     def train_batch(self,  batch):
-        X, Y, _ = batch
-        X = self.model.module.preprocess(*X, self.local_rank)
-        Y = Y.to(self.local_rank)
-        with autocast(dtype=torch.bfloat16):
-            Y_hat = self.model(*X)
-            loss   = self.loss_fn(Y_hat, Y)
-        torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 0.1)
+        X, Y, code = batch
+        first_cpu, second_cpu, pos_cpu = self.model.module.preprocess(*X)
+        first_gpu  =  first_cpu.to(self.local_rank)
+        second_gpu = second_cpu.to(self.local_rank)
+        pos_gpu    =    pos_cpu.to(self.local_rank)
+        Y_gpu    = Y.to(self.local_rank)
+        #print_peak_memory(f"DEBUG_A: code={code}, first=({first_gpu.shape},{first_gpu.device}) second=({second_gpu.shape},{second_gpu.device}), Y_gpu=({Y_gpu.shape},{Y_gpu.device})",self.local_rank)
         self.optimizer.zero_grad()
+        with autocast(dtype=torch.float16):
+            Yhat_gpu = self.model(first_gpu, second_gpu, pos_gpu)
+            loss     = self.loss_fn(Yhat_gpu, Y_gpu)
+            #print_peak_memory(f"DEBUG_B: code={code}, first=({first_gpu.shape},{first_gpu.device}) second=({second_gpu.shape},{second_gpu.device}), Y_gpu=({Y_gpu.shape},{Y_gpu.device}), Yhat_gpu=({Yhat_gpu.shape},{Yhat_gpu.device}), loss={loss}", self.local_rank)
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)
+        torch.nn.utils.clip_grad_norm_(parameters = self.model.parameters(), max_norm = 10.)
         self.scaler.step(self.optimizer)
-        self.scheduler.step()
         self.scaler.update()
-        return Y_hat, Y
+        Yhat_cpu = Yhat_gpu.detach().to("cpu").item()
+        Y_cpu    =    Y_gpu.detach().to("cpu").item()
+        del first_gpu
+        del second_gpu
+        del pos_gpu
+        del Y_gpu  
+        del Yhat_gpu
+        #torch.cuda.empty_cache()
+        return Yhat_cpu, Y_cpu
 
     def all_gather_lab_preds(self, preds, labels):
-        size   = dist.get_world_size()
-        prediction_list = [torch.zeros_like(preds).to(self.local_rank)  for _ in range(size)]
-        labels_list     = [torch.zeros_like(labels).to(self.local_rank) for _ in range(size)]
-        dist.all_gather(prediction_list, preds)
-        dist.all_gather(labels_list, labels)
-        global_preds  = torch.tensor([], dtype=torch.float32)
-        global_labels = torch.tensor([], dtype=torch.float32)
-        for t1 in prediction_list:
-            t1 = t1.cpu()
-            global_preds = torch.cat((global_preds,t1), dim=0)
-        for t2 in labels_list:
-            t2 = t2.cpu()
-            global_labels = torch.cat((global_labels,t2),dim=0)
-        del prediction_list
-        del labels_list
-        return global_preds, global_labels
+        size       = dist.get_world_size()
+        preds_gpu  = preds.to(self.local_rank)
+        labels_gpu = labels.to(self.local_rank)
+        prediction_list_gpu = [torch.zeros_like(preds).to(self.local_rank)  for _ in range(size)]
+        labels_list_gpu     = [torch.zeros_like(labels).to(self.local_rank) for _ in range(size)]
+        dist.all_gather(prediction_list_gpu, preds_gpu)
+        dist.all_gather(labels_list_gpu, labels_gpu)
+        
+        global_preds_cpu  = torch.tensor([], dtype=torch.float32).to("cpu")
+        global_labels_cpu = torch.tensor([], dtype=torch.float32).to("cpu")
+        for t1_gpu in prediction_list_gpu:
+            t1_cpu=t1_gpu.to("cpu")
+            global_preds_cpu = torch.cat((global_preds_cpu,t1_cpu), dim=0)
+        for t2_gpu in labels_list_gpu:
+            t2_cpu=t2_gpu.to("cpu")
+            global_labels_cpu = torch.cat((global_labels_cpu,t2_cpu),dim=0)
+        
+        for t1_gpu in prediction_list_gpu:
+            del t1_gpu
+        for t2_gpu in labels_list_gpu:
+            del t2_gpu
+        del prediction_list_gpu
+        del labels_list_gpu
+        del preds_gpu
+        del labels_gpu
+        
+        return global_preds_cpu, global_labels_cpu
 
     def train_epoch(self, epoch, train_proteindataloader):
         self.scaler = torch.cuda.amp.GradScaler()
         len_dataloader = len(train_proteindataloader.dataloader)
-        t_preds, t_labels = torch.zeros(len_dataloader).to(self.local_rank), torch.zeros(len_dataloader).to(self.local_rank)
+        local_t_preds, local_t_labels = torch.zeros(len_dataloader), torch.zeros(len_dataloader)
         self.model.train()
         train_proteindataloader.dataloader.sampler.set_epoch(epoch)
         for idx, batch in enumerate(train_proteindataloader.dataloader):
+            #print(f"({self.local_rank}) idx={idx} / {len_dataloader}", flush=True)
             Yhat, Y = self.train_batch(batch)
-            Yhat = Yhat.detach()
-            Y = Y.detach()
-            t_preds[idx] = Yhat
-            t_labels[idx] = Y
-        global_t_preds, global_t_labels = self.all_gather_lab_preds(t_preds, t_labels)
-        t_labels        = t_labels.cpu()
-        t_preds         = t_preds.cpu()
-        return global_t_labels, global_t_preds, t_labels, t_preds
+            local_t_preds[idx] = Yhat
+            local_t_labels[idx] = Y
+        global_t_preds, global_t_labels = self.all_gather_lab_preds(local_t_preds, local_t_labels)
+        #print(f"DEBUG: global_t_preds=({global_t_preds.shape},{global_t_preds.device})\nglobal_t_labels=({global_t_labels.shape},{global_t_labels.device})\nlocal_t_preds=({local_t_preds.shape},{local_t_preds.device})\tlocal_t_labels=({local_t_labels.shape},{local_t_labels.device})", flush=True)
+        return global_t_labels, global_t_preds, local_t_labels, local_t_preds
 
     def valid_batch(self, batch):
         X, Y, _ = batch
-        Y = Y.to(self.local_rank)
-        X = self.model.module.preprocess(*X, self.local_rank)
-        Yhat = self.model(*X)
-        return Yhat, Y
+        first_cpu, second_cpu, pos_cpu = self.model.module.preprocess(*X)
+        first_gpu  =  first_cpu.to(self.local_rank)
+        second_gpu = second_cpu.to(self.local_rank)
+        pos_gpu    =    pos_cpu.to(self.local_rank)
+        Yhat_gpu = self.model(first_gpu, second_gpu, pos_gpu)
+        Yhat_cpu = Yhat_gpu.detach().to("cpu").item()
+        Y_cpu    =        Y.detach().to("cpu").item()
+        del first_gpu
+        del second_gpu
+        del pos_gpu
+        del Yhat_gpu 
+        #torch.cuda.empty_cache()
+        return Yhat_cpu, Y_cpu
 
     def valid_epoch(self, epoch, val_proteindataloader):
         self.model.eval()
         len_dataloader = len(val_proteindataloader.dataloader)
-        v_preds, v_labels = torch.zeros(len_dataloader).to(self.local_rank), torch.zeros(len_dataloader).to(self.local_rank)
+        local_v_preds, local_v_labels = torch.zeros(len_dataloader), torch.zeros(len_dataloader)
         with torch.no_grad():
             for idx, batch in enumerate(val_proteindataloader.dataloader):
                 Yhat, Y = self.valid_batch(batch)
-                Yhat    = Yhat.detach()
-                Y       = Y.detach()
-                v_preds[idx] = Yhat
-                v_labels[idx]= Y
-        global_v_preds, global_v_labels = self.all_gather_lab_preds(v_preds, v_labels)
-        v_labels        = v_labels.cpu()
-        v_preds         = v_preds.cpu()
-        return global_v_labels, global_v_preds, v_labels, v_preds
-
-#    def difference_labels_preds(self, model, dls, filename):
-#        world_size = dist.get_world_size()
-#        model.eval()
-#        for no, dl in enumerate(dls):
-#            tmp_filenames = [self.result_dir + f"/{dl.name}_" + filename + f".{i}.diffs" for i in range(world_size)]
-#            output_file   =  self.result_dir + f"/{dl.name}_" + filename + ".diffs"
-#            with open(tmp_filenames[self.global_rank], "w") as diffs:
-#                diffs.write(f"code,pos,ddg,pred\n")
-#            with torch.no_grad():
-#                for idx, batch in enumerate(dl.dataloader):
-#                    X, Y, code = batch
-#                    X = model.module.preprocess(*X, self.local_rank)
-#                    Yhat = model(*X)
-#                    Y_cpu = Y.detach().cpu().item()
-#                    Yhat_cpu = Yhat.detach().cpu().item()
-#                    pos = X[-1]
-#                    pos_cpu = pos.detach().cpu().item()
-#                    with open(tmp_filenames[self.global_rank], "a") as diffs:
-#                       diffs.write(f"{code},{pos_cpu},{Y_cpu},{Yhat_cpu}\n")
-#            dist.barrier()
-#            if self.global_rank==0:
-#                dfs = [None] * world_size
-#                for i in range(world_size):
-#                    dfs[i]=pd.read_csv(tmp_filenames[i])
-#                res_df = pd.concat(dfs, axis=0)
-#                res_df.columns=['code','pos','ddg','pred']
-#                res_df = res_df.sort_values(by=['code'])
-#                res_df.to_csv(output_file, index=False)
-#                for i in range(world_size):
-#                    if os.path.exists(tmp_filenames[i]):
-#                        os.remove(tmp_filenames[i])
-#                del dfs
-#            dist.barrier() 
+                local_v_preds[idx] = Yhat
+                local_v_labels[idx]= Y
+        global_v_preds, global_v_labels = self.all_gather_lab_preds(local_v_preds, local_v_labels)
+        return global_v_labels, global_v_preds, local_v_labels, local_v_preds
 
     def train(self, model, train_dl, val_dl, test_dls):
         print(f"I am rank {self.local_rank}", flush=True)
@@ -255,7 +253,7 @@ class Trainer:
             print_peak_memory(f"Epoch {epoch+1}: train completed", self.global_rank)
             dist.barrier()
             if self.global_rank == 0:
-                print(f"Validation ongoing on Correlation for {self.val_dl.name}", flush=True)
+                print(f"Validation ongoing on MAE for {self.val_dl.name}", flush=True)
                 self._save_snapshot("/checkpoint", epoch, save_onnx=False)
             dist.barrier()
 
@@ -329,6 +327,8 @@ class Trainer:
         
         dist.barrier()
         if self.global_rank == 0:
+            CHECKPOINT_PATH = self.snapshot_dir + "/checkpoint.pt"
+            os.remove(CHECKPOINT_PATH)
             with open(self.early_file, "w") as early_log:
                 early_log.write(f"Saved epoch (best MAE on validation set): {self.best_epoch}\n")
             for epoch in range(0, self.stopped_epoch):

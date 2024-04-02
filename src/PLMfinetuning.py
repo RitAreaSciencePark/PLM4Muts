@@ -69,11 +69,11 @@ def main(output_dir,dataset_dir,
                                 max_tokens=max_tokens) for test_df, test_name in zip(test_dfs, test_names)] 
         collate_function = custom_collate
 
-    train_dl = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False,
+    train_dl = ProteinDataLoader(train_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True,
                                  sampler=DistributedSampler(train_ds),  custom_collate_fn=collate_function)
-    val_dl   = ProteinDataLoader(val_ds,  batch_size=1, num_workers=0, shuffle=False, pin_memory=False, 
+    val_dl   = ProteinDataLoader(val_ds,  batch_size=1, num_workers=0, shuffle=False, pin_memory=True, 
                                   sampler=DistributedSampler(val_ds),   custom_collate_fn=collate_function)
-    test_dls = [ProteinDataLoader(test_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False,
+    test_dls = [ProteinDataLoader(test_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True,
                                   sampler=DistributedSampler(test_ds), custom_collate_fn=collate_function) for test_ds in test_dss]
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
