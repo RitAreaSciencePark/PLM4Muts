@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
+
 from pathlib import Path
 from models.models import *
 from dataloader  import *
@@ -9,6 +12,9 @@ from tester import *
 
 def main(output_dir, dataset_dir, model_name, max_length, max_tokens, snapshot_file):
     test_dir = dataset_dir + "/test"
+    os.environ["HF_HOME"] = "./src/models/models_cache"
+    os.environ['TRANSFORMERS_OFFLINE']="1"
+    torch.hub.set_dir("./src/models/models_cache")
 
     if model_name.rsplit("_")[0]=="ProstT5":
         test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/translated_databases")

@@ -38,3 +38,10 @@ $> pip install -r requirements.txt
 ```
 
 
+module load python
+module load cuda
+module load nvhpc
+python3 -m venv PLM4Muts_venv --system-site-packages
+source PLM4Muts_venv/bin/activate
+pip install -r requirements.txt
+

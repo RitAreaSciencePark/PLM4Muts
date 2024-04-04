@@ -2,7 +2,7 @@
 output_dir: "runs/S3730_MSA"
 dataset_dir: "datasets/S3730"
 model: "MSA_Finetuning"
-learning_rate: 5.0e-6
+learning_rate: 5.0e-4
 max_epochs: 20
 loss_fn: "L1"
 seeds: [10, 11, 12]

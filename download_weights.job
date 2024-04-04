@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+#SBATCH --job-name=download
+#SBATCH -p lrd_all_serial
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=2:00:00
+#SBATCH -o download.%A.out
+#SBATCH -e download.%A.error
+#SBATCH -A cin_staff
+#SBATCH --wait-all-nodes=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=30GB
+CURRENT_DIR=${SLURM_SUBMIT_DIR}
+head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
+
+
+module purge
+module load python
+module load cuda
+module load nvhpc
+source PLM4Muts_venv/bin/activate
+srun python3 src/download_weights.py
+

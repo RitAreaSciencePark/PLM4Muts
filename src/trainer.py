@@ -230,7 +230,7 @@ class Trainer:
         self.stopped_epoch  = self.max_epochs
         self.best_epoch     = self.max_epochs 
         # Start epoch loop
-        print_peak_memory("Start finetuning", self.global_rank)
+        print_peak_memory("Start finetuning", self.local_rank)
         for epoch in range(self.epochs_run, self.max_epochs):
             g_t_labels, g_t_preds, l_t_labels, l_t_preds = self.train_epoch(epoch, self.train_dl)
             g_t_mse  = torch.mean(         (g_t_labels - g_t_preds)**2)
@@ -250,7 +250,7 @@ class Trainer:
                   f"corr = {g_t_corr} ({l_t_corr})", flush=True)
             
             dist.barrier()
-            print_peak_memory(f"Epoch {epoch+1}: train completed", self.global_rank)
+            #print_peak_memory(f"Epoch {epoch+1}: train completed", self.local_rank)
             dist.barrier()
             if self.global_rank == 0:
                 print(f"Validation ongoing on MAE for {self.val_dl.name}", flush=True)
@@ -284,7 +284,7 @@ class Trainer:
                 counter = 0
             
             dist.barrier()
-            print_peak_memory(f"Epoch {epoch+1}: validation completed", self.global_rank)
+            #print_peak_memory(f"Epoch {epoch+1}: validation completed", self.local_rank)
             dist.barrier()
 
             for test_no, test_dl in enumerate(self.test_dls):
@@ -304,7 +304,7 @@ class Trainer:
                       f"rmse = {self.test_rmses[test_no,epoch]} ({l_t_rmse})\t"
                       f"mae = {self.test_maes[test_no,epoch]} ({l_t_mae})\t"
                       f"corr = {self.test_corrs[test_no,epoch]} ({l_t_corr})", flush=True)
-            print_peak_memory(f"Epoch {epoch+1}: test completed", self.global_rank)
+            #print_peak_memory(f"Epoch {epoch+1}: test completed", self.local_rank)
 
             dist.barrier()
             if self.val_mae[epoch] > (min_validation_loss + min_delta):
@@ -313,7 +313,7 @@ class Trainer:
                     print(f"Early Stopping counter increased at epoch {epoch+1} to {counter}: Cur_Val_MAE={self.val_mae[epoch]}>{min_validation_loss + min_delta}=Prev_Val_MAE ({min_validation_loss}) + min_delta ({min_delta})", flush=True)
             
             dist.barrier()
-            print_peak_memory(f"Epoch {epoch+1}: epoch completed", self.global_rank)
+            #print_peak_memory(f"Epoch {epoch+1}: epoch completed", self.local_rank)
             if counter >= patience:
                 if self.global_rank == 0:
                     print(f"Early Stopping at epoch {epoch + 1}: counter={counter} >= {patience}=patience", flush=True)
@@ -325,6 +325,7 @@ class Trainer:
                     print(f"Early Stopping counter at epoch {epoch+1}: {counter}/{patience}", flush=True)
                 dist.barrier()
         
+        print_peak_memory(f"Finetuning completed", self.local_rank)
         dist.barrier()
         if self.global_rank == 0:
             CHECKPOINT_PATH = self.snapshot_dir + "/checkpoint.pt"

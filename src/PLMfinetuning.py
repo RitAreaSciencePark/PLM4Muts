@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
 from pathlib import Path
 import random
 import torch
@@ -17,6 +19,9 @@ def main(output_dir,dataset_dir,
          max_tokens):
     torch.cuda.empty_cache()
     ddp_setup()
+    os.environ["HF_HOME"] = "./src/models/models_cache"
+    os.environ['TRANSFORMERS_OFFLINE']="1"
+    torch.hub.set_dir("./src/models/models_cache")
     # fix the seed for reproducibility
     seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
     torch.manual_seed(seed)

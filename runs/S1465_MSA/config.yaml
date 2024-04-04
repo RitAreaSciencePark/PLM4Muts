@@ -2,7 +2,7 @@
 output_dir: "runs/S1465_MSA"
 dataset_dir: "datasets/S1465"
 model: "MSA_Finetuning"
-learning_rate: 5.0e-6
+learning_rate: 1.0e-4
 max_epochs: 20
 loss_fn: "L1"
 max_length: 1024
