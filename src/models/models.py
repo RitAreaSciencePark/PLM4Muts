@@ -165,7 +165,7 @@ class ProstT5_Finetuning(nn.Module):
     def __init__(self):
         super().__init__()
         self.name="ProstT5_Finetuning"
-        self.prostt5 = T5EncoderModel.from_pretrained("/leonardo_scratch/large/userinternal/mcelori1/ProteinLanguageModels/PLM4Muts/src/models/models_cache/models--Rostlab--ProstT5/snapshots/d7d097d5bf9a993ab8f68488b4681d6ca70db9e5/", local_files_only=True)
+        self.prostt5 = T5EncoderModel.from_pretrained("./src/models/models_cache/models--Rostlab--ProstT5/snapshots/d7d097d5bf9a993ab8f68488b4681d6ca70db9e5/", local_files_only=True)
         self.fc1 = nn.Linear(4096,HIDDEN_UNITS)
         self.fc2 = nn.Linear(HIDDEN_UNITS,1)
         self.relu=nn.ReLU(inplace=True)
