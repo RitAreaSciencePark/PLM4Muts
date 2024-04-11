@@ -6,10 +6,11 @@ import datetime
 
 # Global dictionaries for Models, Losses and Optimizers
 models = {"ESM2_Finetuning":    ESM2_Finetuning,
-          "MSA_Baseline":       MSA_Baseline,
-          #"MSA_Baseline2":      MSA_Baseline2,
+          "ESM2_Baseline":      ESM2_Baseline,
           "MSA_Finetuning":     MSA_Finetuning,
+          "MSA_Baseline":       MSA_Baseline,
           "ProstT5_Finetuning": ProstT5_Finetuning,
+          "ProstT5_Baseline":   ProstT5_Baseline,
         }
 
 losses = {"L1":  torch.nn.functional.l1_loss,

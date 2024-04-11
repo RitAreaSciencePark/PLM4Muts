@@ -1,3 +1,5 @@
+import sys
+sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
 from argparser import *
 import argparse
 import csv
@@ -13,7 +15,6 @@ import re
 import scipy
 from scipy import stats
 from scipy.stats import pearsonr
-import sys
 import string
 from transformers import T5Tokenizer, AutoModelForSeq2SeqLM
 import torch
@@ -49,9 +50,10 @@ class ProstT5Dataset(Dataset):
             self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         else:
             self.max_length = max(wt_lengths)
-
-        self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
-
+        
+        self.tokenizer = T5Tokenizer.from_pretrained("/leonardo_scratch/large/userinternal/mcelori1/ProteinLanguageModels/PLM4Muts/src/models/models_cache/models--Rostlab--ProstT5/snapshots/d7d097d5bf9a993ab8f68488b4681d6ca70db9e5/", local_files_only=True, do_lower_case=False)
+        #self.tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
+        
     def __getitem__(self, idx):
         seqs     = [self.df.iloc[idx]['wt_seq'], self.df.iloc[idx]['mut_seq']]
         wt_seq   = seqs[0]
@@ -118,7 +120,9 @@ def translate(dataloader, model, local_rank):
     workers = 0
     batch_size = 1
     world_size = dist.get_world_size()
-    tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
+    #tokenizer = T5Tokenizer.from_pretrained('Rostlab/ProstT5', do_lower_case=False)
+    tokenizer = T5Tokenizer.from_pretrained("/leonardo_scratch/large/userinternal/mcelori1/ProteinLanguageModels/PLM4Muts/src/models/models_cache/models--Rostlab--ProstT5/snapshots/d7d097d5bf9a993ab8f68488b4681d6ca70db9e5/", local_files_only=True, do_lower_case=False)
+
     noGood = "ARNDBCEQZGHILKMFPSTWYVXOU"
     bad_words = tokenizer( [" ".join(list(noGood))], add_special_tokens=False).input_ids
 
@@ -178,6 +182,10 @@ class ProteinDataLoader():
 
 def main(input_file, output_file, max_length, seeds):
     ddp_setup()
+    os.environ["HF_HOME"] = "./src/models/models_cache"
+    os.environ['TRANSFORMERS_OFFLINE']="1"
+    torch.hub.set_dir("./src/models/models_cache")
+
     local_rank  = int(os.environ["LOCAL_RANK"])
     global_rank = int(os.environ["RANK"])
     world_size = dist.get_world_size()
@@ -198,7 +206,8 @@ def main(input_file, output_file, max_length, seeds):
     ds = ProstT5Dataset(df, infile_name, max_length)
     Dsampler = DistributedSampler(ds,shuffle=False,drop_last=True)
     dl = ProteinDataLoader(ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=False, sampler=Dsampler)
-    model = AutoModelForSeq2SeqLM.from_pretrained("Rostlab/ProstT5")
+    #model = AutoModelForSeq2SeqLM.from_pretrained("Rostlab/ProstT5")
+    model = AutoModelForSeq2SeqLM.from_pretrained(self.prostt5 = T5EncoderModel.from_pretrained("/leonardo_scratch/large/userinternal/mcelori1/ProteinLanguageModels/PLM4Muts/src/models/models_cache/models--Rostlab--ProstT5/snapshots/d7d097d5bf9a993ab8f68488b4681d6ca70db9e5/", local_files_only=True)
     model.to(local_rank)
     model = DDP(model, device_ids=[local_rank])
     result=translate(dl, model, local_rank)

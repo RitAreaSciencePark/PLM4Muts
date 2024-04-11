@@ -1,23 +1,27 @@
-runs/S1465_MSA/snapshots/
-runs/S1465_ESM2/snapshots/
-runs/S1465_ProstT5/snapshots/
-runs/S157479_MSA/snapshots/
-runs/S3730_MSA/snapshots/
-runs/S3730_MSA_2DGX/snapshots/
+runs/S1465_MSA_Finetuning/snapshots/
+runs/S1465_MSA_Baseline/snapshots/
+runs/S1465_ESM2_Finetuning/snapshots/
+runs/S1465_ESM2_Baseline/snapshots/
+runs/S1465_ProstT5_Finetuning/snapshots/
+runs/S1465_ProstT5_Baseline/snapshots/
 
-runs/S1465_ESM2/results/
-runs/S1465_MSA/results/
-runs/S1465_ProstT5/results/
-runs/S157479_MSA/results/
-runs/S3730_MSA/results/
-runs/S3730_MSA_2DGX/results/
+runs/S1465_r_MSA_Finetuning/snapshots/
+runs/S1465_s_MSA_Finetuning/snapshots/
+
+runs/S3730_MSA_Finetuning/snapshots/
+runs/S3730_MSA_Baseline/snapshots/
+runs/S3730_ESM2_Finetuning/snapshots/
+runs/S3730_ESM2_Baseline/snapshots/
+
+runs/S157479_MSA_Finetuning/snapshots/
+runs/S157479_MSA_Baseline/snapshots/
+runs/S157479_ESM2_Finetuning/snapshots/
+runs/S157479_ESM2_Baseline/snapshots/
 
 PLM4Muts_venv/
 
 *.error
 *.out
 *.pt
-*.diffs
-*.log
-*.png
-*.ipynb
+
+

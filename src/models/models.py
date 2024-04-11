@@ -77,73 +77,15 @@ class ESM2_Finetuning(nn.Module):
         outputs = self.dropout(outputs)
         return self.fc2(outputs)
 
-#class MSA_Baseline2(nn.Module):
-#
-#    def __init__(self):
-#        super().__init__()
-#        self.name="MSA_Baseline2"
-#        self.msa_transformer, msa_alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
-#        self.msa_batch_converter = msa_alphabet.get_batch_converter()
-#        self.fc1 = nn.Linear(1536,HIDDEN_UNITS)
-#        self.fc2 = nn.Linear(HIDDEN_UNITS,1)
-#        self.relu=nn.ReLU(inplace=True)
-#        self.dropout = nn.Dropout(0.2)
-#        nn.init.xavier_normal_(self.fc1.weight)
-#        nn.init.zeros_(self.fc1.bias)
-#        nn.init.xavier_normal_(self.fc2.weight)
-#        nn.init.zeros_(self.fc2.bias)
-#        for param in self.msa_transformer.parameters():
-#            param.requires_grad = False
-#
-#    def onnx_model_args(self):
-#        input_names = ["wt", "mut", "pos"]
-#        output_names = ["ddg"]
-#        wt  = torch.tensor([[[ 0, 10, 14, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
-#                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]])
-#        
-#        mut = torch.tensor([[[ 0, 10, 17, 13,  5,  5,  6, 21,  7, 17, 12,  5,  9,  5,  7, 16, 16],
-#                             [18, 15, 11, 15, 12,  5,  9,  7, 11, 11,  8,  4, 15, 16,  9,  5,  9]]])
-#        
-#        pos  = torch.tensor([1])
-#        dynamic_axes = {"wt":{ 1: "N", 2: "L"}, "mut":{ 1: "N", 2: "L"}}
-#        return (wt, mut, pos), (input_names, output_names, dynamic_axes) 
-#
-#    def preprocess(self, wild_seq_msa, mut_seq_msa, pos):
-#        _, _, wild_msa_batch_tokens = self.msa_batch_converter(wild_seq_msa) 
-#        _, _, mut_msa_batch_tokens  = self.msa_batch_converter(mut_seq_msa) 
-#        return wild_msa_batch_tokens, mut_msa_batch_tokens, pos
-#
-#    def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
-#        batch_size   = wild_msa_batch_tokens.shape[0]
-#        batch_size_m = mut_msa_batch_tokens.shape[0]
-#        N   = wild_msa_batch_tokens.shape[1]
-#        N_m = mut_msa_batch_tokens.shape[1]
-#        L   = wild_msa_batch_tokens.shape[2]
-#        L_m = wild_msa_batch_tokens.shape[2]
-#        assert batch_size == 1
-#        assert batch_size_m == 1
-#        assert N == N_m
-#        assert L == L_m
-#        # wild_msa_batch_tokens.shape = torch.Size([1, 98, 163]) = torch.Size([batch_size, N, L])
-#        # wild_msa_batch_tokens.dtype = torch.int64
-#        # mut_msa_batch_tokens.shape  = torch.Size([1, 98, 163]) = torch.Size([batch_size_m, N_m, L_m])
-#        # mut_msa_batch_tokens.dtype  = torch.int64
-#        # pos.shape = torch.Size([1])
-#        # pos.dtype = torch.int64
-#        wild_msa_reps=self.msa_transformer(wild_msa_batch_tokens,repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
-#        mut_msa_reps =self.msa_transformer(mut_msa_batch_tokens, repr_layers=[12])['representations'][12].reshape(batch_size,N,L,-1)
-#        #wild_msa_reps = wild_msa_reps.reshape(batch_size, N, L, 768)
-#        #mut_msa_reps  =  mut_msa_reps.reshape(batch_size_m, N_m, L_m, 768)
-#        wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
-#        mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
-#        wild_msa_reps_m = wild_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
-#        mut_msa_reps_m  =  mut_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
-#        #msa_reps_p = wild_msa_reps_p - mut_msa_reps_p
-#        #msa_reps_m = wild_msa_reps_m - mut_msa_reps_m
-#        outputs = torch.cat((wild_msa_reps_p - mut_msa_reps_p, wild_msa_reps_m - mut_msa_reps_m), dim=1)
-#        outputs = self.relu(self.fc1(outputs))
-#        outputs = self.dropout(outputs)
-#        return self.fc2(outputs)
+
+class ESM2_Baseline(ESM2_Finetuning):
+    def __init__(self):
+        ESM2_Finetuning.__init__(self)
+        self.name="ESM2_Baseline"
+        for param in self.esm_transformer.parameters():
+            param.requires_grad = False
+
+
 
 class MSA_Finetuning(nn.Module):
 
@@ -296,5 +238,14 @@ class ProstT5_Finetuning(nn.Module):
         outputs = self.dropout(outputs)
         outputs = self.fc2(outputs)
         return outputs
+
+
+class ProstT5_Baseline(ProstT5_Finetuning):
+    def __init__(self):
+        ProstT5_Finetuning.__init__(self)
+        self.name="ProstT5_Baseline"
+        for param in self.prostt5.parameters():
+            param.requires_grad = False
+
 
 
