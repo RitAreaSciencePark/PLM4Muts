@@ -70,7 +70,7 @@ The suggested procedure to install the dependencies on Leonardo is the following
 ```
 $> module load python cuda nvhpc
 $> python3 -m venv PLM4Muts_venv --system-site-packages
-$> PLM4Muts_venv/bin/activate
+$> source PLM4Muts_venv/bin/activate
 $> pip install -r requirements.txt 
 ```
 
