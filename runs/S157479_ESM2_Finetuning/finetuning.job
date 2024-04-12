@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:4
 #SBATCH --time=23:00:00
-#SBATCH -o run.%A.out
+#SBATCH -o run.%A.output
 #SBATCH -e run.%A.error
 #SBATCH -A cin_staff
 #SBATCH --wait-all-nodes=1

@@ -21,7 +21,7 @@ runs/S157479_ESM2_Baseline/snapshots/
 PLM4Muts_venv/
 
 *.error
-*.out
+*.output
 *.pt
 
 

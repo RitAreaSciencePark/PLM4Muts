@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=2:00:00
-#SBATCH -o download.%A.out
+#SBATCH -o download.%A.output
 #SBATCH -e download.%A.error
 #SBATCH -A cin_staff
 #SBATCH --wait-all-nodes=1
@@ -15,7 +15,7 @@ CURRENT_DIR=${SLURM_SUBMIT_DIR}
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
 
-
+mkdir -p src/models/models_cache
 module purge
 module load python
 module load cuda

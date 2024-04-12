@@ -1,0 +1,12 @@
+[Info] output_dir:	runs/S3730_ESM2_Finetuning	<class 'str'>
+[Info] loss_fn_name:	L1	<class 'str'>
+[Info] learning rate:	0.001	<class 'float'>
+[Info] seeds:	[10, 11, 12]	<class 'list'>
+[Info] max_epochs:	20	<class 'int'>
+[Info] model_name:	ESM2_Finetuning	<class 'str'>
+[Info] optimizer_name:	AdamW	<class 'str'>
+[Info] train_dir:	datasets/S3730/train	<class 'str'>
+[Info] val_dir:	datasets/S3730/validation	<class 'str'>
+[Info] test_dir:	datasets/S3730/test	<class 'str'>
+[Info] max_length:	1024	<class 'int'>
+[Info] Total time for Finetuning: 0:19:15.372260
