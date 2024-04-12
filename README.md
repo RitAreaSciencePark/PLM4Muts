@@ -81,7 +81,6 @@ For this reasons, we dowloaded the weights in the `src/models/models_cache/` dir
 
 ### Data Format and Structure
 
-# Data Format and Structure
 
 Data must be in csv format. The following columns must be complete and specified in the header:
 
@@ -94,7 +93,7 @@ Each subdir must contain the `database/db_name.csv` and `MSA_train_name` directo
 For the inference only the test set is needed.
 
 
-# Execution
+### Execution
 
 For training, associate the experiments with a directory for example `runs/experiment_name`. 
 This must contain:
@@ -116,10 +115,8 @@ optimizer:
   name: "AdamW"
   weight_decay: 0.01
   momentum: 0.
-
 MSA:
   max_tokens: 16000
-
 snapshot_file: "runs/ experiment_name/snapshots/MSA_Finetuning.pt"
 ```
 
@@ -131,6 +128,32 @@ The possible options for the model field are:
 - `MSA_Baseline`
 - `ESM2_Baseline`
 - `PROST5_Baseline`
+
+The possible options for the `loss_fn` field are:
+
+- "L1"
+- "MSE"
+
+The `max_length` parameter regulates the max length of the sequences that can be loaded in memory.
+That is, sequences with length greater than `max_length` are discarded.
+
+Seeds consists of a list of three integers. The final seed per GPU is computed according to:
+
+`seed = seeds[0] * (seeds[1] + seeds[2] * GPU_rank)`
+
+The possible options for rhe optimizer field are:
+
+- "Adam"
+- "AdamW"
+- "SGD"
+
+For `AdamW` and `SGD` one can also specify the `weight_decay` parameter.
+
+For `SGD` one can eventually specify the `momentum` parameter.
+
+The `max_tokens` parameters is effective only for the MSA case and specifies the max number of tokens that can be loaded in memory (that is `length x depth`).
+
+Too large values of `max_tokens` can result in memory issues such as `CUDA_MEMORY_ERROR`.   
 
 Outputs can be found in `runs/experiment_name/results/` and consists of the following files:
 
