@@ -141,7 +141,7 @@ Seeds consists of a list of three integers. The final seed per GPU is computed a
 
 `seed = seeds[0] * (seeds[1] + seeds[2] * GPU_rank)`
 
-The possible options for rhe optimizer field are:
+The possible options for the optimizer field are:
 
 - "Adam"
 - "AdamW"
