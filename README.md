@@ -84,9 +84,9 @@ For this reasons, we dowloaded the weights in the `src/models/models_cache/` dir
 
 Data must be in csv format. The following columns must be complete and specified in the header:
 
-** 'pdb_id', 'code', 'pos', 'wt_seq', 'mut_seq', 'wt_msa', 'ddg' ** 
+- 'pdb_id', 'code', 'pos', 'wt_seq', 'mut_seq', 'wt_msa', 'ddg'
 
-For training, create a directory associated with the experiment in datasets/train_name containing the following subdirectories: train, test and validation. 
+For training, create a directory associated with the experiment in `datasets/train_name` containing the following subdirectories: **train**, **test** and **validation**. 
 
 Each subdir must contain the `database/db_name.csv` and `MSA_train_name` directory with the wild type MSA.
 
@@ -171,7 +171,7 @@ Outputs can be found in `runs/experiment_name/results/` and consists of the foll
 
 - `val_db_val_name_metrics.log`: rmse, mae, corr on validation set for all training epochs
 
-- `seeds.log`: brief description
+- `seeds.log`: seeds parameter used for the run
 
 - `epochs_rsme.png`
 
