@@ -1,47 +1,160 @@
+The code provided has been tested on the Booster partition of Leonardo, the pre-exascale Tier-0 EuroHPC supercomputer, at CINECA and on the DGX partition of Orfeo, the supercomputer hosted at AREA Science Park.
+
+### Hardware requirements
+Specifically, we tested the finetuning on the following architectures:
+
+- Leonardo Booster one-node configuration:
+	- Processors: single socket 32-core Intel Xeon Platinum 8358 CPU, 2.60GHz (Ice Lake)
+	- RAM: 512 GB DDR4 3200 MHz 
+	- Accelerators: 4x NVIDIA custom Ampere A100 GPU 64GB HBM2e, NVLink 3.0 (200GB/s)
+	- Network: 2 x dual port HDR100 per node (400Gbps/node) 
+	- All the nodes are interconnected through an Nvidia Mellanox network (Dragon Fly+).
+
+- Orfeo DGX one-node configuration:
+	- Processors: 2 x 64-core AMD EPYC 7H12 (2.6 GHz base, 3.3 GHz boost)
+	- RAM: 1024 GB DDR4 3200 MT/s
+	- Accelerators: 8x NVIDIA Ampere A100 SXM GPU 40GB HBM2e, NVLink 3.0 ?? (200GB/s)
+
+
+### Software requirements
+
+The software stack on Leonardo is as follows
+
 ```
-srun --nodes=1 --ntasks-per-node=1 -A lade --mem=40GB --ntasks-per-socket=1  --sockets-per-node=1 --gpus=1 --gpus-per-node=1 --gpus-per-socket=1 --cpus-per-task=32 -p DGX   -w dgx002 --time=4:01:00  --pty bash
+$> srun --nodes=1 --ntasks-per-node=4 --cpus-per-task=8 --gres=gpu:4 -p boost_usr_prod --mem=450GB --time 02:50:00 --pty /bin/bash
+$> module load python cuda nvhpc
 ```
+
+Regarding the operating system, we tested the code with the following OS
 
 ```
 $> cat /etc/os-release
+NAME="Red Hat Enterprise Linux"
+VERSION="8.7 (Ootpa)"
+ID="rhel"
+ID_LIKE="fedora"
+VERSION_ID="8.7"
+PLATFORM_ID="platform:el8"
+PRETTY_NAME="Red Hat Enterprise Linux 8.7 (Ootpa)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:redhat:enterprise_linux:8::baseos"
+HOME_URL="https://www.redhat.com/"
+DOCUMENTATION_URL="https://access.redhat.com/documentation/red_hat_enterprise_linux/8/"
+BUG_REPORT_URL="https://bugzilla.redhat.com/"
 
-NAME="Ubuntu"
-VERSION="20.04.6 LTS (Focal Fossa)"
-ID=ubuntu
-ID_LIKE=debian
-PRETTY_NAME="Ubuntu 20.04.6 LTS"
-VERSION_ID="20.04"
-HOME_URL="https://www.ubuntu.com/"
-SUPPORT_URL="https://help.ubuntu.com/"
-BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
-VERSION_CODENAME=focal
-UBUNTU_CODENAME=focal
+REDHAT_BUGZILLA_PRODUCT="Red Hat Enterprise Linux 8"
+REDHAT_BUGZILLA_PRODUCT_VERSION=8.7
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="8.7"
 ```
+
+As far as CUDA is concerned, we tested the code with the following configuration
 
 ```
 $> nvidia-smi | grep CUDA 
-
-| NVIDIA-SMI 525.147.05   Driver Version: 525.147.05   CUDA Version: 12.0     |
+| NVIDIA-SMI 530.30.02              Driver Version: 530.30.02    CUDA Version: 12.1     | 
 ```
 
+Finally, we tested the code with the following python version
 ```
 $> python3 --version
-
-Python 3.8.10
+Python 3.11.6 
 ```
 
+The dependencies are listed in the `requirements.txt` file.
+
+### Installation 
+
+The suggested procedure to install the dependencies on Leonardo is the following
+
 ```
-$> python3 -m venv PLM4Muts_venv
-$> source PLM4Muts_venv/bin/activate
-$> pip install -r requirements.txt  
+$> module load python cuda nvhpc
+$> python3 -m venv PLM4Muts_venv --system-site-packages
+$> PLM4Muts_venv/bin/activate
+$> pip install -r requirements.txt 
 ```
 
+On Leonardo, pre-trained weights can be downloaded only on the login node. 
+Furthermore, the home directory is limited to 50GB per user.
+For this reasons, we dowloaded the weights in the `src/models/models_cache/` directory using the `download_weights.job` and the `src/download_weights.py` scripts.
 
-module load python
-module load cuda
-module load nvhpc
-python3 -m venv PLM4Muts_venv --system-site-packages
-source PLM4Muts_venv/bin/activate
-pip install -r requirements.txt
+
+### Data Format and Structure
+
+# Data Format and Structure
+
+Data must be in csv format. The following columns must be complete and specified in the header:
+
+** 'pdb_id', 'code', 'pos', 'wt_seq', 'mut_seq', 'wt_msa', 'ddg' ** 
+
+For training, create a directory associated with the experiment in datasets/train_name containing the following subdirectories: train, test and validation. 
+
+Each subdir must contain the `database/db_name.csv` and `MSA_train_name` directory with the wild type MSA.
+
+For the inference only the test set is needed.
+
+
+# Execution
+
+For training, associate the experiments with a directory for example `runs/experiment_name`. 
+This must contain:
+- the script to launch the program (similar to the `finetuning.job` for systems with Slurm scheduler) 
+- the `config.yaml` file reporting the paths and parameters specific to the run. 
+
+The following example to show the required fields in this `config.yaml`
+
+```
+output_dir: "runs/experiment_name"
+dataset_dir: "datasets/train_name"
+model: "MSA_Finetuning"
+learning_rate: 1.0e-4
+max_epochs: 20
+loss_fn: "L1"
+max_length: 1024
+seeds: [10, 11, 12]
+optimizer:
+  name: "AdamW"
+  weight_decay: 0.01
+  momentum: 0.
+
+MSA:
+  max_tokens: 16000
+
+snapshot_file: "runs/ experiment_name/snapshots/MSA_Finetuning.pt"
+```
+
+The possible options for the model field are: 
+
+- `MSA_Finetuning`
+- `ESM2_Finetuning`
+- `PROST5_Finetuning`
+- `MSA_Baseline`
+- `ESM2_Baseline`
+- `PROST5_Baseline`
+
+Outputs can be found in `runs/experiment_name/results/` and consists of the following files:
+
+- `db_test_name.res`: selected epoch, rmse, mae, corr, p-value for the test set
+
+- `db_test_name_labels_preds.diffs`: predicted and experimental values for each sequence in test set
+
+- `epochs_statistics.csv`: summary of results at all epochs for test, validation and training
+
+- `early_stopping_epoch.log`: selected epoch
+
+- `test_db_test_name_metrics.log`: rmse, mae, corr on test set for all training epochs
+
+- `train_db_train_name_metrics.log`: rmse, mae, corr on cross-validated training set for all training epochs
+
+- `val_db_val_name_metrics.log`: rmse, mae, corr on validation set for all training epochs
+
+- `seeds.log`: brief description
+
+- `epochs_rsme.png`
+
+- `epochs_corr.png`
+
+- `epochs_mae.png`
+
+
 
