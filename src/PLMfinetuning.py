@@ -21,6 +21,7 @@ def main(output_dir,dataset_dir,
     ddp_setup()
     os.environ["HF_HOME"] = "./src/models/models_cache"
     os.environ['TRANSFORMERS_OFFLINE']="1"
+    world_size = dist.get_world_size()
     torch.hub.set_dir("./src/models/models_cache")
     # fix the seed for reproducibility
     seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
@@ -114,7 +115,7 @@ def main(output_dir,dataset_dir,
         ft_end_time_str = ft_end_time.strftime("%Y-%m-%d-%I:%M:%S_%p")
         print(f"[Info] Model Finetuning completed at: {ft_start_time_str}", flush=True)
         ft_duration = ft_end_time - ft_start_time
-        print(f"[Info] Total time for Fine-tuning: {ft_duration}", flush=True)
+        print(f"[Info] Total time for Fine-tuning: {ft_duration} on {world_size} GPUs", flush=True)
         with open(output_dir + "/params.out", "w") as param_log:
             param_log.write(f"[Info] output_dir:\t{output_dir}\t{type(output_dir)}\n")
             param_log.write(f"[Info] loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}\n")
@@ -127,7 +128,7 @@ def main(output_dir,dataset_dir,
             param_log.write(f"[Info] val_dir:\t{val_dir}\t{type(val_dir)}\n")
             param_log.write(f"[Info] test_dir:\t{test_dir}\t{type(test_dir)}\n")
             param_log.write(f"[Info] max_length:\t{max_length}\t{type(max_length)}\n")
-            param_log.write(f"[Info] Total time for Finetuning: {ft_duration}\n")
+            param_log.write(f"[Info] Total time for Finetuning: {ft_duration} on {world_size} GPUs\n")
 
     dist.barrier()
     trainer.describe()

@@ -95,7 +95,7 @@ class Trainer:
                 os.makedirs(self.snapshot_dir)            
                 os.makedirs(self.snapshot_dir + "/onnx")            
             with open(self.seeds_file, "w") as seeds_f:
-                seeds_f.write(f"seeds = {self.seeds}")
+                seeds_f.write(f"seeds = {self.seeds}\n")
             with open(self.train_logfile, "w") as tr_log:
                 tr_log.write("epoch,rmse,mae,corr\n")
             with open(self.val_logfile, "w") as v_log:
@@ -333,12 +333,12 @@ class Trainer:
             with open(self.early_file, "w") as early_log:
                 early_log.write(f"Saved epoch (best MAE on validation set): {self.best_epoch}\n")
             for epoch in range(0, self.stopped_epoch):
-                with open(self.train_logfile, "a") as t_log:
-                    t_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
-                with open(self.result_dir + f"/{self.val_dl.name}_metrics.log", "a") as v_log:
+                with open(self.train_logfile, "a") as tr_log:
+                    tr_log.write(f"{epoch+1},{self.train_rmse[epoch]},{self.train_mae[epoch]},{self.train_corr[epoch]}\n")
+                with open(self.val_logfile, "a") as v_log:
                     v_log.write(f"{epoch+1},{self.val_rmse[epoch]},{self.val_mae[epoch]},{self.val_corr[epoch]}\n")
                 for test_no, test_dl in enumerate(self.test_dls):
-                    with open(self.result_dir + f"/{test_dl.name}_metrics.log", "a") as t_log:
+                    with open(self.test_logfiles[test_no], "a") as t_log:
                         t_log.write(f"{epoch+1},{self.test_rmses[test_no,epoch]},{self.test_maes[test_no,epoch]},{self.test_corrs[test_no,epoch]}\n")
         dist.barrier()
         
