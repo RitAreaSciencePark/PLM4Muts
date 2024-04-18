@@ -67,36 +67,40 @@ class Tester:
             with torch.no_grad():
                 for idx, batch in enumerate(test_dl.dataloader):
                     testX, testY, code = batch
+                    code = "".join(code)
                     print(f"dataset:{test_dl.name}\tGPU:{self.local_rank}\tbatch_idx:{idx+1}/{len_dataloader}\ttest:{code}", flush=True)
-                    testX, testY, code = batch
                     first_cpu, second_cpu, pos_cpu = self.test_model.preprocess(*testX)
                     first_gpu  =  first_cpu.to(self.local_rank)
                     second_gpu = second_cpu.to(self.local_rank)
                     pos_gpu    =    pos_cpu.to(self.local_rank)
 
                     testYhat_gpu = self.test_model(first_gpu, second_gpu, pos_gpu)
-                    testY_cpu    =    testY.detach().to("cpu").item()
+                    testY_cpu    =        testY.detach().to("cpu").item()
                     testYhat_cpu = testYhat_gpu.detach().to("cpu").item()
-                    pos_cpu      =  pos_gpu.detach().to("cpu").item()
-                    with open(diff_file, "a") as t_diffs:
-                       t_diffs.write(f"{code},{pos_cpu},{testY_cpu},{testYhat_cpu}\n")
+                    pos_cpu      =      pos_gpu.detach().to("cpu").item()
                     local_t_preds[idx]  = testYhat_cpu
                     local_t_labels[idx] = testY_cpu
-            l_t_mse  = torch.mean(         (local_t_labels - local_t_preds)**2)
-            l_t_mae  = torch.mean(torch.abs(local_t_labels - local_t_preds)   )
-            l_t_rmse = torch.sqrt(l_t_mse)
-            l_t_corr, pvalue = pearsonr(local_t_labels.tolist(), local_t_preds.tolist())
-            self.test_maes[test_no]  = l_t_mae
-            self.test_corrs[test_no] = l_t_corr
-            self.test_rmses[test_no] = l_t_rmse
-            self.test_pvalue[test_no]= pvalue
-            print(f"{test_dl.name}: on GPU {self.local_rank} test\t"
+                    if test_dl.inference:
+                        s = f"{code},{pos_cpu},,{testYhat_cpu}\n"
+                    else:
+                        s = f"{code},{pos_cpu},{testY_cpu},{testYhat_cpu}\n"
+                    with open(diff_file, "a") as t_diffs:
+                        t_diffs.write(s)
+            if not test_dl.inference:
+                l_t_mse  = torch.mean(         (local_t_labels - local_t_preds)**2)
+                l_t_mae  = torch.mean(torch.abs(local_t_labels - local_t_preds)   )
+                l_t_rmse = torch.sqrt(l_t_mse)
+                l_t_corr, pvalue = pearsonr(local_t_labels.tolist(), local_t_preds.tolist())
+                self.test_maes[test_no]  = l_t_mae
+                self.test_corrs[test_no] = l_t_corr
+                self.test_rmses[test_no] = l_t_rmse
+                self.test_pvalue[test_no]= pvalue
+                print(f"{test_dl.name}: on GPU {self.local_rank} test\t"
                       f"rmse = {self.test_rmses[test_no]}\t"
                       f"mae = {self.test_maes[test_no]}\t"
                       f"corr = {self.test_corrs[test_no]} (p-value={self.test_pvalue[test_no]})")
-
-            with open(self.result_dir + f"/{test_dl.name}_test.res", "a") as t_res:
-                        t_res.write(f"{self.epoch+1},{self.test_rmses[test_no]},{self.test_maes[test_no]},{self.test_corrs[test_no]},{self.test_pvalue[test_no]}\n")
+                with open(self.result_dir + f"/{test_dl.name}_test.res", "a") as t_res:
+                    t_res.write(f"{self.epoch+1},{self.test_rmses[test_no]},{self.test_maes[test_no]},{self.test_corrs[test_no]},{self.test_pvalue[test_no]}\n")
 
 
 

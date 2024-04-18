@@ -9,4 +9,4 @@
 [Info] val_dir:	datasets/S1465/validation	<class 'str'>
 [Info] test_dir:	datasets/S1465/test	<class 'str'>
 [Info] max_length:	1024	<class 'int'>
-[Info] Total time for Finetuning: 0:11:23.812859 on 64 GPUs
+[Info] Total time for Finetuning: 0:11:44.378041 on 64 GPUs

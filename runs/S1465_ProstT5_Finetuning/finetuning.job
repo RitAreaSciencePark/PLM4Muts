@@ -17,6 +17,7 @@ CURRENT_DIR=${SLURM_SUBMIT_DIR}
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
 
+module purge
 module load python
 module load cuda
 module load nvhpc

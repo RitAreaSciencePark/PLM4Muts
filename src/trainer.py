@@ -106,6 +106,7 @@ class Trainer:
 
     def train_batch(self,  batch):
         X, Y, code = batch
+        code = "".join(code)
         first_cpu, second_cpu, pos_cpu = self.model.module.preprocess(*X)
         first_gpu  =  first_cpu.to(self.local_rank)
         second_gpu = second_cpu.to(self.local_rank)

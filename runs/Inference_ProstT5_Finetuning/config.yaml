@@ -1,0 +1,11 @@
+#INITIAL SETTINGS
+output_dir: "runs/Inference_ProstT5_Finetuning"
+dataset_dir: "datasets/Inference"
+model: "ProstT5_Finetuning"
+max_length: 490
+MSA:
+  max_tokens: 16000
+snapshot_file: "runs/S1465_ProstT5_Finetuning/snapshots/ProstT5_Finetuning.pt"
+
+
+

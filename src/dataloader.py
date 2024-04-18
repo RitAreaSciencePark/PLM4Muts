@@ -27,12 +27,13 @@ class ESM2_Dataset(Dataset):
     def __init__(self, df, name, max_length):
         self.name = name
         self.df = df
+        self.inference = bool("ddg" not in self.df.columns)
         wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
         self.df["wt_len_seq"]  = wt_lengths
         self.df["mut_len_seq"] = mut_lengths
         self.max_length = max_length
-        self.df = self.df.drop(self.df[self.df.wt_len_seq > self.max_length - 2].index)
+        self.df = self.df.drop(self.df[self.df.wt_len_seq  > self.max_length - 2].index)
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
 
     def __len__(self):
@@ -42,7 +43,10 @@ class ESM2_Dataset(Dataset):
         wild_seq = [self.df.iloc[idx]['wt_seq']]
         mut_seq  = [self.df.iloc[idx]['mut_seq']]
         pos = self.df.iloc[idx]['pos']
-        ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        if self.inference:
+            ddg = torch.FloatTensor([float('nan')])
+        else:
+            ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
         code = self.df.iloc[idx]['code']
         return (wild_seq, mut_seq, pos), ddg, code
 
@@ -50,10 +54,11 @@ class MSA_Dataset(Dataset):
     def __init__(self, df, name, dataset_dir, max_length, max_tokens):
         self.name = name
         self.df = df
+        self.inference = bool("ddg" not in self.df.columns)
         wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
-        self.df["wt_len_seq"]=wt_lengths
-        self.df["mut_len_seq"]=mut_lengths
+        self.df["wt_len_seq"]  = wt_lengths
+        self.df["mut_len_seq"] = mut_lengths
         self.max_length = max_length
         self.df = self.df.drop(self.df[self.df.wt_len_seq  > self.max_length - 2].index)
         self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
@@ -69,8 +74,8 @@ class MSA_Dataset(Dataset):
         #records_mut = [MSA(code, mut_seq)]
         lmsa = len(records_msa)
         lseq = max([len(records_msa[i].seq) for i in range(lmsa)]) #lenght of longest seq of msa
-        assert lseq < 1024
-        assert 2 * lseq + 2 < self.max_tokens
+        #assert lseq < 1024
+        #assert 2 * lseq + 2 < self.max_tokens
         nseqs = int(self.max_tokens//(lseq + 1))
         nseqs = min(nseqs, lmsa) #select the numb of seq you are interested in
         #print(f"DEBUG effetive number of tokens Ntok={nseqs*(lseq+1)}, nseqs={nseqs}, lseq={lseq}, code={code}",flush=True)
@@ -92,7 +97,12 @@ class MSA_Dataset(Dataset):
         #mut_msa_path  = self.df.iloc[idx]['mut_msa']
         code = self.df.iloc[idx]['code']
         pos  = self.df.iloc[idx]['pos']
-        ddg  = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        
+        if self.inference:
+            ddg = torch.FloatTensor([float('nan')])
+        else:
+            ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        
         msa_filename = os.path.join(self.dataset_dir, msa_path)
         #mut_msa_filename  = os.path.join(self.dataset_dir, mut_msa_path )
         wild_msa, mut_msa = self.read_msa(msa_filename, wild_seq, mut_seq, code)
@@ -104,11 +114,13 @@ class ProstT5_Dataset(Dataset):
         self.df = df
         wt_lengths  = [len(s) for s in df['wt_seq'].to_list()] 
         mut_lengths = [len(s) for s in df['mut_seq'].to_list()]
-        self.df["wt_len_seq"]=wt_lengths
-        self.df["mut_len_seq"]=mut_lengths
+        self.inference = bool("ddg" not in self.df.columns)
+
+        self.df["wt_len_seq"]  = wt_lengths
+        self.df["mut_len_seq"] = mut_lengths
         if max_length:
             self.max_length = max_length
-            self.df = self.df.drop(self.df[self.df.wt_len_seq >  self.max_length - 2].index)
+            self.df = self.df.drop(self.df[self.df.wt_len_seq  > self.max_length - 2].index)
             self.df = self.df.drop(self.df[self.df.mut_len_seq > self.max_length - 2].index)
         else:
             self.max_length = max(wt_lengths)
@@ -124,7 +136,10 @@ class ProstT5_Dataset(Dataset):
         input_ids = seqs_e.input_ids
         attention_mask = seqs_e.attention_mask
         pos = self.df.iloc[idx]['pos']
-        ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
+        if self.inference:
+            ddg = torch.FloatTensor([float('nan')])
+        else:
+            ddg = torch.FloatTensor([self.df.iloc[idx]['ddg']])
         code = str(self.df.iloc[idx]['code'])
         return (input_ids, attention_mask, pos), ddg, code
 
@@ -141,7 +156,8 @@ def custom_collate(batch):
 class ProteinDataLoader():
     def __init__(self, dataset, batch_size, num_workers, shuffle, pin_memory, sampler, custom_collate_fn=None):
         self.name = dataset.name
-        self.df = dataset.df
+        self.df   = dataset.df
+        self.inference  = dataset.inference
         self.dataloader = DataLoader(dataset, 
                                      batch_size=batch_size, 
                                      num_workers=num_workers, 
