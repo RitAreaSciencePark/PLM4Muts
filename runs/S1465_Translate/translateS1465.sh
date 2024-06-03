@@ -13,21 +13,24 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=0
 #SBATCH --exclusive
+
+
 CURRENT_DIR=${SLURM_SUBMIT_DIR}
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$( srun  --nodes=1 --ntasks=1 -w "$head_node" --exclusive hostname --ip-address)
 
+module purge
 module load python
 module load cuda
 module load nvhpc
 
+cd ../..
 echo "head_node=" ${head_node} " - head_node_ip=" $head_node_ip
 export OMP_NUM_THREADS=32
-cd ../..
+export PYTHONPATH=$PYTHONPATH:"$(pwd)/PLM4Muts_venv/lib/python3.11/site-packages/"
 source PLM4Muts_venv/bin/activate
 echo $(pwd)
 echo ${CUDA_VISIBLE_DEVICES}
-
 
 
 INFILE_TRAIN="datasets/S1465/train/databases/db_s1465.csv"
