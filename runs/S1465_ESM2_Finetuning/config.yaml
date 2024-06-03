@@ -14,4 +14,6 @@ optimizer:
 MSA:
   max_tokens: 16000
 snapshot_file: "runs/S1465_ESM2_Finetuning/snapshots/ESM2_Finetuning.pt"
+onnx_file: "runs/S1465_ESM2_Finetuning/snapshots/onnx/ESM2_Finetuning.onnx"
+
 

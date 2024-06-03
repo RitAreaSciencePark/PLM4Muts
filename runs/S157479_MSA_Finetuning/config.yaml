@@ -14,4 +14,6 @@ optimizer:
 MSA:
   max_tokens: 16000
 snapshot_file: "runs/S157479_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
+onnx_file: "runs/S157479_MSA_Finetuning/snapshots/onnx/MSA_Finetuning.onnx"
+
 

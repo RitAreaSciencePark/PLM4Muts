@@ -14,4 +14,6 @@ optimizer:
 MSA:
   max_tokens: 16000
 snapshot_file: "runs/S157479_MSA_Baseline/snapshots/MSA_Baseline.pt"
+onnx_file: "runs/S157479_MSA_Baseline/snapshots/onnx/MSA_Baseline.onnx"
+
 
