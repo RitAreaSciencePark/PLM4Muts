@@ -9,4 +9,7 @@
 [Info] val_dir:	datasets/S157479/validation	<class 'str'>
 [Info] test_dir:	datasets/S157479/test	<class 'str'>
 [Info] max_length:	1024	<class 'int'>
-[Info] Total time for Finetuning: 1:09:36.430329
+[Info] Total time for Finetuning: 1:10:05.570813 on 64 GPUs
+[Info] Max GPU memory reserved for Finetuning: 5133.0 MB
+[Info] Max GPU memory allocated for Finetuning: 3206.0 MB
+[Info] Total GPU memory for Finetuning: 68099.0 MB
