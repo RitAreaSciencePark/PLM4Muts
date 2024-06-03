@@ -180,4 +180,30 @@ Outputs can be found in `runs/experiment_name/results/` and consists of the foll
 - `epochs_mae.png`
 
 
+### Inference
+
+In order to perform an Inference have a look at the `runs/Inference_MSA_Finetuning` and `datasets/Inference` folders.
+
+As an example, we provide an example dataset, with dataset files correctly organized as follows
+
+```bash
+Inference/
+└── test
+    ├── databases
+    │   └── db_s669.csv
+    ├── MSA_s669
+    │   └── 1A7V
+    └── translated_databases
+        └── tb_s669.csv
+
+```
+
+output_dir: "runs/Inference_MSA_Finetuning"
+dataset_dir: "datasets/Inference"
+model: "MSA_Finetuning"
+max_length: 1024
+MSA:
+  max_tokens: 16000
+snapshot_file: "runs/S1465_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
+
 
