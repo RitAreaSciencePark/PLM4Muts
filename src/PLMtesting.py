@@ -1,7 +1,5 @@
 import os
 import sys
-sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
-
 from pathlib import Path
 from models.models import *
 from dataloader  import *

@@ -207,9 +207,9 @@ class Trainer:
 
     def train(self, model, train_dl, val_dl, test_dls):
         print(f"I am rank {self.local_rank}", flush=True)
-        self.model_name = model.name
-        self.model = model.to(self.local_rank)
-        self.model = DDP(self.model, device_ids=[self.local_rank], find_unused_parameters=True)
+        self.model = model
+        self.model_name = self.model.module.name
+        #self.model = DDP(self.model, device_ids=[self.local_rank], find_unused_parameters=True)
         self.train_dl = train_dl
         self.val_dl   =  val_dl
         self.test_dls = test_dls
@@ -415,7 +415,4 @@ class Trainer:
             self.plot(df, train_corr_name, val_corr_name, test_corr_names, ylabel="corr", title=f"Model: {self.model_name}")
         dist.barrier()
 
-    def free_memory(self, model):
-        del model
-        torch.cuda.empty_cache()
 

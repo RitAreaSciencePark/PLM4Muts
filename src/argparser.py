@@ -32,6 +32,16 @@ def argparser_translator():
     args = parser.parse_args()
     return args
 
+
+def argparser_onnx_inspector():
+    parser = argparse.ArgumentParser(
+                    prog='onnx inspector',
+                    description='Check the onnx model parameter',
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("config_file", type=str, help="Configuration file")
+    args = parser.parse_args()
+    return args
+
 # Function to load yaml configuration file
 def load_config(config_file):
     with open(config_file, "r") as file:

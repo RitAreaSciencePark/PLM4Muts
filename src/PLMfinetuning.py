@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
+#sys.path.append("PLM4Muts_venv/lib/python3.11/site-packages/")
 from pathlib import Path
 import random
 import torch
@@ -12,6 +12,8 @@ from trainer  import *
 from argparser import *
 import torch.distributed  as dist
 from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.distributed.optim import ZeroRedundancyOptimizer
 
 def main(output_dir,dataset_dir, 
          model_name, max_epochs, loss_fn_name, max_length, 
@@ -19,10 +21,14 @@ def main(output_dir,dataset_dir,
          max_tokens):
     torch.cuda.empty_cache()
     ddp_setup()
+    
     os.environ["HF_HOME"] = "./src/models/models_cache"
     os.environ['TRANSFORMERS_OFFLINE']="1"
-    world_size = dist.get_world_size()
     torch.hub.set_dir("./src/models/models_cache")
+    
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = dist.get_world_size()
+    
     # fix the seed for reproducibility
     seed = int(seeds[0]) * (int(seeds[1]) + int(seeds[2]) * dist.get_rank())
     torch.manual_seed(seed)
@@ -30,27 +36,26 @@ def main(output_dir,dataset_dir,
     random.seed(seed)
     print(f"seed={seed} on GPU {dist.get_rank()}", flush=True)
 
-    loss_fn   = losses[loss_fn_name]
-    model     = models[model_name]()
-    if optimizer_name=="SGD":
-        optimizer = optimizers[optimizer_name](params=model.parameters(),lr=lr,momentum=momentum,weight_decay=weight_decay)
-    if optimizer_name=="AdamW":
-        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, weight_decay=weight_decay)
-    if optimizer_name=="Adam":
-        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
+    loss_fn = losses[loss_fn_name]
+    model   = models[model_name]()
+    model   = model.to(local_rank)
     train_dir = dataset_dir + "/train"
     val_dir   = dataset_dir + "/validation"
     test_dir  = dataset_dir + "/test"
     
     if model_name.rsplit("_")[0]=="ProstT5":
+        model_ddp = DDP(model, device_ids=[local_rank], find_unused_parameters=True, gradient_as_bucket_view=False)
+        #model_ddp = DDP(model, device_ids=[local_rank], find_unused_parameters=False, gradient_as_bucket_view=True)
         train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, databases_dir="/translated_databases")
         val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, databases_dir="/translated_databases")
         test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/translated_databases")
     else:
+        model_ddp = DDP(model, device_ids=[local_rank], find_unused_parameters=True, gradient_as_bucket_view=False) 
+        #model_ddp = DDP(model, device_ids=[local_rank], find_unused_parameters=True, gradient_as_bucket_view=True)  
         train_dfs, train_names = from_cvs_files_in_dir_to_dfs_list(train_dir, databases_dir="/databases")
         val_dfs, val_names   = from_cvs_files_in_dir_to_dfs_list(val_dir, databases_dir="/databases")
         test_dfs, test_names = from_cvs_files_in_dir_to_dfs_list(test_dir, databases_dir="/databases")
-
+    
     train_df     = pd.concat(train_dfs)
     train_name   = train_names[0]
     val_df     = pd.concat(val_dfs)
@@ -82,8 +87,23 @@ def main(output_dir,dataset_dir,
     test_dls = [ProteinDataLoader(test_ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=True,
                                   sampler=DistributedSampler(test_ds), custom_collate_fn=collate_function) for test_ds in test_dss]
     
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs)
-    trainer   = Trainer(max_epochs=max_epochs, loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler, output_dir=output_dir, seeds=seeds)
+    if optimizer_name=="SGD":
+        optimizer = optimizers[optimizer_name](params=model.parameters(),lr=lr,momentum=momentum,weight_decay=weight_decay)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=True)
+        #optimizer= ZeroRedundancyOptimizer(model_ddp.parameters(), optimizer_class=optimizers[optimizer_name], parameters_as_bucket_view=True, lr=lr, weight_decay=weight_decay, momentum=momentum)
+        #scheduler= torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=True)
+    if optimizer_name=="AdamW":
+        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr, weight_decay=weight_decay)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=True)
+        #optimizer= ZeroRedundancyOptimizer(model_ddp.parameters(), optimizer_class=optimizers[optimizer_name], parameters_as_bucket_view=True, lr=lr, weight_decay=weight_decay)
+        #scheduler= torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=False)
+    if optimizer_name=="Adam":
+        optimizer = optimizers[optimizer_name](params=model.parameters(), lr=lr)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=True)
+        #optimizer= ZeroRedundancyOptimizer(model_ddp.parameters(), optimizer_class=optimizers[optimizer_name], parameters_as_bucket_view=True, lr=lr)
+        #scheduler= torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, steps_per_epoch=len(train_dl.dataloader), epochs=max_epochs, cycle_momentum=False)
+    
+    trainer = Trainer(max_epochs=max_epochs, loss_fn=loss_fn, optimizer=optimizer, scheduler=scheduler, output_dir=output_dir, seeds=seeds)
     
     dist.barrier()
     if int(os.environ["RANK"]) == 0:
@@ -108,7 +128,19 @@ def main(output_dir,dataset_dir,
         ft_start_time_str = ft_start_time.strftime("%Y-%m-%d-%I:%M:%S_%p")
         print(f"[Info] Model Finetuning started at: {ft_start_time_str}", flush=True)
     dist.barrier()
-    trainer.train(model=model, train_dl=train_dl, val_dl=val_dl, test_dls=test_dls)
+    trainer.train(model=model_ddp, train_dl=train_dl, val_dl=val_dl, test_dls=test_dls)
+    dist.barrier()
+    reserved_mem_int = torch.cuda.max_memory_reserved(local_rank)
+    reserved_mem_t   = torch.tensor(reserved_mem_int).to(local_rank)
+    dist.all_reduce(reserved_mem_t, op=dist.ReduceOp.MAX)
+    
+    allocated_mem_int = torch.cuda.max_memory_allocated(local_rank)
+    allocated_mem_t   = torch.tensor(allocated_mem_int).to(local_rank)
+    dist.all_reduce(allocated_mem_t, op=dist.ReduceOp.MAX)
+    
+    total_mem_int = torch.cuda.get_device_properties(local_rank).total_memory
+    total_mem_t   = torch.tensor(total_mem_int).to(local_rank)
+    dist.all_reduce(total_mem_t, op=dist.ReduceOp.MAX)
     dist.barrier()
     if int(os.environ["RANK"]) == 0:
         ft_end_time = get_date_of_run()
@@ -116,6 +148,9 @@ def main(output_dir,dataset_dir,
         print(f"[Info] Model Finetuning completed at: {ft_start_time_str}", flush=True)
         ft_duration = ft_end_time - ft_start_time
         print(f"[Info] Total time for Fine-tuning: {ft_duration} on {world_size} GPUs", flush=True)
+        print(f"[Info] Max GPU memory reserved for Finetuning: {reserved_mem_t.item()//1e6} MB", flush=True)
+        print(f"[Info] Max GPU memory allocated for Finetuning: {allocated_mem_t.item()//1e6} MB", flush=True)
+        print(f"[Info] Total GPU memory for Finetuning: {total_mem_t.item()//1e6} MB", flush=True)
         with open(output_dir + "/params.out", "w") as param_log:
             param_log.write(f"[Info] output_dir:\t{output_dir}\t{type(output_dir)}\n")
             param_log.write(f"[Info] loss_fn_name:\t{loss_fn_name}\t{type(loss_fn_name)}\n")
@@ -129,11 +164,16 @@ def main(output_dir,dataset_dir,
             param_log.write(f"[Info] test_dir:\t{test_dir}\t{type(test_dir)}\n")
             param_log.write(f"[Info] max_length:\t{max_length}\t{type(max_length)}\n")
             param_log.write(f"[Info] Total time for Finetuning: {ft_duration} on {world_size} GPUs\n")
+            param_log.write(f"[Info] Max GPU memory reserved for Finetuning: {reserved_mem_t.item()//1e6} MB\n")
+            param_log.write(f"[Info] Max GPU memory allocated for Finetuning: {allocated_mem_t.item()//1e6} MB\n")
+            param_log.write(f"[Info] Total GPU memory for Finetuning: {total_mem_t.item()//1e6} MB\n")
 
     dist.barrier()
     trainer.describe()
     dist.barrier()
-    trainer.free_memory(model)
+    del model
+    torch.cuda.empty_cache()
+    dist.barrier()
     dist.destroy_process_group()
 
 if __name__ == "__main__":
