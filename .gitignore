@@ -13,10 +13,37 @@ runs/S3730_MSA_Baseline/snapshots/
 runs/S3730_ESM2_Finetuning/snapshots/
 runs/S3730_ESM2_Baseline/snapshots/
 
+
+runs/S3648_MSA_Finetuning/snapshots/
+runs/S3648_MSA_Baseline/snapshots/
+runs/S3648_ESM2_Finetuning/snapshots/
+runs/S3648_ESM2_Baseline/snapshots/
+
+
 runs/S157479_MSA_Finetuning/snapshots/
 runs/S157479_MSA_Baseline/snapshots/
 runs/S157479_ESM2_Finetuning/snapshots/
 runs/S157479_ESM2_Baseline/snapshots/
+
+
+runs/S155329_MSA_Finetuning/snapshots/
+runs/S155329_MSA_Baseline/snapshots/
+runs/S155329_ESM2_Finetuning/snapshots/
+runs/S155329_ESM2_Baseline/snapshots/
+
+runs/S1413_MSA_Finetuning/snapshots/
+runs/S1413_MSA_Finetuning_OnlyPos/snapshots/
+runs/S1413_MSA_Finetuning_OnlyMean/snapshots/
+runs/S1413_MSA_Baseline/snapshots/
+runs/S1413_ESM2_Finetuning/snapshots/
+runs/S1413_ESM2_Finetuning_OnlyPos/snapshots/
+runs/S1413_ESM2_Finetuning_OnlyMean/snapshots/
+runs/S1413_ESM2_Baseline/snapshots/
+runs/S1413_ProstT5_Finetuning/snapshots/
+runs/S1413_ProstT5_Baseline/snapshots/
+
+runs/S1413_r_MSA_Finetuning/snapshots/
+runs/S1413_s_MSA_Finetuning/snapshots/
 
 PLM4Muts_venv/
 runs_old/
