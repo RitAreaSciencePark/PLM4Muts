@@ -19,7 +19,7 @@ runs/S157479_ESM2_Finetuning/snapshots/
 runs/S157479_ESM2_Baseline/snapshots/
 
 PLM4Muts_venv/
-
+runs_old/
 *.error
 *.output
 *.pt

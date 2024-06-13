@@ -85,10 +85,58 @@ class ESM2_Baseline(ESM2_Finetuning):
         for param in self.esm_transformer.parameters():
             param.requires_grad = False
 
+class ESM2_Finetuning_OnlyPos(ESM2_Finetuning):
+    def __init__(self):
+        ESM2_Finetuning.__init__(self)
+        self.name="ESM2_Finetuning_OnlyPos"
+        self.fc1 = nn.Linear(1280,HIDDEN_UNITS)
+        self.fc2 = nn.Linear(HIDDEN_UNITS,1)
+        nn.init.xavier_normal_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_normal_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
 
+    def forward(self, wild_esm_batch_tokens, mut_esm_batch_tokens, pos):
+        batch_size   = wild_esm_batch_tokens.shape[0]
+        batch_size_m = mut_esm_batch_tokens.shape[0]
+        L   = wild_esm_batch_tokens.shape[1]
+        L_m = mut_esm_batch_tokens.shape[1]
+        wild_esm_reps=self.esm_transformer(wild_esm_batch_tokens,repr_layers=[33])['representations'][33].view(batch_size,L,-1)
+        mut_esm_reps=self.esm_transformer(mut_esm_batch_tokens,repr_layers=[33])['representations'][33].view(batch_size,L,-1)
+        wild_esm_reps_p = wild_esm_reps[:, pos+1, :].reshape((batch_size,-1))
+        mut_esm_reps_p  =  mut_esm_reps[:, pos+1, :].reshape((batch_size,-1))
+        outputs = wild_esm_reps_p - mut_esm_reps_p
+        outputs = self.relu(self.fc1(outputs))
+        outputs = self.dropout(outputs)
+        return self.fc2(outputs)
+
+
+class ESM2_Finetuning_OnlyMean(ESM2_Finetuning):
+    def __init__(self):
+        ESM2_Finetuning.__init__(self)
+        self.name="ESM2_Finetuning_OnlyMean"
+        self.fc1 = nn.Linear(1280,HIDDEN_UNITS)
+        self.fc2 = nn.Linear(HIDDEN_UNITS,1)
+        nn.init.xavier_normal_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_normal_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
+
+    def forward(self, wild_esm_batch_tokens, mut_esm_batch_tokens, pos):
+        batch_size   = wild_esm_batch_tokens.shape[0]
+        batch_size_m = mut_esm_batch_tokens.shape[0]
+        L   = wild_esm_batch_tokens.shape[1]
+        L_m = mut_esm_batch_tokens.shape[1]
+        wild_esm_reps=self.esm_transformer(wild_esm_batch_tokens,repr_layers=[33])['representations'][33].view(batch_size,L,-1)
+        mut_esm_reps=self.esm_transformer(mut_esm_batch_tokens,repr_layers=[33])['representations'][33].view(batch_size,L,-1)
+        wild_esm_reps_m = wild_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        mut_esm_reps_m  =  mut_esm_reps[:, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        outputs = wild_esm_reps_m - mut_esm_reps_m
+        outputs = self.relu(self.fc1(outputs))
+        outputs = self.dropout(outputs)
+        return self.fc2(outputs)
 
 class MSA_Finetuning(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.name="MSA_Finetuning"
@@ -159,6 +207,63 @@ class MSA_Baseline(MSA_Finetuning):
         self.name="MSA_Baseline"
         for param in self.msa_transformer.parameters():
             param.requires_grad = False
+
+
+class MSA_Finetuning_OnlyPos(MSA_Finetuning):
+    def __init__(self):
+        MSA_Finetuning.__init__(self)
+        self.name="MSA_Finetuning_OnlyPos"
+        self.fc1 = nn.Linear(768, HIDDEN_UNITS)
+        self.fc2 = nn.Linear( HIDDEN_UNITS, 1)
+        nn.init.xavier_normal_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_normal_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
+    
+    def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
+        batch_size   = wild_msa_batch_tokens.shape[0]
+        batch_size_m = mut_msa_batch_tokens.shape[0]
+        N   = wild_msa_batch_tokens.shape[1]
+        N_m = mut_msa_batch_tokens.shape[1]
+        L   = wild_msa_batch_tokens.shape[2]
+        L_m = wild_msa_batch_tokens.shape[2]
+        wild_msa_reps=self.msa_transformer(wild_msa_batch_tokens,repr_layers=[12])['representations'][12].view(batch_size,N,L,-1)
+        mut_msa_reps =self.msa_transformer(mut_msa_batch_tokens, repr_layers=[12])['representations'][12].view(batch_size,N,L,-1)
+        wild_msa_reps_p = wild_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
+        mut_msa_reps_p  =  mut_msa_reps[:, 0, pos+1, :].reshape((batch_size,-1))
+        outputs = wild_msa_reps_p - mut_msa_reps_p
+        outputs = self.relu(self.fc1(outputs))
+        outputs = self.dropout(outputs)
+        return self.fc2(outputs)
+
+
+class MSA_Finetuning_OnlyMean(MSA_Finetuning):
+    def __init__(self):
+        MSA_Finetuning.__init__(self)
+        self.name="MSA_Finetuning_OnlyMean"
+        self.fc1 = nn.Linear(768, HIDDEN_UNITS)
+        self.fc2 = nn.Linear( HIDDEN_UNITS, 1)
+        nn.init.xavier_normal_(self.fc1.weight)
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_normal_(self.fc2.weight)
+        nn.init.zeros_(self.fc2.bias)
+    
+    def forward(self, wild_msa_batch_tokens, mut_msa_batch_tokens, pos):
+        batch_size   = wild_msa_batch_tokens.shape[0]
+        batch_size_m = mut_msa_batch_tokens.shape[0]
+        N   = wild_msa_batch_tokens.shape[1]
+        N_m = mut_msa_batch_tokens.shape[1]
+        L   = wild_msa_batch_tokens.shape[2]
+        L_m = wild_msa_batch_tokens.shape[2]
+        wild_msa_reps=self.msa_transformer(wild_msa_batch_tokens,repr_layers=[12])['representations'][12].view(batch_size,N,L,-1)
+        mut_msa_reps =self.msa_transformer(mut_msa_batch_tokens, repr_layers=[12])['representations'][12].view(batch_size,N,L,-1)
+        wild_msa_reps_m = wild_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        mut_msa_reps_m  =  mut_msa_reps[:, 0, 1:-1, :].mean(dim=1).reshape((batch_size,-1))
+        outputs = wild_msa_reps_m - mut_msa_reps_m
+        outputs = self.relu(self.fc1(outputs))
+        outputs = self.dropout(outputs)
+        return self.fc2(outputs)
+
 
 class ProstT5_Finetuning(nn.Module):
 
