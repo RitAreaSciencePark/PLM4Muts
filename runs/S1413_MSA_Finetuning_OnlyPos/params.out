@@ -1,0 +1,15 @@
+[Info] output_dir:	runs/S1413_MSA_Finetuning_OnlyPos	<class 'str'>
+[Info] loss_fn_name:	L1	<class 'str'>
+[Info] learning rate:	0.0002	<class 'float'>
+[Info] seeds:	[10, 11, 12]	<class 'list'>
+[Info] max_epochs:	20	<class 'int'>
+[Info] model_name:	MSA_Finetuning_OnlyPos	<class 'str'>
+[Info] optimizer_name:	AdamW	<class 'str'>
+[Info] train_dir:	datasets/S1413/train	<class 'str'>
+[Info] val_dir:	datasets/S1413/validation	<class 'str'>
+[Info] test_dir:	datasets/S1413/test	<class 'str'>
+[Info] max_length:	1024	<class 'int'>
+[Info] Total time for Finetuning: 0:10:03.662926 on 64 GPUs
+[Info] Max GPU memory reserved for Finetuning: 60504.0 MB
+[Info] Max GPU memory allocated for Finetuning: 30619.0 MB
+[Info] Total GPU memory for Finetuning: 68099.0 MB
