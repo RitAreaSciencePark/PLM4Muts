@@ -1,0 +1,15 @@
+[Info] output_dir:	runs/S3648_MSA_Finetuning	<class 'str'>
+[Info] loss_fn_name:	L1	<class 'str'>
+[Info] learning rate:	0.0001	<class 'float'>
+[Info] seeds:	[10, 11, 12]	<class 'list'>
+[Info] max_epochs:	20	<class 'int'>
+[Info] model_name:	MSA_Finetuning	<class 'str'>
+[Info] optimizer_name:	AdamW	<class 'str'>
+[Info] train_dir:	datasets/S3648/train	<class 'str'>
+[Info] val_dir:	datasets/S3648/validation	<class 'str'>
+[Info] test_dir:	datasets/S3648/test	<class 'str'>
+[Info] max_length:	1024	<class 'int'>
+[Info] Total time for Finetuning: 0:15:05.031067 on 64 GPUs
+[Info] Max GPU memory reserved for Finetuning: 65974.0 MB
+[Info] Max GPU memory allocated for Finetuning: 37851.0 MB
+[Info] Total GPU memory for Finetuning: 68099.0 MB
