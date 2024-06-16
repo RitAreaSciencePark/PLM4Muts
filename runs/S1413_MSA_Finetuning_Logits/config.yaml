@@ -2,7 +2,7 @@
 output_dir: "runs/S1413_MSA_Finetuning_Logits"
 dataset_dir: "datasets/S1413"
 model: "MSA_Finetuning_Logits"
-learning_rate: 2.0e-4
+learning_rate: 5.0e-4
 max_epochs: 20
 loss_fn: "L1"
 max_length: 1024

@@ -2,7 +2,7 @@
 output_dir: "runs/S1413_ESM2_Finetuning_Logits"
 dataset_dir: "datasets/S1413"
 model: "ESM2_Finetuning_Logits"
-learning_rate: 4.0e-3
+learning_rate: 5.0e-3
 max_epochs: 20
 loss_fn: "L1"
 seeds: [10, 11, 12]
