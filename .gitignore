@@ -34,10 +34,12 @@ runs/S155329_ESM2_Baseline/snapshots/
 runs/S1413_MSA_Finetuning/snapshots/
 runs/S1413_MSA_Finetuning_OnlyPos/snapshots/
 runs/S1413_MSA_Finetuning_OnlyMean/snapshots/
+runs/S1413_MSA_Finetuning_Logits/snapshots/
 runs/S1413_MSA_Baseline/snapshots/
 runs/S1413_ESM2_Finetuning/snapshots/
 runs/S1413_ESM2_Finetuning_OnlyPos/snapshots/
 runs/S1413_ESM2_Finetuning_OnlyMean/snapshots/
+runs/S1413_ESM2_Finetuning_Logits/snapshots/
 runs/S1413_ESM2_Baseline/snapshots/
 runs/S1413_ProstT5_Finetuning/snapshots/
 runs/S1413_ProstT5_Baseline/snapshots/
