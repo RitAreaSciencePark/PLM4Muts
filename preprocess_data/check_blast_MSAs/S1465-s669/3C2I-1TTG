@@ -1,0 +1,23 @@
+Query         3C2I
+Match_columns 72
+No_of_seqs    107 out of 1010
+Neff          8.21267
+Searched_HMMs 1
+Date          Tue May 28 08:26:27 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3C2I -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1TTG -o S1465-s669/3C2I-1TTG 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1TTG                             0.2    0.36    0.36    4.4   0.0    7   11-17     19-25  (94)
+
+No 1
+>1TTG
+Probab=0.17  E-value=0.36  Score=4.42  Aligned_cols=7  Identities=14%  Similarity=0.401  Sum_probs=3.1  Template_Neff=14.677
+
+Q 3C2I             11 PEGWTRK   17 (72)
+Q Consensus        11 p~GW~r~   17 (72)
+                      ...|...
+T Consensus        19 ~~~w~~~   25 (94)
+T 1TTG             19 LISWDAP   25 (94)
+Confidence            3445543
+
+

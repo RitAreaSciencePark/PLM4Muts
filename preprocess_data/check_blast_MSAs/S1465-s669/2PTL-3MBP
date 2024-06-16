@@ -1,0 +1,23 @@
+Query         2PTL
+Match_columns 78
+No_of_seqs    13 out of 13
+Neff          3.15127
+Searched_HMMs 1
+Date          Tue May 28 08:26:13 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2PTL -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/3MBP -o S1465-s669/2PTL-3MBP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3MBP                             0.1    0.42    0.42    8.9   0.0    5   47-51    276-280 (370)
+
+No 1
+>3MBP
+Probab=0.14  E-value=0.42  Score=8.92  Aligned_cols=5  Identities=20%  Similarity=0.282  Sum_probs=2.2  Template_Neff=12.574
+
+Q 2PTL             47 AYAYA   51 (78)
+Q Consensus        47 a~~y~   51 (78)
+                      |.+|.
+T Consensus       276 A~~fi  280 (370)
+T 3MBP            276 AKEFL  280 (370)
+Confidence            34444
+
+

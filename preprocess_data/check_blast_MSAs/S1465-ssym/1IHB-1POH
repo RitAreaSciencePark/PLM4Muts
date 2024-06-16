@@ -1,0 +1,15 @@
+Query         1IHB
+Match_columns 156
+No_of_seqs    200 out of 1404
+Neff          12.5689
+Searched_HMMs 1
+Date          Tue May 28 08:27:38 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1IHB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1POH -o S1465-ssym/1IHB-1POH 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1POH                             0.3    0.18    0.18    7.7   0.0    1   28-28     43-43  (85)
+
+No 1
+>1POH
+Probab=0.34  E-value=0.18  Score=7.74  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.526
+

@@ -1,0 +1,15 @@
+Query         2PR5
+Match_columns 127
+No_of_seqs    723 out of 1014
+Neff          14.4162
+Searched_HMMs 1
+Date          Tue May 28 08:26:12 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2PR5 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1YCC -o S1465-s669/2PR5-1YCC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1YCC                             0.8   0.066   0.066    7.7   0.0    1  116-116    96-96  (108)
+
+No 1
+>1YCC
+Probab=0.84  E-value=0.066  Score=7.67  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.481
+

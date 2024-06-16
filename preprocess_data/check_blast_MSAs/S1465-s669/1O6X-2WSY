@@ -1,0 +1,15 @@
+Query         1O6X
+Match_columns 81
+No_of_seqs    113 out of 1021
+Neff          9.93241
+Searched_HMMs 1
+Date          Tue May 28 08:25:40 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1O6X -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2WSY -o S1465-s669/1O6X-2WSY 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2WSY                             0.3    0.22    0.22    8.8   0.0    1   70-70    138-138 (237)
+
+No 1
+>2WSY
+Probab=0.28  E-value=0.22  Score=8.78  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.410
+

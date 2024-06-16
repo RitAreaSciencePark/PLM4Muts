@@ -1,0 +1,15 @@
+Query         1JL9
+Match_columns 42
+No_of_seqs    122 out of 1888
+Neff          13.0936
+Searched_HMMs 1
+Date          Tue May 28 08:25:29 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1JL9 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1CYC -o S1465-s669/1JL9-1CYC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1CYC                             0.9   0.059   0.059    5.7   0.0    1    1-1       1-1   (103)
+
+No 1
+>1CYC
+Probab=0.93  E-value=0.059  Score=5.73  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.577
+

@@ -1,0 +1,15 @@
+Query         5VP3
+Match_columns 195
+No_of_seqs    196 out of 1152
+Neff          11.3219
+Searched_HMMs 1
+Date          Tue May 28 08:29:13 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/5VP3 -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/1YU5 -o S157479-s669/5VP3-1YU5 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1YU5                             1.0   0.054   0.054   10.5   0.0    1  147-147    35-35  (65)
+
+No 1
+>1YU5
+Probab=1.00  E-value=0.054  Score=10.54  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=8.483
+

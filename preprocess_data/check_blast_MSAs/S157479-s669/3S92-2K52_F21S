@@ -1,0 +1,15 @@
+Query         3S92
+Match_columns 110
+No_of_seqs    106 out of 1190
+Neff          10.4127
+Searched_HMMs 1
+Date          Tue May 28 08:29:12 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/3S92 -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2K52_F21S -o S157479-s669/3S92-2K52_F21S 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2K52_F21S                        0.1    0.66    0.66    3.6   0.0    1    1-1       1-1   (71)
+
+No 1
+>2K52_F21S
+Probab=0.08  E-value=0.66  Score=3.55  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.863
+

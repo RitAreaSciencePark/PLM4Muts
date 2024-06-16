@@ -1,0 +1,23 @@
+Query         1VQB
+Match_columns 86
+No_of_seqs    100 out of 221
+Neff          6.41092
+Searched_HMMs 1
+Date          Tue May 28 08:27:42 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1VQB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1ANK -o S1465-ssym/1VQB-1ANK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1ANK                             0.3     0.2     0.2    9.6   0.0    9   18-26      7-15  (214)
+
+No 1
+>1ANK
+Probab=0.31  E-value=0.2  Score=9.62  Aligned_cols=9  Identities=33%  Similarity=0.453  Sum_probs=4.0  Template_Neff=11.994
+
+Q 1VQB             18 GVSRQGKPY   26 (86)
+Q Consensus        18 g~sk~G~~~   26 (86)
+                      |.+.+||..
+T Consensus         7 G~~gsGKst   15 (214)
+T 1ANK              7 GAPGAGKGT   15 (214)
+Confidence            334445543
+
+

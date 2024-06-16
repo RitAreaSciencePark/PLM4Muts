@@ -1,0 +1,15 @@
+Query         5PTI
+Match_columns 58
+No_of_seqs    135 out of 1091
+Neff          12.2213
+Searched_HMMs 1
+Date          Tue May 28 08:28:22 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_ssym/5PTI -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2LQK -o S157479-ssym/5PTI-2LQK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2LQK                             0.4    0.15    0.15    5.6   0.0    1   30-30     17-17  (62)
+
+No 1
+>2LQK
+Probab=0.39  E-value=0.15  Score=5.58  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.042
+

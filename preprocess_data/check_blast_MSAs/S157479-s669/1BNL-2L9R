@@ -1,0 +1,15 @@
+Query         1BNL
+Match_columns 178
+No_of_seqs    162 out of 1065
+Neff          8.37319
+Searched_HMMs 1
+Date          Tue May 28 08:28:47 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1BNL -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2L9R -o S157479-s669/1BNL-2L9R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2L9R                             0.1    0.62    0.62    3.9   0.0    1  120-120    44-44  (61)
+
+No 1
+>2L9R
+Probab=0.08  E-value=0.62  Score=3.90  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.057
+

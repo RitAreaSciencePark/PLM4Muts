@@ -1,0 +1,23 @@
+Query         3D2A
+Match_columns 179
+No_of_seqs    394 out of 1225
+Neff          12.3656
+Searched_HMMs 1
+Date          Tue May 28 08:29:06 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/3D2A -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/1MHN -o S157479-s669/3D2A-1MHN 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1MHN                             0.5    0.11    0.11    7.3   0.0    7   34-40     35-41  (57)
+
+No 1
+>1MHN
+Probab=0.53  E-value=0.11  Score=7.30  Aligned_cols=7  Identities=0%  Similarity=-0.012  Sum_probs=3.1  Template_Neff=10.739
+
+Q 3D2A             34 LYAVDFW   40 (179)
+Q Consensus        34 v~~~~~~   40 (179)
+                      |...|+.
+T Consensus        35 V~~~d~g   41 (57)
+T 1MHN             35 VVYTGYG   41 (57)
+Confidence            4444443
+
+

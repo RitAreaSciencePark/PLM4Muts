@@ -1,0 +1,15 @@
+Query         2ZTA
+Match_columns 31
+No_of_seqs    64 out of 64
+Neff          2.8178
+Searched_HMMs 1
+Date          Tue May 28 08:26:19 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2ZTA -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1KDX -o S1465-s669/2ZTA-1KDX 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1KDX                             0.7   0.085   0.085    8.7   0.0    1    8-8      71-71  (81)
+
+No 1
+>1KDX
+Probab=0.67  E-value=0.085  Score=8.68  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.209
+

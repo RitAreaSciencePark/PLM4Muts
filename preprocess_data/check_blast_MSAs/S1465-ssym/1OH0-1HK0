@@ -1,0 +1,23 @@
+Query         1OH0
+Match_columns 125
+No_of_seqs    460 out of 1012
+Neff          12.5328
+Searched_HMMs 1
+Date          Tue May 28 08:27:41 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1OH0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HK0 -o S1465-ssym/1OH0-1HK0 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HK0                             0.1    0.56    0.56    6.1   0.0    8  108-115    72-79  (173)
+
+No 1
+>1HK0
+Probab=0.10  E-value=0.56  Score=6.14  Aligned_cols=8  Identities=0%  Similarity=0.268  Sum_probs=3.3  Template_Neff=11.296
+
+Q 1OH0            108 HGRIQTMQ  115 (125)
+Q Consensus       108 ~gki~~~~  115 (125)
+                      +.+|..++
+T Consensus        72 ~~~i~S~~   79 (173)
+T 1HK0             72 SDSVRSCR   79 (173)
+Confidence            34444333
+
+

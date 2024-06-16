@@ -1,0 +1,23 @@
+Query         2NTE
+Match_columns 210
+No_of_seqs    133 out of 1445
+Neff          10.9548
+Searched_HMMs 1
+Date          Tue May 28 08:26:10 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2NTE -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1SCE -o S1465-s669/2NTE-1SCE 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1SCE                             0.1    0.45    0.45    8.1   0.0    8   36-43     32-39  (97)
+
+No 1
+>1SCE
+Probab=0.13  E-value=0.45  Score=8.06  Aligned_cols=8  Identities=38%  Similarity=0.791  Sum_probs=4.0  Template_Neff=6.851
+
+Q 2NTE             36 TVTHVVVP   43 (210)
+Q Consensus        36 ~~thvv~~   43 (210)
+                      .-.||+.+
+T Consensus        32 eYRhV~Lp   39 (97)
+T 1SCE             32 EYRHVMLP   39 (97)
+Confidence            34455554
+
+

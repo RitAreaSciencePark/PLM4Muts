@@ -1,0 +1,15 @@
+Query         5PTI
+Match_columns 58
+No_of_seqs    135 out of 1091
+Neff          12.2213
+Searched_HMMs 1
+Date          Tue May 28 08:27:47 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/5PTI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HK0 -o S1465-ssym/5PTI-1HK0 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HK0                             0.0    0.95    0.95    3.3   0.0    1   31-31     16-16  (173)
+
+No 1
+>1HK0
+Probab=0.03  E-value=0.95  Score=3.28  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.296
+

@@ -1,0 +1,23 @@
+Query         1GWY
+Match_columns 175
+No_of_seqs    139 out of 322
+Neff          7.12965
+Searched_HMMs 1
+Date          Tue May 28 08:25:20 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1GWY -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BP2 -o S1465-s669/1GWY-1BP2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BP2                             0.2    0.32    0.32    9.4   0.0   18  103-120    17-34  (123)
+
+No 1
+>1BP2
+Probab=0.19  E-value=0.32  Score=9.38  Aligned_cols=18  Identities=17%  Similarity=0.224  Sum_probs=11.8  Template_Neff=9.573
+
+Q 1GWY            103 SVPFDYNWYSNWWDVKIY  120 (175)
+Q Consensus       103 svP~~~~~~~n~~~v~i~  120 (175)
+                      ..|..|..|-.|=+++-.
+T Consensus        17 ~~~~~y~~YGC~Cg~gg~   34 (123)
+T 1BP2             17 EPLLDFNNYGCYCGLGGS   34 (123)
+Confidence            366777777777666544
+
+

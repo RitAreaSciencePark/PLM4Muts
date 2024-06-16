@@ -1,0 +1,15 @@
+Query         2RPN
+Match_columns 59
+No_of_seqs    143 out of 1258
+Neff          14.3442
+Searched_HMMs 1
+Date          Tue May 28 08:26:14 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2RPN -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1CHK -o S1465-s669/2RPN-1CHK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1CHK                             0.0    0.98    0.98    4.3   0.0    1    1-1      16-16  (238)
+
+No 1
+>1CHK
+Probab=0.02  E-value=0.98  Score=4.33  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=8.582
+

@@ -1,0 +1,23 @@
+Query         2KS4
+Match_columns 176
+No_of_seqs    136 out of 323
+Neff          7.10181
+Searched_HMMs 1
+Date          Tue May 28 08:26:08 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2KS4 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BP2 -o S1465-s669/2KS4-1BP2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BP2                             0.2    0.26    0.26   10.0   0.0   18  104-121    17-34  (123)
+
+No 1
+>1BP2
+Probab=0.24  E-value=0.26  Score=9.98  Aligned_cols=18  Identities=17%  Similarity=0.224  Sum_probs=11.8  Template_Neff=9.573
+
+Q 2KS4            104 SVPFDYNWYSNWWDVKIY  121 (176)
+Q Consensus       104 svP~~~~~~sn~~~v~i~  121 (176)
+                      ..|..|..|-.|=+++-.
+T Consensus        17 ~~~~~y~~YGC~Cg~gg~   34 (123)
+T 1BP2             17 EPLLDFNNYGCYCGLGGS   34 (123)
+Confidence            366777777777655544
+
+

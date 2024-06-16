@@ -1,0 +1,23 @@
+Query         1IOJ
+Match_columns 57
+No_of_seqs    58 out of 58
+Neff          4.02504
+Searched_HMMs 1
+Date          Tue May 28 08:25:22 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1IOJ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AV1 -o S1465-s669/1IOJ-1AV1 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AV1                            20.5  0.0011  0.0011   21.1   0.0   22   34-55    168-189 (201)
+
+No 1
+>1AV1
+Probab=20.54  E-value=0.0011  Score=21.12  Aligned_cols=22  Identities=9%  Similarity=0.081  Sum_probs=15.4  Template_Neff=8.713
+
+Q 1IOJ             34 LSAKMREWFSETFQKVKEKLKI   55 (57)
+Q Consensus        34 ~~~KtrnWfsE~~eK~K~K~~~   55 (57)
+                      +...+|.||...++.++..+..
+T Consensus       168 ~~~~l~~~l~~~~e~l~~~l~~  189 (201)
+T 1AV1            168 ALEDLRQGLLPVLESFKVSFLS  189 (201)
+Confidence            3566777777777777776654
+
+

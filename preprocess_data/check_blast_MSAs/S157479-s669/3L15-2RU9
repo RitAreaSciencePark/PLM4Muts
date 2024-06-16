@@ -1,0 +1,23 @@
+Query         3L15
+Match_columns 204
+No_of_seqs    124 out of 175
+Neff          5.10007
+Searched_HMMs 1
+Date          Tue May 28 08:29:10 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/3L15 -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2RU9 -o S157479-s669/3L15-2RU9 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2RU9                             0.2    0.33    0.33    7.0   0.0   14  143-156    22-35  (68)
+
+No 1
+>2RU9
+Probab=0.18  E-value=0.33  Score=6.98  Aligned_cols=14  Identities=7%  Similarity=-0.114  Sum_probs=6.0  Template_Neff=12.833
+
+Q 3L15            143 NFLHKLRQLPERYM  156 (204)
+Q Consensus       143 ~Fi~kLk~L~~~~~  156 (204)
+                      .+...+..++....
+T Consensus        22 ~i~~~~~~~~gv~~   35 (68)
+T 2RU9             22 ALKVRLLETEGVKE   35 (68)
+Confidence            34444444444433
+
+

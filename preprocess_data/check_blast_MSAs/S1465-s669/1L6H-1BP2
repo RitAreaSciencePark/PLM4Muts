@@ -1,0 +1,23 @@
+Query         1L6H
+Match_columns 69
+No_of_seqs    127 out of 1069
+Neff          8.43389
+Searched_HMMs 1
+Date          Tue May 28 08:25:34 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1L6H -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BP2 -o S1465-s669/1L6H-1BP2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BP2                             0.4    0.15    0.15    8.7   0.0    4   35-38     27-30  (123)
+
+No 1
+>1BP2
+Probab=0.40  E-value=0.15  Score=8.73  Aligned_cols=4  Identities=50%  Similarity=2.253  Sum_probs=1.7  Template_Neff=9.573
+
+Q 1L6H             35 CFCQ   38 (69)
+Q Consensus        35 ClC~   38 (69)
+                      |.|.
+T Consensus        27 C~Cg   30 (123)
+T 1BP2             27 CYCG   30 (123)
+Confidence            4443
+
+

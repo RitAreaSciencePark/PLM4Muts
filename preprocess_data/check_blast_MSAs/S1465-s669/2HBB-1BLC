@@ -1,0 +1,15 @@
+Query         2HBB
+Match_columns 51
+No_of_seqs    127 out of 1083
+Neff          6.61989
+Searched_HMMs 1
+Date          Tue May 28 08:25:58 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2HBB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BLC -o S1465-s669/2HBB-1BLC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BLC                             0.1    0.43    0.43    7.1   0.0    1   27-27    162-162 (257)
+
+No 1
+>1BLC
+Probab=0.13  E-value=0.43  Score=7.08  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.028
+

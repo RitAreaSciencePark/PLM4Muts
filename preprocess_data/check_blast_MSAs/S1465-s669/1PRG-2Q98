@@ -1,0 +1,23 @@
+Query         1PRG
+Match_columns 270
+No_of_seqs    215 out of 1448
+Neff          10.2081
+Searched_HMMs 1
+Date          Tue May 28 08:25:45 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1PRG -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2Q98 -o S1465-s669/1PRG-2Q98 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2Q98                             0.8   0.066   0.066   15.3   0.0   29   69-97    153-181 (191)
+
+No 1
+>2Q98
+Probab=0.84  E-value=0.066  Score=15.27  Aligned_cols=29  Identities=14%  Similarity=0.188  Sum_probs=18.5  Template_Neff=8.174
+
+Q 1PRG             69 KEVAIRIFQGCQFRSVEAVQEITEYAKSI   97 (270)
+Q Consensus        69 ~~~~~~~~~~~~~~~~~~i~~~i~fak~i   97 (270)
+                      ++.+...+..+...+.++...+-.|.|-+
+T Consensus       153 ~~~~l~~~y~L~~C~~rD~~Kv~~yLk~L  181 (191)
+T 2Q98            153 EESRLSAYYNLLHCLRRDSHKIDNYLKLL  181 (191)
+Confidence            34466666667777777777666666544
+
+

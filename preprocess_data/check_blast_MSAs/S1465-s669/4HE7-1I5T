@@ -1,0 +1,15 @@
+Query         4HE7
+Match_columns 54
+No_of_seqs    51 out of 51
+Neff          3.05929
+Searched_HMMs 1
+Date          Tue May 28 08:26:41 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/4HE7 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1I5T -o S1465-s669/4HE7-1I5T 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1I5T                             0.1    0.51    0.51    5.3   0.0    1    1-1       1-1   (104)
+
+No 1
+>1I5T
+Probab=0.11  E-value=0.51  Score=5.28  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.585
+

@@ -1,0 +1,23 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:26:06 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1UZC -o S1465-s669/2JUC-1UZC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1UZC                            99.6 9.4E-24 9.4E-24   87.2   0.0   54    2-55     13-66  (69)
+
+No 1
+>1UZC
+Probab=99.57  E-value=9.4e-24  Score=87.16  Aligned_cols=54  Identities=19%  Similarity=0.370  Sum_probs=51.4  Template_Neff=8.574
+
+Q 2JUC              2 IDERNIFFELFDRYKLDKFSTWSLQSKKIENDPDFYKIRDDTVRESLFEEWCGE   55 (55)
+Q Consensus         2 ~~~~~~F~~lL~~~~i~~~~~w~~~~~~i~~d~ry~~i~~~~~r~~~F~~~~~~   55 (55)
+                      ++++.+|+.||++++|+++++|+++++.|..||||.+|++..+|+++|++||++
+T Consensus        13 ~e~~~~F~~lL~~~~v~~~~~W~~~~~~~~~d~ry~~i~~~~~Rk~~F~~y~~~   66 (69)
+T 1UZC             13 EEAKQAFKELLKEKRVPSNASWEQAMKMIINDPRYSALAKLSEKKQAFNAYKVQ   66 (69)
+Confidence            467899999999999999999999999999999999999999999999999974
+
+

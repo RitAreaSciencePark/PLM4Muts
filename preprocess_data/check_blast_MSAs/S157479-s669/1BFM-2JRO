@@ -1,0 +1,15 @@
+Query         1BFM
+Match_columns 69
+No_of_seqs    105 out of 1114
+Neff          10.8698
+Searched_HMMs 1
+Date          Tue May 28 08:28:45 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1BFM -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2JRO -o S157479-s669/1BFM-2JRO 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2JRO                             0.3    0.21    0.21    7.0   0.0    1   60-60     56-56  (64)
+
+No 1
+>2JRO
+Probab=0.29  E-value=0.21  Score=7.05  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=5.457
+

@@ -1,0 +1,23 @@
+Query         1O6X
+Match_columns 81
+No_of_seqs    113 out of 1021
+Neff          9.93241
+Searched_HMMs 1
+Date          Tue May 28 08:25:40 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1O6X -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1TUP -o S1465-s669/1O6X-1TUP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1TUP                             0.4    0.15    0.15   10.0   0.0   17    4-20      7-23  (196)
+
+No 1
+>1TUP
+Probab=0.40  E-value=0.15  Score=10.01  Aligned_cols=17  Identities=12%  Similarity=0.104  Sum_probs=9.4  Template_Neff=8.334
+
+Q 1O6X              4 LETFVGDQVLEIVPSNE   20 (81)
+Q Consensus         4 ~~~y~~~~v~ri~~~~~   20 (81)
+                      ...|.|..-++|.....
+T Consensus         7 ~~~~~G~~~F~v~~~~~   23 (196)
+T 1TUP              7 QKTYQGSYGFRLGFLHS   23 (196)
+Confidence            34556666666655443
+
+

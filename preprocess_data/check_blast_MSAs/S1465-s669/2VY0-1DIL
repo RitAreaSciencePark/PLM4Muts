@@ -1,0 +1,23 @@
+Query         2VY0
+Match_columns 264
+No_of_seqs    137 out of 1511
+Neff          10.8374
+Searched_HMMs 1
+Date          Tue May 28 08:26:16 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2VY0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1DIL -o S1465-s669/2VY0-1DIL 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1DIL                             0.1     0.7     0.7    8.2   0.0   15   59-73    181-195 (381)
+
+No 1
+>1DIL
+Probab=0.07  E-value=0.7  Score=8.19  Aligned_cols=15  Identities=20%  Similarity=0.284  Sum_probs=9.5  Template_Neff=13.089
+
+Q 2VY0             59 TYIVNGTLVIEARKE   73 (264)
+Q Consensus        59 v~v~~G~l~l~~~~~   73 (264)
+                      +...+|.+.+.....
+T Consensus       181 ~~~~~g~~~~~~~~~  195 (381)
+T 1DIL            181 LQLNDGKLVFPVQMV  195 (381)
+Confidence            666777777655544
+
+

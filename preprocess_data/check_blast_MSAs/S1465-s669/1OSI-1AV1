@@ -1,0 +1,23 @@
+Query         1OSI
+Match_columns 345
+No_of_seqs    140 out of 1557
+Neff          8.65901
+Searched_HMMs 1
+Date          Tue May 28 08:25:41 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1OSI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AV1 -o S1465-s669/1OSI-1AV1 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AV1                             0.1     0.8     0.8    8.1   0.0   12   91-102   159-170 (201)
+
+No 1
+>1AV1
+Probab=0.05  E-value=0.8  Score=8.12  Aligned_cols=12  Identities=8%  Similarity=-0.000  Sum_probs=6.2  Template_Neff=8.713
+
+Q 1OSI             91 LSLRKSQDLFAN  102 (345)
+Q Consensus        91 ~~lR~~ldl~a~  102 (345)
+                      ..||+.++-++.
+T Consensus       159 ~~l~~~~~~~~~  170 (201)
+T 1AV1            159 STLSEKAKPALE  170 (201)
+Confidence            455665554443
+
+

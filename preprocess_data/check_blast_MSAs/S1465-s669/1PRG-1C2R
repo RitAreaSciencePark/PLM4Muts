@@ -1,0 +1,23 @@
+Query         1PRG
+Match_columns 270
+No_of_seqs    215 out of 1448
+Neff          10.2081
+Searched_HMMs 1
+Date          Tue May 28 08:25:42 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1PRG -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C2R -o S1465-s669/1PRG-1C2R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C2R                             2.4   0.019   0.019   15.3   0.0   20   79-98     96-115 (116)
+
+No 1
+>1C2R
+Probab=2.40  E-value=0.019  Score=15.26  Aligned_cols=20  Identities=15%  Similarity=0.381  Sum_probs=13.9  Template_Neff=11.385
+
+Q 1PRG             79 CQFRSVEAVQEITEYAKSIP   98 (270)
+Q Consensus        79 ~~~~~~~~i~~~i~fak~ip   98 (270)
+                      +...+...+..+++|+++++
+T Consensus        96 m~~~l~~~~~~l~~yl~~~~  115 (116)
+T 1C2R             96 MAFKLAKGGEDVAAYLASVV  115 (116)
+Confidence            34456677778888888765
+
+

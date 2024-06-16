@@ -1,0 +1,23 @@
+Query         2H3F
+Match_columns 131
+No_of_seqs    129 out of 680
+Neff          4.61142
+Searched_HMMs 1
+Date          Tue May 28 08:25:57 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2H3F -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HTI -o S1465-s669/2H3F-1HTI 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HTI                             0.3    0.24    0.24   12.1   0.0   23   79-101   119-141 (248)
+
+No 1
+>1HTI
+Probab=0.26  E-value=0.24  Score=12.07  Aligned_cols=23  Identities=13%  Similarity=0.447  Sum_probs=12.9  Template_Neff=8.994
+
+Q 2H3F             79 NTIAVLYCVHQRIDVKDTKEALD  101 (131)
+Q Consensus        79 ntvavL~CVH~~i~VkDTkEAl~  101 (131)
+                      +=+.++.||=...+.++..+..+
+T Consensus       119 ~gl~pIlCvge~~~~~~~~~~~~  141 (248)
+T 1HTI            119 EGLGVIACIGEKLDEREAGITEK  141 (248)
+Confidence            44667788876555444333333
+
+

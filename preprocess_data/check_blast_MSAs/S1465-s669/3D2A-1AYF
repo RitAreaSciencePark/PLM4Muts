@@ -1,0 +1,23 @@
+Query         3D2A
+Match_columns 179
+No_of_seqs    394 out of 1225
+Neff          12.3656
+Searched_HMMs 1
+Date          Tue May 28 08:26:29 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3D2A -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AYF -o S1465-s669/3D2A-1AYF 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AYF                             0.3    0.21    0.21    7.7   0.0   11   19-29     23-33  (103)
+
+No 1
+>1AYF
+Probab=0.28  E-value=0.21  Score=7.70  Aligned_cols=11  Identities=9%  Similarity=0.193  Sum_probs=5.1  Template_Neff=11.125
+
+Q 3D2A             19 GIKSYLVSQGW   29 (179)
+Q Consensus        19 ~~~~~l~~~g~   29 (179)
+                      .+++.+.+.|+
+T Consensus        23 ~ll~~~~~~g~   33 (103)
+T 1AYF             23 SLLDVVVQNNL   33 (103)
+Confidence            34444555443
+
+

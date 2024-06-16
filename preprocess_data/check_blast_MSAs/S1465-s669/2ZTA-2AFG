@@ -1,0 +1,15 @@
+Query         2ZTA
+Match_columns 31
+No_of_seqs    64 out of 64
+Neff          2.8178
+Searched_HMMs 1
+Date          Tue May 28 08:26:20 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2ZTA -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2AFG -o S1465-s669/2ZTA-2AFG 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2AFG                             0.1    0.47    0.47    6.4   0.0    1    1-1       1-1   (129)
+
+No 1
+>2AFG
+Probab=0.12  E-value=0.47  Score=6.36  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.200
+

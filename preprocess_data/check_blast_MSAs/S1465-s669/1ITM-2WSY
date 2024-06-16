@@ -1,0 +1,23 @@
+Query         1ITM
+Match_columns 130
+No_of_seqs    96 out of 96
+Neff          3.86347
+Searched_HMMs 1
+Date          Tue May 28 08:25:25 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1ITM -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2WSY -o S1465-s669/1ITM-2WSY 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2WSY                             1.2   0.045   0.045   15.0   0.0   10  110-119   224-233 (237)
+
+No 1
+>2WSY
+Probab=1.18  E-value=0.045  Score=14.99  Aligned_cols=10  Identities=30%  Similarity=0.677  Sum_probs=4.0  Template_Neff=11.410
+
+Q 1ITM            110 LENFLERLKT  119 (130)
+Q Consensus       110 LkdFLe~Lk~  119 (130)
+                      ++.|++.|+.
+T Consensus       224 ~~~~~~~~~~  233 (237)
+T 2WSY            224 LRSFVSAMKA  233 (237)
+Confidence            3344444433
+
+

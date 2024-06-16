@@ -1,0 +1,23 @@
+Query         5VP3
+Match_columns 195
+No_of_seqs    196 out of 1152
+Neff          11.3219
+Searched_HMMs 1
+Date          Tue May 28 08:26:47 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/5VP3 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1CHK -o S1465-s669/5VP3-1CHK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1CHK                             0.1    0.44    0.44    9.5   0.0   10  177-186   177-186 (238)
+
+No 1
+>1CHK
+Probab=0.13  E-value=0.44  Score=9.51  Aligned_cols=10  Identities=10%  Similarity=0.145  Sum_probs=4.0  Template_Neff=8.582
+
+Q 5VP3            177 LERPELVHLF  186 (195)
+Q Consensus       177 i~~~eF~~~~  186 (195)
+                      ++-.+|+..+
+T Consensus       177 ~~E~~~l~~~  186 (238)
+T 1CHK            177 GDETTYLNGF  186 (238)
+Confidence            3344444433
+
+

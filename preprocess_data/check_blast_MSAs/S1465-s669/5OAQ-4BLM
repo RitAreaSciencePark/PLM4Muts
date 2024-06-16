@@ -1,0 +1,23 @@
+Query         5OAQ
+Match_columns 204
+No_of_seqs    117 out of 171
+Neff          5.16843
+Searched_HMMs 1
+Date          Tue May 28 08:26:45 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/5OAQ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/4BLM -o S1465-s669/5OAQ-4BLM 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 4BLM                             0.2    0.38    0.38   10.4   0.0   13  153-165   112-124 (256)
+
+No 1
+>4BLM
+Probab=0.16  E-value=0.38  Score=10.36  Aligned_cols=13  Identities=8%  Similarity=-0.038  Sum_probs=5.5  Template_Neff=12.218
+
+Q 5OAQ            153 KYMMNSVLENFTI  165 (204)
+Q Consensus       153 ~~~mNsVLeNftI  165 (204)
+                      ...+|..++.+.+
+T Consensus       112 ~~~~~~~~~~lg~  124 (256)
+T 4BLM            112 PESLKKELRKIGD  124 (256)
+Confidence            3344444444433
+
+

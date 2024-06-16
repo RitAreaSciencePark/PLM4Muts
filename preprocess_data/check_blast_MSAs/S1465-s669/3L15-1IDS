@@ -1,0 +1,23 @@
+Query         3L15
+Match_columns 204
+No_of_seqs    124 out of 175
+Neff          5.10007
+Searched_HMMs 1
+Date          Tue May 28 08:26:37 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3L15 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1IDS -o S1465-s669/3L15-1IDS 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1IDS                             0.1    0.52    0.52    9.9   0.0    5  178-182   154-158 (198)
+
+No 1
+>1IDS
+Probab=0.11  E-value=0.52  Score=9.91  Aligned_cols=5  Identities=40%  Similarity=0.195  Sum_probs=2.0  Template_Neff=8.945
+
+Q 3L15            178 LLLCT  182 (204)
+Q Consensus       178 ~LL~i  182 (204)
+                      +||||
+T Consensus       154 Pll~i  158 (198)
+T 1IDS            154 PLLLL  158 (198)
+Confidence            34443
+
+

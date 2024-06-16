@@ -1,0 +1,15 @@
+Query         2WQG
+Match_columns 51
+No_of_seqs    124 out of 1127
+Neff          8.48873
+Searched_HMMs 1
+Date          Tue May 28 08:29:05 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2WQG -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2RU9 -o S157479-s669/2WQG-2RU9 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2RU9                             0.7   0.086   0.086    6.2   0.0    1    1-1       1-1   (68)
+
+No 1
+>2RU9
+Probab=0.66  E-value=0.086  Score=6.22  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.833
+

@@ -1,0 +1,15 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:29:01 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/3L1X -o S157479-s669/2JUC-3L1X 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3L1X                             0.4    0.14    0.14    5.4   0.0    1    1-1       1-1   (69)
+
+No 1
+>3L1X
+Probab=0.43  E-value=0.14  Score=5.35  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.593
+

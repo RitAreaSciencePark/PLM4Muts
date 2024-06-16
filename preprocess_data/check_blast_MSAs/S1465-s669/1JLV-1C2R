@@ -1,0 +1,23 @@
+Query         1JLV
+Match_columns 207
+No_of_seqs    198 out of 1161
+Neff          11.9801
+Searched_HMMs 1
+Date          Tue May 28 08:25:33 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1JLV -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C2R -o S1465-s669/1JLV-1C2R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C2R                             0.8   0.071   0.071   10.7   0.0    9   66-74    105-113 (116)
+
+No 1
+>1C2R
+Probab=0.78  E-value=0.071  Score=10.67  Aligned_cols=9  Identities=33%  Similarity=0.693  Sum_probs=4.6  Template_Neff=11.385
+
+Q 1JLV             66 RAICTYLAE   74 (207)
+Q Consensus        66 ~~I~~yL~~   74 (207)
+                      .+|+.||..
+T Consensus       105 ~~l~~yl~~  113 (116)
+T 1C2R            105 EDVAAYLAS  113 (116)
+Confidence            345555543
+
+

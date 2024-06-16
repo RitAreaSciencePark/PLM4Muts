@@ -1,0 +1,23 @@
+Query         3D2A
+Match_columns 179
+No_of_seqs    394 out of 1225
+Neff          12.3656
+Searched_HMMs 1
+Date          Tue May 28 08:26:33 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3D2A -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/4BLM -o S1465-s669/3D2A-4BLM 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 4BLM                             0.5    0.13    0.13   11.0   0.0   17   46-62    146-162 (256)
+
+No 1
+>4BLM
+Probab=0.45  E-value=0.13  Score=11.03  Aligned_cols=17  Identities=6%  Similarity=-0.013  Sum_probs=10.1  Template_Neff=12.218
+
+Q 3D2A             46 NYNNGPVLSRFVQKVLD   62 (179)
+Q Consensus        46 ~~~~~~~~~~~~~~~~~   62 (179)
+                      ...+..++..++..+.+
+T Consensus       146 ~~~t~~dl~~~~~~l~~  162 (256)
+T 4BLM            146 DTSTARALVTSLRAFAL  162 (256)
+Confidence            34456666666666655
+
+

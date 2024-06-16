@@ -1,0 +1,15 @@
+Query         1LVM
+Match_columns 229
+No_of_seqs    137 out of 1295
+Neff          10.3336
+Searched_HMMs 1
+Date          Tue May 28 08:25:37 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1LVM -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1IO2 -o S1465-s669/1LVM-1IO2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1IO2                             0.1    0.47    0.47    9.4   0.0    1  173-173     5-5   (213)
+
+No 1
+>1IO2
+Probab=0.12  E-value=0.47  Score=9.42  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.109
+

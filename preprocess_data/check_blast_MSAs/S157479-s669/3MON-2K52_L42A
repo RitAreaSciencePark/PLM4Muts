@@ -1,0 +1,15 @@
+Query         3MON
+Match_columns 50
+No_of_seqs    102 out of 1023
+Neff          8.46272
+Searched_HMMs 1
+Date          Tue May 28 08:29:11 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/3MON -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2K52_L42A -o S157479-s669/3MON-2K52_L42A 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2K52_L42A                        0.2    0.28    0.28    4.8   0.0    1   37-37     55-55  (71)
+
+No 1
+>2K52_L42A
+Probab=0.21  E-value=0.28  Score=4.85  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.836
+

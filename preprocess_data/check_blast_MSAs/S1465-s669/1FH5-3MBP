@@ -1,0 +1,15 @@
+Query         1FH5
+Match_columns 198
+No_of_seqs    376 out of 1079
+Neff          12.9562
+Searched_HMMs 1
+Date          Tue May 28 08:25:14 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1FH5 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/3MBP -o S1465-s669/1FH5-3MBP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3MBP                             0.0    0.91    0.91    6.1   0.0    1   88-88    104-104 (370)
+
+No 1
+>3MBP
+Probab=0.04  E-value=0.91  Score=6.13  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.574
+

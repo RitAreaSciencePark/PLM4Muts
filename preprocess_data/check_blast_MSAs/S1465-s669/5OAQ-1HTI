@@ -1,0 +1,23 @@
+Query         5OAQ
+Match_columns 204
+No_of_seqs    117 out of 171
+Neff          5.16843
+Searched_HMMs 1
+Date          Tue May 28 08:26:43 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/5OAQ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HTI -o S1465-s669/5OAQ-1HTI 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HTI                             0.1    0.59    0.59    9.9   0.0    3   67-69    229-231 (248)
+
+No 1
+>1HTI
+Probab=0.09  E-value=0.59  Score=9.88  Aligned_cols=3  Identities=33%  Similarity=1.198  Sum_probs=1.1  Template_Neff=8.994
+
+Q 5OAQ             67 FFL   69 (204)
+Q Consensus        67 FfL   69 (204)
+                      |++
+T Consensus       229 ~lv  231 (248)
+T 1HTI            229 FLV  231 (248)
+Confidence            333
+
+

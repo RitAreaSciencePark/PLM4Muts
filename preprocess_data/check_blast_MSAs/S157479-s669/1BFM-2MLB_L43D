@@ -1,0 +1,15 @@
+Query         1BFM
+Match_columns 69
+No_of_seqs    105 out of 1114
+Neff          10.8698
+Searched_HMMs 1
+Date          Tue May 28 08:28:46 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1BFM -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2MLB_L43D -o S157479-s669/1BFM-2MLB_L43D 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2MLB_L43D                        0.5    0.12    0.12    5.5   0.0    1    1-1       1-1   (72)
+
+No 1
+>2MLB_L43D
+Probab=0.48  E-value=0.12  Score=5.49  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.033
+

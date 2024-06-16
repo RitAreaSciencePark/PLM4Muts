@@ -1,0 +1,23 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:29:02 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/6M3N -o S157479-s669/2JUC-6M3N 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 6M3N                             0.4    0.15    0.15    8.6   0.0    6   31-36      7-12  (64)
+
+No 1
+>6M3N
+Probab=0.41  E-value=0.15  Score=8.61  Aligned_cols=6  Identities=50%  Similarity=1.215  Sum_probs=2.7  Template_Neff=2.093
+
+Q 2JUC             31 ENDPDF   36 (55)
+Q Consensus        31 ~~d~ry   36 (55)
+                      ..+|.|
+T Consensus         7 ~t~pdf   12 (64)
+T 6M3N              7 TTNPDF   12 (64)
+Confidence            344444
+
+

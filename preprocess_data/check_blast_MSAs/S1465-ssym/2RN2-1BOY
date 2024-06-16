@@ -1,0 +1,23 @@
+Query         2RN2
+Match_columns 155
+No_of_seqs    137 out of 1761
+Neff          11.6929
+Searched_HMMs 1
+Date          Tue May 28 08:27:44 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/2RN2 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BOY -o S1465-ssym/2RN2-1BOY 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BOY                             0.1    0.64    0.64    6.2   0.0    9  114-122   119-127 (211)
+
+No 1
+>1BOY
+Probab=0.08  E-value=0.64  Score=6.17  Aligned_cols=9  Identities=0%  Similarity=-0.056  Sum_probs=4.8  Template_Neff=12.791
+
+Q 2RN2            114 HQIKWEWVK  122 (155)
+Q Consensus       114 ~~~~~~~~~  122 (155)
+                      ..+.+.|.+
+T Consensus       119 ~~~~~~W~~  127 (211)
+T 1BOY            119 TKVNVTVED  127 (211)
+Confidence            445566653
+
+

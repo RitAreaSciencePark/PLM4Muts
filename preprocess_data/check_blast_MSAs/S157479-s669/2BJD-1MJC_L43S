@@ -1,0 +1,15 @@
+Query         2BJD
+Match_columns 90
+No_of_seqs    104 out of 1312
+Neff          9.37932
+Searched_HMMs 1
+Date          Tue May 28 08:29:00 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2BJD -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/1MJC_L43S -o S157479-s669/2BJD-1MJC_L43S 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1MJC_L43S                        0.6   0.099   0.099    7.5   0.0    1   35-35     19-19  (68)
+
+No 1
+>1MJC_L43S
+Probab=0.58  E-value=0.099  Score=7.46  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.450
+

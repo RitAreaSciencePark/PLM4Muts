@@ -1,0 +1,15 @@
+Query         3MON
+Match_columns 50
+No_of_seqs    102 out of 1023
+Neff          8.46272
+Searched_HMMs 1
+Date          Tue May 28 08:26:39 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3MON -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C5G -o S1465-s669/3MON-1C5G 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C5G                             0.1     0.8     0.8    5.9   0.0    1    1-1       1-1   (379)
+
+No 1
+>1C5G
+Probab=0.05  E-value=0.8  Score=5.91  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=10.913
+

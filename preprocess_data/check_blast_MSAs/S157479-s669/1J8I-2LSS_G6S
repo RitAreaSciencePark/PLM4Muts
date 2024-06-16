@@ -1,0 +1,15 @@
+Query         1J8I
+Match_columns 93
+No_of_seqs    116 out of 1009
+Neff          6.79874
+Searched_HMMs 1
+Date          Tue May 28 08:28:55 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1J8I -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2LSS_G6S -o S157479-s669/1J8I-2LSS_G6S 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2LSS_G6S                         0.2    0.27    0.27    6.4   0.0    1   38-38      8-8   (69)
+
+No 1
+>2LSS_G6S
+Probab=0.23  E-value=0.27  Score=6.36  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.734
+

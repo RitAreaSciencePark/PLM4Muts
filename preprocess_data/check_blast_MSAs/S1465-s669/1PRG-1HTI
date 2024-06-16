@@ -1,0 +1,23 @@
+Query         1PRG
+Match_columns 270
+No_of_seqs    215 out of 1448
+Neff          10.2081
+Searched_HMMs 1
+Date          Tue May 28 08:25:44 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1PRG -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HTI -o S1465-s669/1PRG-1HTI 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HTI                             0.1    0.45    0.45   10.4   0.0   21  195-215   176-196 (248)
+
+No 1
+>1HTI
+Probab=0.13  E-value=0.45  Score=10.41  Aligned_cols=21  Identities=10%  Similarity=0.208  Sum_probs=10.4  Template_Neff=8.994
+
+Q 1PRG            195 LNVKPIEDIQDNLLQALELQL  215 (270)
+Q Consensus       195 ~~~~~v~~~~~~~~~~L~~~~  215 (270)
+                      .+++.++.....+...+....
+T Consensus       176 ~~~~~i~~~~~~i~~~~~~~~  196 (248)
+T 1HTI            176 ATPQQAQEVHEKLRGWLKSNV  196 (248)
+Confidence            344555555555555544443
+
+

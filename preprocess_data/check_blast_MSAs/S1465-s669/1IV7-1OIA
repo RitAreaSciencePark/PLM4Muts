@@ -1,0 +1,15 @@
+Query         1IV7
+Match_columns 96
+No_of_seqs    130 out of 1014
+Neff          7.66683
+Searched_HMMs 1
+Date          Tue May 28 08:25:26 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1IV7 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1OIA -o S1465-s669/1IV7-1OIA 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1OIA                             0.3    0.23    0.23    6.5   0.0    1   20-20     67-67  (90)
+
+No 1
+>1OIA
+Probab=0.27  E-value=0.23  Score=6.53  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.195
+

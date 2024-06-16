@@ -1,0 +1,15 @@
+Query         2CLR
+Match_columns 100
+No_of_seqs    117 out of 1189
+Neff          11.8495
+Searched_HMMs 1
+Date          Tue May 28 08:25:55 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2CLR -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1B0O -o S1465-s669/2CLR-1B0O 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1B0O                             0.1    0.54    0.54    5.7   0.0    1   40-40     18-18  (161)
+
+No 1
+>1B0O
+Probab=0.10  E-value=0.54  Score=5.66  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.791
+

@@ -1,0 +1,39 @@
+Query         3BCI
+Match_columns 165
+No_of_seqs    179 out of 1221
+Neff          11.3561
+Searched_HMMs 1
+Date          Tue May 28 08:26:21 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3BCI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1A23 -o S1465-s669/3BCI-1A23 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1A23                            99.8 1.1E-29 1.1E-29  141.6   0.0  153    1-164    18-183 (189)
+
+No 1
+>1A23
+Probab=99.82  E-value=1.1e-29  Score=141.64  Aligned_cols=153  Identities=16%  Similarity=0.240  Sum_probs=134.0  Template_Neff=11.979
+
+Q 3BCI              1 GKPLVVVYGDYKCPYCKELD---EKVMPKLRKNYIDNHKVEYQFVNLAFLG-KDSIVGSRASHAVLMYAPKSFLDFQKQL   76 (165)
+Q Consensus         1 ~~~~v~~f~d~~C~~C~~~~---~~~~~~l~~~~~~~~~~~~~~~~~~~~~-~~~~~~~~~~~~~~~~~~~~~~~~~~~~   76 (165)
+                      ++++|++|+|++||||+.++   +.+ +.+.+.+  ..++.+++++++... ..+...+.++.|+...+  +++.+++.+
+T Consensus        18 ~~~~i~~f~d~~C~~C~~~~~~~~~~-~~~~~~~--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~--~~~~~~~~~   92 (189)
+T 1A23             18 GAPQVLEFFSFFCPHCYQFEEVLHIS-DNVKKKL--PEGVKMTKYHVNFMGGDLGKDLTQAWAVAMALG--VEDKVTVPL   92 (189)
+Confidence            47899999999999999999   655 6677677  778999999999887 78999999999999888  999999999
+
+
+Q 3BCI             77 FAAQQDENKEWLTKELLDKHIKQLHLDKETENKIIKDYKTKDSKSWKAAEKDKKIAKDNHIKTTPTAFINGEKVEDPY--  154 (165)
+Q Consensus        77 ~~~~~~~~~~~~~~~~l~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~i~~~P~~~i~g~~~~g~~--  154 (165)
+                      +...+..+.. .+.+.+.+++...   +++.+.+.+|+.+  ..+...++.....+..+|+.++|+++|||+.+.+..  
+T Consensus        93 ~~~~~~~~~~-~~~~~l~~~~~~~---g~~~~~~~~~~~~--~~~~~~~~~~~~~~~~~gi~~tPt~~i~g~~~~~~~~~  166 (189)
+T 1A23             93 FEGVQKTQTI-RSASDIRDVFINA---GIKGEEYDAAWNS--FVVKSLVAQQEKAAADVQLRGVPAMFVNGKYQLNPQGM  166 (189)
+Confidence            9998876654 6789999999999   8899999999999  999999999999999999999999999999996443  
+
+
+Q 3BCI            155 -D------YESYEKLLK  164 (165)
+Q Consensus       155 -~------~~~l~~~l~  164 (165)
+                       +      .+.|.+.|+
+T Consensus       167 ~~~~~~~~~~~~~~~i~  183 (189)
+T 1A23            167 DTSNMDVFVQQYADTVK  183 (189)
+Confidence             3      466666554
+
+

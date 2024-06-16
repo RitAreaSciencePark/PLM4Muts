@@ -1,0 +1,15 @@
+Query         2HBB
+Match_columns 51
+No_of_seqs    127 out of 1083
+Neff          6.61989
+Searched_HMMs 1
+Date          Tue May 28 08:25:59 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2HBB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1G6N -o S1465-s669/2HBB-1G6N 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1G6N                             0.2    0.33    0.33    7.3   0.0    1   40-40    162-162 (200)
+
+No 1
+>1G6N
+Probab=0.18  E-value=0.33  Score=7.33  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.658
+
