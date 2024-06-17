@@ -5,7 +5,7 @@ model: "ESM2_Finetuning"
 max_length: 1024
 MSA:
   max_tokens: 16000
-snapshot_file: "runs/S1465_ESM2_Finetuning/snapshots/ESM2_Finetuning.pt"
+snapshot_file: "runs/S1413_ESM2_Finetuning/snapshots/ESM2_Finetuning.pt"
 
 
 
