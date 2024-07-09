@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024 (C) 2024 Marco Celoria <celoria.marco@gmail.com> and Francesca Cuturello <francesca.cuturello@areasciencepark.it>
+SPDX-FileCopyrightText: (C) 2024 Marco Celoria <celoria.marco@gmail.com> and Francesca Cuturello <francesca.cuturello@areasciencepark.it>
 
 SPDX-License-Identifier: CC-BY-4.0
 -->
