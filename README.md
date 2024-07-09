@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 (C) 2024 Marco Celoria <celoria.marco@gmail.com> and Francesca Cuturello <francesca.cuturello@areasciencepark.it>
+
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 The code provided has been tested on the Booster partition of Leonardo, the pre-exascale Tier-0 EuroHPC supercomputer, at CINECA and on the DGX partition of Orfeo, the supercomputer hosted at AREA Science Park.
 
 ### Hardware requirements

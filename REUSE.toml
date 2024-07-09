@@ -6,19 +6,24 @@ SPDX-FileCopyrightText = ["(C) 2024 Marco Celoria <celoria.marco@gmail.com>"]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
-path = ["README.md","runs/**.log","runs/**.diffs","runs/**.res","runs/**.png","runs/**.out","runs/**.csv","runs/**.yaml"]
+path = ["runs/**.log","runs/**.diffs","runs/**.res","runs/**.png","runs/**.out","runs/**.csv","runs/**.yaml"]
 SPDX-FileCopyrightText = ["(C) 2024 Marco Celoria <celoria.marco@gmail.com>"] 
 SPDX-License-Identifier = "CC-BY-4.0"
 
 [[annotations]]
+path = ["README.md"]
+SPDX-FileCopyrightText = ["(C) 2024 Marco Celoria <celoria.marco@gmail.com> and Francesca Cuturello <francesca.cuturello@areasciencepark.it>"] 
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
 path = ["preprocess_data/**.py", "preprocess_data/**.sh"]
-SPDX-FileCopyrightText = ["(C) 2024 Francesca Cuturello <francesca.cuturello@areascienceprk.it>"]
+SPDX-FileCopyrightText = ["(C) 2024 Francesca Cuturello <francesca.cuturello@areasciencepark.it>"]
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
 path = ["datasets/**", 
         "preprocess_data/**.csv","preprocess_data/check_blast_MSAs/**","preprocess_data/blastp/**","preprocess_data/README.md"]
-SPDX-FileCopyrightText = ["(C) 2024 Francesca Cuturello <francesca.cuturello@areascienceprk.it>"]
+SPDX-FileCopyrightText = ["(C) 2024 Francesca Cuturello <francesca.cuturello@areasciencepark.it>"]
 SPDX-License-Identifier = "CC-BY-4.0"
 
 [[annotations]]

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 (C) 2024 Francesca Cuturello <francesca.cuturello@areasciencepark.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import numpy as np
 import pandas as pd
 import subprocess

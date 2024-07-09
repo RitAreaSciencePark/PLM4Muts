@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 (C) 2024 Marco Celoria <celoria.marco@gmail.com>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import itertools
 import math
 import matplotlib.pyplot as plt

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 (C) 2024 Francesca Cuturello <francesca.cuturello@areasciencepark.it>
+
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # README.md
 
 # Requirements
