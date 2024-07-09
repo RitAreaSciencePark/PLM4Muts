@@ -1,0 +1,23 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:26:05 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1DIL -o S1465-s669/2JUC-1DIL 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1DIL                             0.1    0.52    0.52    6.9   0.0   10   19-28     75-84  (381)
+
+No 1
+>1DIL
+Probab=0.11  E-value=0.52  Score=6.91  Aligned_cols=10  Identities=20%  Similarity=0.288  Sum_probs=5.2  Template_Neff=13.089
+
+Q 2JUC             19 KFSTWSLQSK   28 (55)
+Q Consensus        19 ~~~~w~~~~~   28 (55)
+                      ...+|.....
+T Consensus        75 ~G~tW~~~~~   84 (381)
+T 1DIL             75 GGKTWNKKIA   84 (381)
+Confidence            3455665543
+
+

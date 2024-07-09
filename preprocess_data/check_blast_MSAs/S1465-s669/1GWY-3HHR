@@ -1,0 +1,23 @@
+Query         1GWY
+Match_columns 175
+No_of_seqs    139 out of 322
+Neff          7.12965
+Searched_HMMs 1
+Date          Tue May 28 08:25:20 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1GWY -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/3HHR -o S1465-s669/1GWY-3HHR 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3HHR                             0.3    0.23    0.23   11.8   0.0   12   97-108    81-92  (185)
+
+No 1
+>3HHR
+Probab=0.27  E-value=0.23  Score=11.81  Aligned_cols=12  Identities=17%  Similarity=0.241  Sum_probs=8.7  Template_Neff=8.302
+
+Q 1GWY             97 TLGVMFSVPFDY  108 (175)
+Q Consensus        97 ~l~i~wsvP~~~  108 (175)
+                      .+.-.|..|...
+T Consensus        81 ~ll~sW~~PL~h   92 (185)
+T 3HHR             81 LLIQSWLEPVQF   92 (185)
+Confidence            455679999963
+
+

@@ -1,0 +1,23 @@
+Query         1R6R
+Match_columns 80
+No_of_seqs    76 out of 76
+Neff          5.20472
+Searched_HMMs 1
+Date          Tue May 28 08:25:47 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1R6R -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C5G -o S1465-s669/1R6R-1C5G 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C5G                             0.1    0.54    0.54    8.6   0.0   22   44-65    246-267 (379)
+
+No 1
+>1C5G
+Probab=0.10  E-value=0.54  Score=8.64  Aligned_cols=22  Identities=0%  Similarity=-0.177  Sum_probs=9.9  Template_Neff=10.913
+
+Q 1R6R             44 GILKRWGTIKKSKAINVLRGFR   65 (80)
+Q Consensus        44 ~l~~rW~~v~k~~A~~vLr~fk   65 (80)
+                      ++....+..+..+....+..++
+T Consensus       246 ~l~~~~~~l~~~~l~~~~~~~~  267 (379)
+T 1C5G            246 PLSALTNILSAQLISHWKGNMT  267 (379)
+Confidence            3444444444444444444443
+
+

@@ -1,0 +1,23 @@
+Query         2VY0
+Match_columns 264
+No_of_seqs    137 out of 1511
+Neff          10.8374
+Searched_HMMs 1
+Date          Tue May 28 08:26:15 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2VY0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C2R -o S1465-s669/2VY0-1C2R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C2R                             0.2    0.24    0.24    9.0   0.0   15  187-201    64-78  (116)
+
+No 1
+>1C2R
+Probab=0.25  E-value=0.24  Score=8.99  Aligned_cols=15  Identities=33%  Similarity=0.769  Sum_probs=9.5  Template_Neff=11.385
+
+Q 2VY0            187 GIVWYPDKIKWYVDG  201 (264)
+Q Consensus       187 ~~ew~~~~i~~yidg  201 (264)
+                      ...|+++.+.-++.+
+T Consensus        64 ~~~~~~~~l~~~~~~   78 (116)
+T 1C2R             64 GFAWTEEDIATYVKD   78 (116)
+Confidence            566777777666544
+
+

@@ -1,0 +1,23 @@
+Query         3BCI
+Match_columns 165
+No_of_seqs    179 out of 1221
+Neff          11.3561
+Searched_HMMs 1
+Date          Tue May 28 08:26:23 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3BCI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1HK0 -o S1465-s669/3BCI-1HK0 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1HK0                             0.1    0.43    0.43    7.5   0.0    9  137-145   125-133 (173)
+
+No 1
+>1HK0
+Probab=0.13  E-value=0.43  Score=7.55  Aligned_cols=9  Identities=0%  Similarity=-0.067  Sum_probs=3.3  Template_Neff=11.296
+
+Q 3BCI            137 IKTTPTAFI  145 (165)
+Q Consensus       137 i~~~P~~~i  145 (165)
+                      +.+-+.++.
+T Consensus       125 v~~~~~~~~  133 (173)
+T 1HK0            125 VLEGSWVLY  133 (173)
+Confidence            333333333
+
+

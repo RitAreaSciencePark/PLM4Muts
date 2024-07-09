@@ -1,0 +1,23 @@
+Query         1DXX
+Match_columns 238
+No_of_seqs    160 out of 1519
+Neff          10.121
+Searched_HMMs 1
+Date          Tue May 28 08:25:10 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1DXX -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1A23 -o S1465-s669/1DXX-1A23 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1A23                             0.6   0.093   0.093   12.7   0.0   14   70-83    106-119 (189)
+
+No 1
+>1A23
+Probab=0.62  E-value=0.093  Score=12.68  Aligned_cols=14  Identities=14%  Similarity=0.114  Sum_probs=6.5  Template_Neff=11.979
+
+Q 1DXX             70 NKALRVLQNNNVDL   83 (238)
+Q Consensus        70 ~~~l~~l~~~g~~~   83 (238)
+                      ..+.+++.+.|++.
+T Consensus       106 ~~l~~~~~~~g~~~  119 (189)
+T 1A23            106 SDIRDVFINAGIKG  119 (189)
+Confidence            34444445555443
+
+

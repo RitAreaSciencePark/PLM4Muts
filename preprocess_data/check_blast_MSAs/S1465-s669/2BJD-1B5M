@@ -1,0 +1,23 @@
+Query         2BJD
+Match_columns 90
+No_of_seqs    104 out of 1312
+Neff          9.37932
+Searched_HMMs 1
+Date          Tue May 28 08:25:51 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2BJD -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1B5M -o S1465-s669/2BJD-1B5M 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1B5M                             1.5   0.035   0.035    9.9   0.0   22   20-41     19-40  (84)
+
+No 1
+>1B5M
+Probab=1.47  E-value=0.035  Score=9.92  Aligned_cols=22  Identities=23%  Similarity=0.462  Sum_probs=11.1  Template_Neff=11.384
+
+Q 2BJD             20 KFVQIHAIRLGIKGYAKNLPDG   41 (90)
+Q Consensus        20 ~~i~~~A~~~~l~G~v~~~~~~   41 (90)
+                      .|+.-...-+.++.++...+.+
+T Consensus        19 ~~~~i~g~vyd~t~~~~~~p~g   40 (84)
+T 1B5M             19 TWMVIHGRVYDITRFLSEHPGG   40 (84)
+Confidence            3444444455556665555444
+
+

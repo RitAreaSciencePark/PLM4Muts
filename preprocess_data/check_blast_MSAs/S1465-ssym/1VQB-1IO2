@@ -1,0 +1,15 @@
+Query         1VQB
+Match_columns 86
+No_of_seqs    100 out of 221
+Neff          6.41092
+Searched_HMMs 1
+Date          Tue May 28 08:27:42 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1VQB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1IO2 -o S1465-ssym/1VQB-1IO2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1IO2                             0.1    0.42    0.42    8.7   0.0    1   76-76     18-18  (213)
+
+No 1
+>1IO2
+Probab=0.14  E-value=0.42  Score=8.71  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.109
+

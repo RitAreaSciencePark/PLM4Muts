@@ -1,0 +1,23 @@
+Query         1FT8
+Match_columns 242
+No_of_seqs    275 out of 3095
+Neff          9.56495
+Searched_HMMs 1
+Date          Tue May 28 08:25:16 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1FT8 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1FEP -o S1465-s669/1FT8-1FEP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1FEP                             0.2     0.3     0.3   13.1   0.0   10  228-237    73-82  (680)
+
+No 1
+>1FEP
+Probab=0.20  E-value=0.3  Score=13.08  Aligned_cols=10  Identities=30%  Similarity=0.700  Sum_probs=6.6  Template_Neff=13.001
+
+Q 1FT8            228 LLRLDGHELP  237 (242)
+Q Consensus       228 L~~Ldg~~v~  237 (242)
+                      +-.+||+++.
+T Consensus        73 ~v~idG~~~~   82 (680)
+T 1FEP             73 LILIDGKPVS   82 (680)
+Confidence            4567777765
+
+

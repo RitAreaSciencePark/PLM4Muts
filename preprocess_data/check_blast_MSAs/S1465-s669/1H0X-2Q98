@@ -1,0 +1,23 @@
+Query         1H0X
+Match_columns 89
+No_of_seqs    128 out of 1013
+Neff          8.18309
+Searched_HMMs 1
+Date          Tue May 28 08:25:21 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1H0X -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2Q98 -o S1465-s669/1H0X-2Q98 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2Q98                             0.3    0.18    0.18   10.5   0.0   20   35-54    102-121 (191)
+
+No 1
+>2Q98
+Probab=0.34  E-value=0.18  Score=10.51  Aligned_cols=20  Identities=25%  Similarity=0.215  Sum_probs=14.9  Template_Neff=8.174
+
+Q 1H0X             35 GRAISKAVDTVEIVRNRFLP   54 (89)
+Q Consensus        35 G~aI~kaV~vae~lk~~~~~   54 (89)
+                      ...+++|..+.+.+++-..|
+T Consensus       102 ~~i~ska~~i~~~~~~L~eg  121 (191)
+T 2Q98            102 EAILSKAVEIEEQTKRLLER  121 (191)
+Confidence            56677888888888777655
+
+

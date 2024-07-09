@@ -1,0 +1,23 @@
+Query         2RPN
+Match_columns 59
+No_of_seqs    143 out of 1258
+Neff          14.3442
+Searched_HMMs 1
+Date          Tue May 28 08:29:04 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2RPN -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2BTT -o S157479-s669/2RPN-2BTT 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2BTT                            96.7 3.4E-10 3.4E-10   22.4   0.0   54    4-57      5-59  (61)
+
+No 1
+>2BTT
+Probab=96.73  E-value=3.4e-10  Score=22.36  Aligned_cols=54  Identities=22%  Similarity=0.422  Sum_probs=37.7  Template_Neff=14.636
+
+Q 2RPN              4 ATAEYDYDAAE-DNELTFVENDKIINIEFVDDDWWLGELEKDGSKGLFPSNYVSL   57 (59)
+Q Consensus         4 ~~~~~~~~~~~-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   57 (59)
+                      +.+..++.... ...+.+..++.+.+......+|+..........++++..++..
+T Consensus         5 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   59 (61)
+T 2BTT              5 FEAAYDFPGSGSSSELPLKKGDIVFISRDEPSGWSLAKLLDGSKEGWVPTAYMTP   59 (61)
+Confidence            44556666666 7777888888888888778888888763235667777766543
+
+

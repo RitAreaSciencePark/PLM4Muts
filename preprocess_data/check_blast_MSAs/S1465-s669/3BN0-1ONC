@@ -1,0 +1,15 @@
+Query         3BN0
+Match_columns 95
+No_of_seqs    114 out of 1044
+Neff          5.71686
+Searched_HMMs 1
+Date          Tue May 28 08:26:24 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3BN0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1ONC -o S1465-s669/3BN0-1ONC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1ONC                             0.1    0.57    0.57    6.8   0.0    1   38-38     34-34  (104)
+
+No 1
+>1ONC
+Probab=0.09  E-value=0.57  Score=6.82  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=8.805
+

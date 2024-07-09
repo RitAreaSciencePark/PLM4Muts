@@ -1,0 +1,23 @@
+Query         2HBB
+Match_columns 51
+No_of_seqs    127 out of 1083
+Neff          6.61989
+Searched_HMMs 1
+Date          Tue May 28 08:26:01 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2HBB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1PGA -o S1465-s669/2HBB-1PGA 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1PGA                             0.8    0.07    0.07   10.1   0.0    8   23-30     27-34  (56)
+
+No 1
+>1PGA
+Probab=0.80  E-value=0.07  Score=10.13  Aligned_cols=8  Identities=0%  Similarity=0.152  Sum_probs=4.0  Template_Neff=3.272
+
+Q 2HBB             23 DGYANNFL   30 (51)
+Q Consensus        23 ~g~arN~L   30 (51)
+                      ..|++|+-
+T Consensus        27 e~~F~~~a   34 (56)
+T 1PGA             27 EKVFKQYA   34 (56)
+Confidence            34555553
+
+

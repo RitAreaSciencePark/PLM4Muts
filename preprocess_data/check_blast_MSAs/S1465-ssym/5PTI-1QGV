@@ -1,0 +1,15 @@
+Query         5PTI
+Match_columns 58
+No_of_seqs    135 out of 1091
+Neff          12.2213
+Searched_HMMs 1
+Date          Tue May 28 08:27:47 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/5PTI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QGV -o S1465-ssym/5PTI-1QGV 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QGV                             0.5    0.12    0.12    6.5   0.0    1   30-30     37-37  (131)
+
+No 1
+>1QGV
+Probab=0.49  E-value=0.12  Score=6.48  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.418
+

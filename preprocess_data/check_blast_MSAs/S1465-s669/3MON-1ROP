@@ -1,0 +1,23 @@
+Query         3MON
+Match_columns 50
+No_of_seqs    102 out of 1023
+Neff          8.46272
+Searched_HMMs 1
+Date          Tue May 28 08:26:39 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3MON -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1ROP -o S1465-s669/3MON-1ROP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1ROP                             0.8   0.065   0.065    9.3   0.0    9   14-22     10-18  (56)
+
+No 1
+>1ROP
+Probab=0.85  E-value=0.065  Score=9.25  Aligned_cols=9  Identities=22%  Similarity=0.600  Sum_probs=4.0  Template_Neff=3.683
+
+Q 3MON             14 NLGKFAVDE   22 (50)
+Q Consensus        14 ~~a~~av~~   22 (50)
+                      .+|+|+..+
+T Consensus        10 NMAkFi~~Q   18 (56)
+T 1ROP             10 NMARFIRSQ   18 (56)
+Confidence            344554443
+
+

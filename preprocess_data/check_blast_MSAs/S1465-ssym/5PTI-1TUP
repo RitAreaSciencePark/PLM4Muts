@@ -1,0 +1,23 @@
+Query         5PTI
+Match_columns 58
+No_of_seqs    135 out of 1091
+Neff          12.2213
+Searched_HMMs 1
+Date          Tue May 28 08:27:48 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/5PTI -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1TUP -o S1465-ssym/5PTI-1TUP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1TUP                             1.3   0.039   0.039   10.3   0.0    6   50-55    144-149 (196)
+
+No 1
+>1TUP
+Probab=1.32  E-value=0.039  Score=10.28  Aligned_cols=6  Identities=33%  Similarity=1.060  Sum_probs=2.6  Template_Neff=8.334
+
+Q 5PTI             50 DCMRTC   55 (58)
+Q Consensus        50 ~c~~~c   55 (58)
+                      -|...|
+T Consensus       144 ~C~~SC  149 (196)
+T 1TUP            144 MCNSSC  149 (196)
+Confidence            344444
+
+

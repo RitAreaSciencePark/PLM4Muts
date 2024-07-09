@@ -1,0 +1,23 @@
+Query         3FIS
+Match_columns 73
+No_of_seqs    117 out of 1013
+Neff          10.9969
+Searched_HMMs 1
+Date          Tue May 28 08:26:34 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3FIS -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C5G -o S1465-s669/3FIS-1C5G 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C5G                             0.1    0.69    0.69    6.7   0.0    9   50-58     56-64  (379)
+
+No 1
+>1C5G
+Probab=0.07  E-value=0.69  Score=6.74  Aligned_cols=9  Identities=22%  Similarity=0.390  Sum_probs=3.6  Template_Neff=10.913
+
+Q 3FIS             50 TRAALMMGI   58 (73)
+Q Consensus        50 ~~~~~~lgi   58 (73)
+                      .++.+.+|.
+T Consensus        56 ~~l~~~l~~   64 (379)
+T 1C5G             56 QQIQAAMGF   64 (379)
+Confidence            334444443
+
+

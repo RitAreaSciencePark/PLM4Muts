@@ -1,0 +1,15 @@
+Query         5OAQ
+Match_columns 204
+No_of_seqs    117 out of 171
+Neff          5.16843
+Searched_HMMs 1
+Date          Tue May 28 08:26:44 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/5OAQ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2BRD -o S1465-s669/5OAQ-2BRD 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2BRD                             0.1    0.55    0.55    9.7   0.0    1  195-195    71-71  (222)
+
+No 1
+>2BRD
+Probab=0.10  E-value=0.55  Score=9.72  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=9.492
+

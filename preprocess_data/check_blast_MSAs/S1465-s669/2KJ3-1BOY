@@ -1,0 +1,15 @@
+Query         2KJ3
+Match_columns 79
+No_of_seqs    82 out of 82
+Neff          5.51077
+Searched_HMMs 1
+Date          Tue May 28 08:26:07 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2KJ3 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BOY -o S1465-s669/2KJ3-1BOY 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BOY                             0.1    0.59    0.59    6.5   0.0    1    1-1       1-1   (211)
+
+No 1
+>1BOY
+Probab=0.09  E-value=0.59  Score=6.45  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.791
+

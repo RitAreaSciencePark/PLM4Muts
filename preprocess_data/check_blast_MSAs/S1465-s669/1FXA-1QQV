@@ -1,0 +1,15 @@
+Query         1FXA
+Match_columns 98
+No_of_seqs    165 out of 1415
+Neff          9.79113
+Searched_HMMs 1
+Date          Tue May 28 08:25:17 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1FXA -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QQV -o S1465-s669/1FXA-1QQV 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QQV                             0.1    0.68    0.68    4.6   0.0    1    1-1       1-1   (67)
+
+No 1
+>1QQV
+Probab=0.07  E-value=0.68  Score=4.59  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=8.653
+

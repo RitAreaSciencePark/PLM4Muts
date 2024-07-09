@@ -1,0 +1,15 @@
+Query         1IOJ
+Match_columns 57
+No_of_seqs    58 out of 58
+Neff          4.02504
+Searched_HMMs 1
+Date          Tue May 28 08:25:23 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1IOJ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1UWO -o S1465-s669/1IOJ-1UWO 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1UWO                             0.3    0.22    0.22    6.7   0.0    1   34-34     73-73  (91)
+
+No 1
+>1UWO
+Probab=0.28  E-value=0.22  Score=6.70  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.663
+

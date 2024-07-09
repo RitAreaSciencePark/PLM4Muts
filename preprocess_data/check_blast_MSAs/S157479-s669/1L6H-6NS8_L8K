@@ -1,0 +1,15 @@
+Query         1L6H
+Match_columns 69
+No_of_seqs    127 out of 1069
+Neff          8.43389
+Searched_HMMs 1
+Date          Tue May 28 08:28:57 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1L6H -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/6NS8_L8K -o S157479-s669/1L6H-6NS8_L8K 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 6NS8_L8K                         0.2    0.37    0.37    7.2   0.0    1    1-1       1-1   (70)
+
+No 1
+>6NS8_L8K
+Probab=0.16  E-value=0.37  Score=7.23  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=4.470
+

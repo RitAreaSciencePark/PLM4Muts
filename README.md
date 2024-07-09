@@ -188,6 +188,7 @@ As an example, we provide an example dataset, where we consider 13 mutations of 
 Dataset files correctly organized as follows
 
 ```bash
+<<<<<<< HEAD
 Inference/
 └── test
     ├── databases
@@ -199,6 +200,18 @@ Inference/
 
 ```
 We have generated `translated_databases/tb_s669.csv` by means of the `src/ProstT5TranslationDDP.py` program (see for instance `runs/S1465_Translate/translateS1465.sh` for more details). 
+=======
+datasets/Inference/
+`-- test
+    |-- databases
+    |   `-- db_s13.csv
+    |-- MSA_s13
+    |   `-- 1A7V
+    `-- translated_databases
+        `-- tb_s13.csv
+```
+We have generated `translated_databases/tb_s13.csv` by means of the `src/ProstT5TranslationDDP.py` program (see for instance `runs/S1465_Translate/translateS1465.sh` for more details). 
+>>>>>>> production
 
 Now, in `runs/Inference_MSA_Finetuning` we have a `config.yaml` file where we specify for the MSA model
 
@@ -209,11 +222,9 @@ model: "MSA_Finetuning"
 max_length: 1024
 MSA:
   max_tokens: 16000
-snapshot_file: "runs/S1465_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
+snapshot_file: "runs/S1413_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
 ```
 
 To perform the inference we provide a slurm job template in `runs/Inference_MSA_Finetuning/inference.job`, to be adjusted in accordance to your needs.
  
-
-
 

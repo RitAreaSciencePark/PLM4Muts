@@ -1,0 +1,15 @@
+Query         1GWY
+Match_columns 175
+No_of_seqs    139 out of 322
+Neff          7.12965
+Searched_HMMs 1
+Date          Tue May 28 08:28:54 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1GWY -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/1QKH -o S157479-s669/1GWY-1QKH 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QKH                             0.2    0.28    0.28    8.9   0.0    1  137-137    46-46  (68)
+
+No 1
+>1QKH
+Probab=0.21  E-value=0.28  Score=8.95  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=7.654
+

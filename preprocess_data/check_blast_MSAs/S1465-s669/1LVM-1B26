@@ -1,0 +1,23 @@
+Query         1LVM
+Match_columns 229
+No_of_seqs    137 out of 1295
+Neff          10.3336
+Searched_HMMs 1
+Date          Tue May 28 08:25:35 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1LVM -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1B26 -o S1465-s669/1LVM-1B26 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1B26                             0.1    0.51    0.51   10.5   0.0   23  155-177   213-239 (409)
+
+No 1
+>1B26
+Probab=0.11  E-value=0.51  Score=10.52  Aligned_cols=23  Identities=13%  Similarity=0.099  Sum_probs=11.4  Template_Neff=9.757
+
+Q 1LVM            155 KDGQCGSPLVST----RDGFIVGIHSA  177 (229)
+Q Consensus       155 ~~G~sGspli~~----~~g~ivGih~~  177 (229)
+                      --|..|..+...    ..-+|+||...
+T Consensus       213 G~G~vG~~~a~~l~~~~g~~vv~v~D~  239 (409)
+T 1B26            213 GFGNVGQFAALLISQELGSKVVAVSDS  239 (409)
+Confidence            445566655432    23455555443
+
+

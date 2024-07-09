@@ -1,0 +1,23 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:26:04 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C5G -o S1465-s669/2JUC-1C5G 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C5G                             0.3    0.21    0.21    9.6   0.0    9   10-18    288-296 (379)
+
+No 1
+>1C5G
+Probab=0.29  E-value=0.21  Score=9.61  Aligned_cols=9  Identities=0%  Similarity=0.209  Sum_probs=3.9  Template_Neff=10.913
+
+Q 2JUC             10 ELFDRYKLD   18 (55)
+Q Consensus        10 ~lL~~~~i~   18 (55)
+                      ..|...|++
+T Consensus       288 ~~l~~~g~~  296 (379)
+T 1C5G            288 KPLENLGMT  296 (379)
+Confidence            344444443
+
+

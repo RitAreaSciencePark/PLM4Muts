@@ -1,0 +1,23 @@
+Query         3L15
+Match_columns 204
+No_of_seqs    124 out of 175
+Neff          5.10007
+Searched_HMMs 1
+Date          Tue May 28 08:26:38 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3L15 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/3HHR -o S1465-s669/3L15-3HHR 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3HHR                             0.3    0.24    0.24   12.5   0.0   21   45-65    107-127 (185)
+
+No 1
+>3HHR
+Probab=0.25  E-value=0.24  Score=12.52  Aligned_cols=21  Identities=24%  Similarity=0.523  Sum_probs=12.7  Template_Neff=8.302
+
+Q 3L15             45 VRQIYDKFPEKKGGLRELYDR   65 (204)
+Q Consensus        45 i~~I~dKfP~~~~gL~el~~~   65 (204)
+                      .+.|.+|.-+-..|++.+..+
+T Consensus       107 ~~~i~~k~~~L~egi~~i~~~  127 (185)
+T 3HHR            107 DSNVYDLLKDLEEGIQTLMGR  127 (185)
+Confidence            345667776666666666554
+
+

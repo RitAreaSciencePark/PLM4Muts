@@ -1,0 +1,15 @@
+Query         2VY0
+Match_columns 264
+No_of_seqs    137 out of 1511
+Neff          10.8374
+Searched_HMMs 1
+Date          Tue May 28 08:26:17 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2VY0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2ABD -o S1465-s669/2VY0-2ABD 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2ABD                             0.1    0.46    0.46    7.0   0.0    1    1-1       1-1   (86)
+
+No 1
+>2ABD
+Probab=0.12  E-value=0.46  Score=6.99  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=10.046
+

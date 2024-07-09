@@ -1,0 +1,23 @@
+Query         3BN0
+Match_columns 95
+No_of_seqs    114 out of 1044
+Neff          5.71686
+Searched_HMMs 1
+Date          Tue May 28 08:26:24 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3BN0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1B26 -o S1465-s669/3BN0-1B26 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1B26                             0.5    0.13    0.13   13.6   0.0   17   57-73    315-331 (409)
+
+No 1
+>1B26
+Probab=0.46  E-value=0.13  Score=13.59  Aligned_cols=17  Identities=35%  Similarity=0.401  Sum_probs=9.6  Template_Neff=9.757
+
+Q 3BN0             57 ELSHRAKAILWNHGILK   73 (95)
+Q Consensus        57 qpS~~V~~LL~~~g~~~   73 (95)
+                      +.|+...++|.+.|++-
+T Consensus       315 ~~~~~a~~~L~~~gi~~  331 (409)
+T 1B26            315 PTTPEADEILSRRGILV  331 (409)
+Confidence            45555666666555543
+
+

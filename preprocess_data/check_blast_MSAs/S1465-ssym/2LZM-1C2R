@@ -1,0 +1,15 @@
+Query         2LZM
+Match_columns 164
+No_of_seqs    155 out of 1212
+Neff          9.42734
+Searched_HMMs 1
+Date          Tue May 28 08:27:43 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/2LZM -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C2R -o S1465-ssym/2LZM-1C2R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C2R                             0.3    0.18    0.18    9.1   0.0    1    6-6     110-110 (116)
+
+No 1
+>1C2R
+Probab=0.33  E-value=0.18  Score=9.09  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.385
+

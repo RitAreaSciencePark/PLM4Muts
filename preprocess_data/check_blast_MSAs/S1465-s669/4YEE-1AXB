@@ -1,0 +1,15 @@
+Query         4YEE
+Match_columns 82
+No_of_seqs    109 out of 1229
+Neff          11.0299
+Searched_HMMs 1
+Date          Tue May 28 08:26:41 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/4YEE -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AXB -o S1465-s669/4YEE-1AXB 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AXB                             0.1    0.62    0.62    6.0   0.0    1    1-1       1-1   (263)
+
+No 1
+>1AXB
+Probab=0.08  E-value=0.62  Score=5.99  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.447
+

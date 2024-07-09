@@ -1,0 +1,15 @@
+Query         2JUC
+Match_columns 55
+No_of_seqs    102 out of 1031
+Neff          8.30966
+Searched_HMMs 1
+Date          Tue May 28 08:26:04 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2JUC -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1ANK -o S1465-s669/2JUC-1ANK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1ANK                             0.2    0.35    0.35    6.9   0.0    1    1-1       1-1   (214)
+
+No 1
+>1ANK
+Probab=0.17  E-value=0.35  Score=6.95  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.994
+

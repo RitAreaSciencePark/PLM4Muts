@@ -1,0 +1,15 @@
+Query         1O1U
+Match_columns 127
+No_of_seqs    158 out of 1129
+Neff          9.53418
+Searched_HMMs 1
+Date          Tue May 28 08:25:39 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1O1U -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1FNF -o S1465-s669/1O1U-1FNF 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1FNF                             0.1    0.42    0.42    8.7   0.0    1    6-6      23-23  (368)
+
+No 1
+>1FNF
+Probab=0.14  E-value=0.42  Score=8.73  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.142
+

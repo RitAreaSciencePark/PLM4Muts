@@ -1,0 +1,15 @@
+Query         1G3P
+Match_columns 192
+No_of_seqs    13 out of 13
+Neff          2.03502
+Searched_HMMs 1
+Date          Tue May 28 08:25:18 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1G3P -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1KFW -o S1465-s669/1G3P-1KFW 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1KFW                             0.1    0.76    0.76    9.1   0.0    1  163-163   414-414 (435)
+
+No 1
+>1KFW
+Probab=0.06  E-value=0.76  Score=9.09  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=10.788
+

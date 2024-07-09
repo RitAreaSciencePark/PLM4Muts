@@ -1,0 +1,15 @@
+[Info] output_dir:	runs/S3648_ESM2_Finetuning	<class 'str'>
+[Info] loss_fn_name:	L1	<class 'str'>
+[Info] learning rate:	0.001	<class 'float'>
+[Info] seeds:	[10, 11, 12]	<class 'list'>
+[Info] max_epochs:	20	<class 'int'>
+[Info] model_name:	ESM2_Finetuning	<class 'str'>
+[Info] optimizer_name:	AdamW	<class 'str'>
+[Info] train_dir:	datasets/S3648/train	<class 'str'>
+[Info] val_dir:	datasets/S3648/validation	<class 'str'>
+[Info] test_dir:	datasets/S3648/test	<class 'str'>
+[Info] max_length:	1024	<class 'int'>
+[Info] Total time for Finetuning: 0:18:10.282390 on 64 GPUs
+[Info] Max GPU memory reserved for Finetuning: 20331.0 MB
+[Info] Max GPU memory allocated for Finetuning: 19119.0 MB
+[Info] Total GPU memory for Finetuning: 68099.0 MB

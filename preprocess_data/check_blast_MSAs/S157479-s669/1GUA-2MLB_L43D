@@ -1,0 +1,23 @@
+Query         1GUA
+Match_columns 76
+No_of_seqs    100 out of 278
+Neff          7.27744
+Searched_HMMs 1
+Date          Tue May 28 08:28:52 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1GUA -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2MLB_L43D -o S157479-s669/1GUA-2MLB_L43D 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2MLB_L43D                       79.6 1.5E-05 1.5E-05   21.9   0.0   44    3-46      3-46  (72)
+
+No 1
+>2MLB_L43D
+Probab=79.64  E-value=1.5e-05  Score=21.89  Aligned_cols=44  Identities=18%  Similarity=0.249  Sum_probs=37.4  Template_Neff=13.033
+
+Q 1GUA              3 IRVFLPNKQRTVVNVRNGMSLHDCLMKALKVRGLQPECCAVFRL   46 (76)
+Q Consensus         3 ~rv~LPn~q~t~V~v~~g~tv~~~l~k~l~~R~L~~~~c~V~~~   46 (76)
+                      +.+..++++...+.+.+..|+.+.........++.+....++..
+T Consensus         3 i~~~~~~~~~~~~~~~~~~~v~~l~~~~~~~~~~~~~~~~~~~~   46 (72)
+T 2MLB_L43D         3 INITLPDGKTLTLTVTPEFTVKELAEEIARRLGLSPEDIKDTHN   46 (72)
+Confidence            56778899999999999999999999999999998877666544
+
+

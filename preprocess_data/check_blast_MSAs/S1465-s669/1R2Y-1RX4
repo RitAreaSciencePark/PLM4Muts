@@ -1,0 +1,23 @@
+Query         1R2Y
+Match_columns 273
+No_of_seqs    264 out of 1682
+Neff          8.56782
+Searched_HMMs 1
+Date          Tue May 28 08:25:46 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1R2Y -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1RX4 -o S1465-s669/1R2Y-1RX4 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1RX4                             0.4    0.15    0.15   12.4   0.0    4  262-265    43-46  (159)
+
+No 1
+>1RX4
+Probab=0.39  E-value=0.15  Score=12.37  Aligned_cols=4  Identities=75%  Similarity=1.032  Sum_probs=1.4  Template_Neff=10.504
+
+Q 1R2Y            262 GRGT  265 (273)
+Q Consensus       262 gR~t  265 (273)
+                      ||.|
+T Consensus        43 Gr~T   46 (159)
+T 1RX4             43 GRHT   46 (159)
+Confidence            3333
+
+

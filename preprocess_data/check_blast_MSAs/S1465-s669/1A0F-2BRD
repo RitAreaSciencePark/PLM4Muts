@@ -1,0 +1,23 @@
+Query         1A0F
+Match_columns 201
+No_of_seqs    202 out of 1140
+Neff          11.8946
+Searched_HMMs 1
+Date          Tue May 28 08:25:05 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1A0F -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2BRD -o S1465-s669/1A0F-2BRD 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2BRD                             0.1    0.48    0.48    8.7   0.0    3   53-55     85-87  (222)
+
+No 1
+>2BRD
+Probab=0.12  E-value=0.48  Score=8.74  Aligned_cols=3  Identities=67%  Similarity=1.154  Sum_probs=1.1  Template_Neff=9.492
+
+Q 1A0F             53 PAL   55 (201)
+Q Consensus        53 P~l   55 (201)
+                      |.+
+T Consensus        85 Pll   87 (222)
+T 2BRD             85 PLL   87 (222)
+Confidence            333
+
+

@@ -1,0 +1,15 @@
+Query         1JL9
+Match_columns 42
+No_of_seqs    122 out of 1888
+Neff          13.0936
+Searched_HMMs 1
+Date          Tue May 28 08:25:31 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1JL9 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1MBG -o S1465-s669/1JL9-1MBG 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1MBG                             0.5    0.12    0.12    3.5   0.0    1    1-1       1-1   (52)
+
+No 1
+>1MBG
+Probab=0.49  E-value=0.12  Score=3.48  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.065
+

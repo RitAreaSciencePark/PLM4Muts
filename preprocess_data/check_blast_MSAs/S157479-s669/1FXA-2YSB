@@ -1,0 +1,15 @@
+Query         1FXA
+Match_columns 98
+No_of_seqs    165 out of 1415
+Neff          9.79113
+Searched_HMMs 1
+Date          Tue May 28 08:28:49 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1FXA -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2YSB -o S157479-s669/1FXA-2YSB 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2YSB                             0.3    0.24    0.24    4.0   0.0    1    1-1       1-1   (43)
+
+No 1
+>2YSB
+Probab=0.26  E-value=0.24  Score=3.95  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.032
+

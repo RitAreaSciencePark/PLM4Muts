@@ -1,0 +1,15 @@
+Query         2N7Z
+Match_columns 106
+No_of_seqs    137 out of 778
+Neff          7.72939
+Searched_HMMs 1
+Date          Tue May 28 08:26:09 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2N7Z -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1DIL -o S1465-s669/2N7Z-1DIL 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1DIL                             0.0     0.9     0.9    5.6   0.0    1   97-97     38-38  (381)
+
+No 1
+>1DIL
+Probab=0.04  E-value=0.9  Score=5.62  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=13.089
+

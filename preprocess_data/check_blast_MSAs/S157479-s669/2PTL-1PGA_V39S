@@ -1,0 +1,15 @@
+Query         2PTL
+Match_columns 78
+No_of_seqs    13 out of 13
+Neff          3.15127
+Searched_HMMs 1
+Date          Tue May 28 08:29:03 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/2PTL -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/1PGA_V39S -o S157479-s669/2PTL-1PGA_V39S 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1PGA_V39S                        0.1    0.74    0.74    6.8   0.0    1   58-58     37-37  (56)
+
+No 1
+>1PGA_V39S
+Probab=0.06  E-value=0.74  Score=6.76  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=3.278
+

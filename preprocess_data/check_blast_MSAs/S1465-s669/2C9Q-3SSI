@@ -1,0 +1,23 @@
+Query         2C9Q
+Match_columns 102
+No_of_seqs    129 out of 1053
+Neff          8.34324
+Searched_HMMs 1
+Date          Tue May 28 08:25:54 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2C9Q -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/3SSI -o S1465-s669/2C9Q-3SSI 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 3SSI                             0.2    0.28    0.28    8.5   0.0   25   18-42      4-32  (108)
+
+No 1
+>3SSI
+Probab=0.22  E-value=0.28  Score=8.49  Aligned_cols=25  Identities=12%  Similarity=0.240  Sum_probs=12.3  Template_Neff=7.988
+
+Q 2C9Q             18 PAKIELHFSENL----VTQFSGAKLVMTA   42 (102)
+Q Consensus        18 P~~i~l~F~~~v----~~~~s~~~l~~~~   42 (102)
+                      +..|.|+....-    ........|....
+T Consensus         4 ~~~L~ltv~~~~~~~~~~~~~~~~L~C~p   32 (108)
+T 3SSI              4 PSALVLTVGKGVSATTAAPERAVTLTCAP   32 (108)
+Confidence            455666665432    1222345666643
+
+

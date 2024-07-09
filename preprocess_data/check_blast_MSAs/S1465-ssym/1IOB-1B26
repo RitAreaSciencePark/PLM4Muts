@@ -1,0 +1,23 @@
+Query         1IOB
+Match_columns 153
+No_of_seqs    108 out of 523
+Neff          7.04271
+Searched_HMMs 1
+Date          Tue May 28 08:27:39 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1IOB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1B26 -o S1465-ssym/1IOB-1B26 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1B26                             0.1     0.7     0.7    9.0   0.0   12  113-124   128-139 (409)
+
+No 1
+>1B26
+Probab=0.07  E-value=0.7  Score=8.97  Aligned_cols=12  Identities=17%  Similarity=-0.064  Sum_probs=6.2  Template_Neff=9.757
+
+Q 1IOB            113 ESAQFPNWYIST  124 (153)
+Q Consensus       113 ESa~~pgWFL~t  124 (153)
+                      .+..-|++|+..
+T Consensus       128 ~~~~~~~~~~~~  139 (409)
+T 1B26            128 QVIIGPYNDIPA  139 (409)
+Confidence            333445577654
+
+

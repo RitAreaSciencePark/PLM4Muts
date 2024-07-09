@@ -1,0 +1,15 @@
+Query         4YEF
+Match_columns 80
+No_of_seqs    116 out of 1172
+Neff          10.926
+Searched_HMMs 1
+Date          Tue May 28 08:26:42 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/4YEF -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1SUP -o S1465-s669/4YEF-1SUP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1SUP                             0.1    0.79    0.79    5.5   0.0    1   17-17    176-176 (275)
+
+No 1
+>1SUP
+Probab=0.05  E-value=0.79  Score=5.52  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.545
+

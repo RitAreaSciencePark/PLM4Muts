@@ -1,0 +1,23 @@
+Query         2JIE
+Match_columns 445
+No_of_seqs    295 out of 2650
+Neff          10.7845
+Searched_HMMs 1
+Date          Tue May 28 08:26:03 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2JIE -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1RHG -o S1465-s669/2JIE-1RHG 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1RHG                             0.2    0.33    0.33   11.4   0.0   17  138-154    65-81  (145)
+
+No 1
+>1RHG
+Probab=0.18  E-value=0.33  Score=11.38  Aligned_cols=17  Identities=6%  Similarity=0.014  Sum_probs=12.1  Template_Neff=7.517
+
+Q 2JIE            138 IQHFKTYASVIMDRFGE  154 (445)
+Q Consensus       138 ~~~f~~~~~~~~~~~~~  154 (445)
+                      ...|..|.+.+.++|.+
+T Consensus        65 L~~yq~~L~~l~~~~~~   81 (145)
+T 1RHG             65 LFLYQGLLQALEGISPE   81 (145)
+Confidence            46677777777777763
+
+

@@ -1,0 +1,23 @@
+Query         1N88
+Match_columns 96
+No_of_seqs    116 out of 1166
+Neff          7.16888
+Searched_HMMs 1
+Date          Tue May 28 08:25:38 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1N88 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QLP -o S1465-s669/1N88-1QLP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QLP                             0.4    0.13    0.13   12.4   0.0   22   36-57    105-126 (372)
+
+No 1
+>1QLP
+Probab=0.44  E-value=0.13  Score=12.44  Aligned_cols=22  Identities=14%  Similarity=0.143  Sum_probs=13.6  Template_Neff=10.928
+
+Q 1N88             36 KTEIKNAVETAFKVKVVKVNTL   57 (96)
+Q Consensus        36 K~~Ik~~le~~y~v~v~~Vnt~   57 (96)
+                      +.+-.+.+.+.|+..+..+.-.
+T Consensus       105 ~~~~~~~~~~~~~~~~~~~df~  126 (372)
+T 1QLP            105 VDKFLEDVKKLYHSEAFTVNFG  126 (372)
+Confidence            4445566677788777665543
+
+

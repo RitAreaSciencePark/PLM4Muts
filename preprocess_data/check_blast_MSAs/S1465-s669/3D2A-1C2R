@@ -1,0 +1,23 @@
+Query         3D2A
+Match_columns 179
+No_of_seqs    394 out of 1225
+Neff          12.3656
+Searched_HMMs 1
+Date          Tue May 28 08:26:30 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3D2A -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C2R -o S1465-s669/3D2A-1C2R 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C2R                             0.8   0.071   0.071   10.1   0.0   11  162-172   102-112 (116)
+
+No 1
+>1C2R
+Probab=0.79  E-value=0.071  Score=10.09  Aligned_cols=11  Identities=9%  Similarity=-0.215  Sum_probs=4.7  Template_Neff=11.385
+
+Q 3D2A            162 QVYSLIKEGLN  172 (179)
+Q Consensus       162 ~~~~~i~~~l~  172 (179)
+                      +-...|.+||+
+T Consensus       102 ~~~~~l~~yl~  112 (116)
+T 1C2R            102 KGGEDVAAYLA  112 (116)
+Confidence            33344444443
+
+

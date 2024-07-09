@@ -1,0 +1,23 @@
+Query         1JLV
+Match_columns 207
+No_of_seqs    198 out of 1161
+Neff          11.9801
+Searched_HMMs 1
+Date          Tue May 28 08:25:32 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1JLV -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AXB -o S1465-s669/1JLV-1AXB 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AXB                             0.2    0.35    0.35    9.1   0.0   14  149-162   153-166 (263)
+
+No 1
+>1AXB
+Probab=0.17  E-value=0.35  Score=9.12  Aligned_cols=14  Identities=7%  Similarity=0.031  Sum_probs=8.2  Template_Neff=12.447
+
+Q 1JLV            149 GDSLTIADLTVLAT  162 (207)
+Q Consensus       149 g~~~s~aD~~~~~~  162 (207)
+                      +...|..|++-+..
+T Consensus       153 ~~~~t~~d~~~~~~  166 (263)
+T 1AXB            153 RDTTMPVAMATTLR  166 (263)
+Confidence            35667777665443
+
+

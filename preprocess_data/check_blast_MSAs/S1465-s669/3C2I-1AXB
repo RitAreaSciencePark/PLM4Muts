@@ -1,0 +1,23 @@
+Query         3C2I
+Match_columns 72
+No_of_seqs    107 out of 1010
+Neff          8.21267
+Searched_HMMs 1
+Date          Tue May 28 08:26:25 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3C2I -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AXB -o S1465-s669/3C2I-1AXB 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AXB                             0.3    0.21    0.21    8.9   0.0   19   36-54    149-167 (263)
+
+No 1
+>1AXB
+Probab=0.28  E-value=0.21  Score=8.91  Aligned_cols=19  Identities=11%  Similarity=0.086  Sum_probs=10.3  Template_Neff=12.447
+
+Q 3C2I             36 NPQGKAFRSKVELIMYFEK   54 (72)
+Q Consensus        36 ~P~G~~~rS~~ev~~YL~~   54 (72)
+                      ...|...-|..++.+++..
+T Consensus       149 ~~~~~~~~t~~d~~~~~~~  167 (263)
+T 1AXB            149 PNDERDTTMPVAMATTLRK  167 (263)
+Confidence            3344455556666666554
+
+

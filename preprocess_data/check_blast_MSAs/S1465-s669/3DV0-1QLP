@@ -1,0 +1,15 @@
+Query         3DV0
+Match_columns 43
+No_of_seqs    126 out of 1417
+Neff          10.7509
+Searched_HMMs 1
+Date          Tue May 28 08:26:34 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3DV0 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QLP -o S1465-s669/3DV0-1QLP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QLP                             0.1    0.65    0.65    6.1   0.0    1    1-1       1-1   (372)
+
+No 1
+>1QLP
+Probab=0.08  E-value=0.65  Score=6.09  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=10.928
+

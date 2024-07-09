@@ -1,0 +1,23 @@
+Query         3C2I
+Match_columns 72
+No_of_seqs    107 out of 1010
+Neff          8.21267
+Searched_HMMs 1
+Date          Tue May 28 08:26:26 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3C2I -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1BLC -o S1465-s669/3C2I-1BLC 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1BLC                             0.3    0.21    0.21    9.1   0.0   18   39-56    144-161 (257)
+
+No 1
+>1BLC
+Probab=0.29  E-value=0.21  Score=9.08  Aligned_cols=18  Identities=11%  Similarity=-0.034  Sum_probs=10.7  Template_Neff=12.028
+
+Q 3C2I             39 GKAFRSKVELIMYFEKVG   56 (72)
+Q Consensus        39 G~~~rS~~ev~~YL~~~~   56 (72)
+                      +...-|..++.+++....
+T Consensus       144 ~~~~~t~~dl~~~~~~l~  161 (257)
+T 1BLC            144 KKDTSTPAAFGKTLNKLI  161 (257)
+Confidence            455566666666666543
+
+

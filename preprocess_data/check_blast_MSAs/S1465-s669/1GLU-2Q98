@@ -1,0 +1,23 @@
+Query         1GLU
+Match_columns 81
+No_of_seqs    122 out of 1018
+Neff          10.9452
+Searched_HMMs 1
+Date          Tue May 28 08:25:19 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1GLU -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2Q98 -o S1465-s669/1GLU-2Q98 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2Q98                             0.1    0.48    0.48    7.3   0.0    3   32-34    168-170 (191)
+
+No 1
+>2Q98
+Probab=0.12  E-value=0.48  Score=7.25  Aligned_cols=3  Identities=33%  Similarity=0.789  Sum_probs=1.1  Template_Neff=8.174
+
+Q 1GLU             32 KRA   34 (81)
+Q Consensus        32 ~r~   34 (81)
+                      ++-
+T Consensus       168 ~rD  170 (191)
+T 2Q98            168 RRD  170 (191)
+Confidence            333
+
+

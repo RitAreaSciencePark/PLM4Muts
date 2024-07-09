@@ -1,0 +1,23 @@
+Query         1N88
+Match_columns 96
+No_of_seqs    116 out of 1166
+Neff          7.16888
+Searched_HMMs 1
+Date          Tue May 28 08:28:58 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1N88 -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2KZI_pross1 -o S157479-s669/1N88-2KZI_pross1 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2KZI_pross1                      2.3   0.021   0.021   13.3   0.0   13    4-16     11-23  (54)
+
+No 1
+>2KZI_pross1
+Probab=2.29  E-value=0.021  Score=13.34  Aligned_cols=13  Identities=31%  Similarity=0.736  Sum_probs=8.3  Template_Neff=4.155
+
+Q 1N88              4 AYDVILAPVLSEK   16 (96)
+Q Consensus         4 ~~~ii~~P~iTeK   16 (96)
+                      .+.|+.-|-+||.
+T Consensus        11 fy~il~l~~ltee   23 (54)
+T 2KZI_pross1      11 YWEILLLPNLNEQ   23 (54)
+Confidence            3556666777765
+
+

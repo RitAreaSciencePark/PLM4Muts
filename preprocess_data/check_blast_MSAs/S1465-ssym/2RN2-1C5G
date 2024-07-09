@@ -1,0 +1,15 @@
+Query         2RN2
+Match_columns 155
+No_of_seqs    137 out of 1761
+Neff          11.6929
+Searched_HMMs 1
+Date          Tue May 28 08:27:45 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/2RN2 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1C5G -o S1465-ssym/2RN2-1C5G 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1C5G                             0.1    0.71    0.71    7.8   0.0    1    1-1       1-1   (379)
+
+No 1
+>1C5G
+Probab=0.07  E-value=0.71  Score=7.77  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=10.913
+

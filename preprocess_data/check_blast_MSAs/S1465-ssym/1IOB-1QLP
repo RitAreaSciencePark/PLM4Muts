@@ -1,0 +1,23 @@
+Query         1IOB
+Match_columns 153
+No_of_seqs    108 out of 523
+Neff          7.04271
+Searched_HMMs 1
+Date          Tue May 28 08:27:40 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/1IOB -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QLP -o S1465-ssym/1IOB-1QLP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QLP                             0.9   0.064   0.064   15.8   0.0   19    2-20    344-362 (372)
+
+No 1
+>1QLP
+Probab=0.86  E-value=0.064  Score=15.83  Aligned_cols=19  Identities=11%  Similarity=0.095  Sum_probs=10.7  Template_Neff=10.928
+
+Q 1IOB              2 PVRSLNCTLRDSQQKSLVM   20 (153)
+Q Consensus         2 ~~~~~~~~i~D~~~K~Lvl   20 (153)
+                      +++|.-|.|+|......++
+T Consensus       344 ~drPF~f~i~~~~~~~il~  362 (372)
+T 1QLP            344 FNKPFVFLMIEQNTKSPLF  362 (372)
+Confidence            3566666666665544444
+
+

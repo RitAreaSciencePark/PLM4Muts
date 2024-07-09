@@ -1,0 +1,19 @@
+#INITIAL SETTINGS
+output_dir: "runs/S1413_ESM2_Finetuning_Logits"
+dataset_dir: "datasets/S1413"
+model: "ESM2_Finetuning_Logits"
+learning_rate: 5.0e-3
+max_epochs: 20
+loss_fn: "L1"
+seeds: [10, 11, 12]
+max_length: 1024
+optimizer:
+  name: "AdamW"
+  weight_decay: 0.01
+  momentum: 0.
+MSA:
+  max_tokens: 16000
+snapshot_file: "runs/S1413_ESM2_Finetuning_Logits/snapshots/ESM2_Finetuning_Logits.pt"
+onnx_file: "runs/S1413_ESM2_Finetuning_Logits/snapshots/onnx/ESM2_Finetuning_Logits.onnx"
+
+

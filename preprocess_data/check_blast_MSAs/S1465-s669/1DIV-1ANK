@@ -1,0 +1,23 @@
+Query         1DIV
+Match_columns 149
+No_of_seqs    123 out of 1134
+Neff          8.05449
+Searched_HMMs 1
+Date          Tue May 28 08:25:07 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1DIV -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1ANK -o S1465-s669/1DIV-1ANK 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1ANK                             0.5    0.13    0.13   11.7   0.0   13    4-16      3-15  (214)
+
+No 1
+>1ANK
+Probab=0.47  E-value=0.13  Score=11.65  Aligned_cols=13  Identities=38%  Similarity=0.521  Sum_probs=6.3  Template_Neff=11.994
+
+Q 1DIV              4 IFLKDVKGKGKKG   16 (149)
+Q Consensus         4 iLl~dv~~lG~kG   16 (149)
+                      +++.-.||-|+.-
+T Consensus         3 i~i~G~~gsGKst   15 (214)
+T 1ANK              3 IILLGAPGAGKGT   15 (214)
+Confidence            3444455555544
+
+

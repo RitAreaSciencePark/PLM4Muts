@@ -1,0 +1,23 @@
+Query         1IV7
+Match_columns 96
+No_of_seqs    130 out of 1014
+Neff          7.66683
+Searched_HMMs 1
+Date          Tue May 28 08:25:26 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1IV7 -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1A23 -o S1465-s669/1IV7-1A23 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1A23                             2.5   0.019   0.019   14.3   0.0   27   55-81      4-30  (189)
+
+No 1
+>1A23
+Probab=2.50  E-value=0.019  Score=14.28  Aligned_cols=27  Identities=7%  Similarity=-0.128  Sum_probs=15.9  Template_Neff=11.979
+
+Q 1IV7             55 IKGYEYQLYVYASDKLFRADISEDYKT   81 (96)
+Q Consensus        55 v~G~~Y~l~v~~~~~~c~~~V~~~~~~   81 (96)
+                      ..|..|.+.....+...++.+|..++.
+T Consensus         4 ~~~~~~~~~~~~~~~~~~i~~f~d~~C   30 (189)
+T 1A23              4 EDGKQYTTLEKPVAGAPQVLEFFSFFC   30 (189)
+Confidence            355566666666666666666665554
+
+

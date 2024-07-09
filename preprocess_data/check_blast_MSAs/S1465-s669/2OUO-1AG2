@@ -1,0 +1,23 @@
+Query         2OUO
+Match_columns 111
+No_of_seqs    123 out of 1169
+Neff          10.5176
+Searched_HMMs 1
+Date          Tue May 28 08:26:11 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2OUO -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AG2 -o S1465-s669/2OUO-1AG2 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AG2                             0.6    0.09    0.09   11.0   0.0   15   64-78     46-60  (103)
+
+No 1
+>1AG2
+Probab=0.64  E-value=0.09  Score=11.04  Aligned_cols=15  Identities=20%  Similarity=0.315  Sum_probs=9.8  Template_Neff=2.947
+
+Q 2OUO             64 YRDAQEFGADVRLMF   78 (111)
+Q Consensus        64 y~~~~~f~~d~~~~~   78 (111)
+                      |.+-+-|.+|...|-
+T Consensus        46 ~v~q~~FV~DC~NiT   60 (103)
+T 1AG2             46 YSNQNNFVHDCVNIT   60 (103)
+Confidence            455667888876553
+
+

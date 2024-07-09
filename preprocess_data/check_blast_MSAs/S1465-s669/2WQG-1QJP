@@ -1,0 +1,15 @@
+Query         2WQG
+Match_columns 51
+No_of_seqs    124 out of 1127
+Neff          8.48873
+Searched_HMMs 1
+Date          Tue May 28 08:26:19 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/2WQG -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1QJP -o S1465-s669/2WQG-1QJP 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1QJP                             0.0    0.85    0.85    3.4   0.0    1    1-1       1-1   (137)
+
+No 1
+>1QJP
+Probab=0.05  E-value=0.85  Score=3.38  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=12.272
+

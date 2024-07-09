@@ -1,0 +1,23 @@
+Query         1GUA
+Match_columns 76
+No_of_seqs    100 out of 278
+Neff          7.27744
+Searched_HMMs 1
+Date          Tue May 28 08:28:51 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/1GUA -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2K5N -o S157479-s669/1GUA-2K5N 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2K5N                             0.5    0.13    0.13    7.4   0.0    5   19-23     42-46  (67)
+
+No 1
+>2K5N
+Probab=0.46  E-value=0.13  Score=7.35  Aligned_cols=5  Identities=0%  Similarity=0.209  Sum_probs=1.9  Template_Neff=11.424
+
+Q 1GUA             19 NGMSL   23 (76)
+Q Consensus        19 ~g~tv   23 (76)
+                      .|..+
+T Consensus        42 ~g~~v   46 (67)
+T 2K5N             42 KDAAV   46 (67)
+Confidence            33333
+
+

@@ -1,0 +1,23 @@
+Query         4LYZ
+Match_columns 129
+No_of_seqs    161 out of 1156
+Neff          8.72477
+Searched_HMMs 1
+Date          Tue May 28 08:27:46 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/validation/MSA_ssym/4LYZ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/2TRX -o S1465-ssym/4LYZ-2TRX 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2TRX                             0.4    0.14    0.14    8.4   0.0    9  109-117    29-37  (108)
+
+No 1
+>2TRX
+Probab=0.43  E-value=0.14  Score=8.36  Aligned_cols=9  Identities=33%  Similarity=0.844  Sum_probs=3.6  Template_Neff=13.145
+
+Q 4LYZ            109 VAWRNRCKG  117 (129)
+Q Consensus       109 ~~~~~~C~~  117 (129)
+                      ..|-..|..
+T Consensus        29 ~~~c~~c~~   37 (108)
+T 2TRX             29 AEWCGPCKM   37 (108)
+Confidence            334444443
+
+

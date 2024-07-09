@@ -1,0 +1,15 @@
+Query         3G1G
+Match_columns 77
+No_of_seqs    102 out of 286
+Neff          6.85356
+Searched_HMMs 1
+Date          Tue May 28 08:26:35 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/3G1G -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1G6N -o S1465-s669/3G1G-1G6N 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1G6N                             0.3     0.2     0.2    9.2   0.0    1   67-67    179-179 (200)
+
+No 1
+>1G6N
+Probab=0.30  E-value=0.2  Score=9.19  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.658
+

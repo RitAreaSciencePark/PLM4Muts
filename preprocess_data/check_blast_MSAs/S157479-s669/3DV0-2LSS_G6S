@@ -1,0 +1,15 @@
+Query         3DV0
+Match_columns 43
+No_of_seqs    126 out of 1417
+Neff          10.7509
+Searched_HMMs 1
+Date          Tue May 28 08:29:08 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S157479/test/MSA_s669/3DV0 -t ../preprocess_PLM4Muts/S157479/train/MSA_S157479/2LSS_G6S -o S157479-s669/3DV0-2LSS_G6S 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 2LSS_G6S                         0.2     0.3     0.3    3.9   0.0    1   32-32     20-20  (69)
+
+No 1
+>2LSS_G6S
+Probab=0.20  E-value=0.3  Score=3.88  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=11.734
+

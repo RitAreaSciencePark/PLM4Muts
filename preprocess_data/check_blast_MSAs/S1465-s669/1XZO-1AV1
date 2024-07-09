@@ -1,0 +1,15 @@
+Query         1XZO
+Match_columns 172
+No_of_seqs    294 out of 1045
+Neff          12.4364
+Searched_HMMs 1
+Date          Tue May 28 08:25:48 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1XZO -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1AV1 -o S1465-s669/1XZO-1AV1 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1AV1                             0.1    0.65    0.65    7.4   0.0    1   57-57    106-106 (201)
+
+No 1
+>1AV1
+Probab=0.08  E-value=0.65  Score=7.38  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=8.713
+

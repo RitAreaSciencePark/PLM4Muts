@@ -1,0 +1,15 @@
+Query         1IOJ
+Match_columns 57
+No_of_seqs    58 out of 58
+Neff          4.02504
+Searched_HMMs 1
+Date          Tue May 28 08:25:22 2024
+Command       hhalign -i ../preprocess_PLM4Muts/S1465/test/MSA_s669/1IOJ -t ../preprocess_PLM4Muts/S1465/train/MSA_S1465/1RHG -o S1465-s669/1IOJ-1RHG 
+
+ No Hit                             Prob E-value P-value  Score    SS Cols Query HMM  Template HMM
+  1 1RHG                             0.6   0.096   0.096   11.6   0.0    1   24-24     11-11  (145)
+
+No 1
+>1RHG
+Probab=0.60  E-value=0.096  Score=11.64  Aligned_cols=1  Identities=0%  Similarity=0.000  Sum_probs=0.0  Template_Neff=7.517
+
