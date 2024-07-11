@@ -220,3 +220,16 @@ snapshot_file: "runs/S1413_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
 To perform the inference we provide a slurm job template in `runs/Inference_MSA_Finetuning/inference.job`, to be adjusted in accordance to your needs.
  
 
+### Licensing
+
+This work is licensed under multiple licences. 
+
+Because keeping this section up-to-date is challenging, here is a brief summary as of July 2024:
+
+- All original source code is licensed under `AGPL-3.0-or-later`.
+- All documentation, data, images is licensed under `CC-BY-4.0`.
+- Some configuration files (`.gitignore`, `requirements.txt`, `REUSE.toml`, `reuse.spdx`) are licensed under `CC0-1.0`.
+- Some code (`preprocess\_data/scripts/reformat.pl`) borrowed from the HHsuite version 3.0.0 is licensed under `GPL-3.0-or-later`.
+
+For more accurate information, check the `REUSE.toml` or `reuse.spdx` files or individual files.
+
