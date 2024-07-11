@@ -194,14 +194,14 @@ As an example, we provide an example dataset, where we consider 13 mutations of 
 Dataset files correctly organized as follows
 
 ```bash
-datasets/Inference/
-`-- test
-    |-- databases
-    |   `-- db_s13.csv
-    |-- MSA_s13
-    |   `-- 1A7V
-    `-- translated_databases
-        `-- tb_s13.csv
+Inference/
+└── test
+    ├── databases
+    │   └── db_s13.csv
+    ├── MSA_s13
+    │   └── 1A7V
+    └── translated_databases
+        └── tb_s13.csv
 ```
 We have generated `translated_databases/tb_s13.csv` by means of the `src/ProstT5TranslationDDP.py` program (see for instance `runs/S1465_Translate/translateS1465.sh` for more details). 
 
@@ -226,10 +226,10 @@ This work is licensed under multiple licences.
 
 Because keeping this section up-to-date is challenging, here is a brief summary as of July 2024:
 
-- All original source code is licensed under `AGPL-3.0-or-later`.
-- All documentation, data, images is licensed under `CC-BY-4.0`.
+- All original source code and scripts are licensed under `AGPL-3.0-or-later`.
+- All documentation, data, images are licensed under `CC-BY-4.0`.
 - Some configuration files (`.gitignore`, `requirements.txt`, `REUSE.toml`, `reuse.spdx`) are licensed under `CC0-1.0`.
 - Some code (`preprocess\_data/scripts/reformat.pl`) borrowed from the HHsuite version 3.0.0 is licensed under `GPL-3.0-or-later`.
 
-For more accurate information, check the `REUSE.toml` or `reuse.spdx` files or individual files.
+For more accurate information, check the `REUSE.toml` file or the SPDX License List `reuse.spdx`.
 
