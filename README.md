@@ -233,3 +233,10 @@ Because keeping this section up-to-date is challenging, here is a brief summary 
 
 For more accurate information, check the `REUSE.toml` file or the SPDX License List `reuse.spdx`.
 
+
+### Publications
+
+
+[Cuturello F, Celoria M, Ansuini A, Cazzaniga A. (2024). Enhancing predictions of protein stability changes induced by single mutations using MSA-based Language Models. Bioinformatics, Volume 40, Issue 7, July 2024, btae447, https://doi.org/10.1093/bioinformatics/btae447](https://doi.org/10.1093/bioinformatics/btae447)
+
+
