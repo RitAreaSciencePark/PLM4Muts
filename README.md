@@ -186,29 +186,7 @@ Outputs can be found in `runs/experiment_name/results/` and consists of the foll
 
 ### <a name="SecZenodo"></a>  Model weights on Zenodo
 
-Weights associated to MSA fine-tuned model, trained with the Megascale data (S155329), resulting from [this run](https://github.com/RitAreaSciencePark/PLM4Muts/tree/main/runs/S155329_MSA_Finetuning), are available on Zenodo [here](https://zenodo.org/records/14026821) . 
-
-These model weights are precisely the `MSA_Finetuning.pt` of the [config.yaml](https://github.com/RitAreaSciencePark/PLM4Muts/tree/main/runs/S155329_MSA_Finetuning/config.yaml)
-
-```
-#INITIAL SETTINGS
-output_dir: "runs/S155329_MSA_Finetuning"
-dataset_dir: "datasets/S155329"
-model: "MSA_Finetuning"
-learning_rate: 5.0e-5
-max_epochs: 20
-loss_fn: "L1"
-seeds: [10, 11, 12]
-max_length: 1024
-optimizer:
-  name: "AdamW"
-  weight_decay: 0.01
-  momentum: 0.
-MSA:
-  max_tokens: 16000
-snapshot_file: "runs/S155329_MSA_Finetuning/snapshots/MSA_Finetuning.pt"
-onnx_file: "runs/S155329_MSA_Finetuning/snapshots/onnx/MSA_Finetuning.onnx"
-```
+Weights associated to MSA fine-tuned model, trained with the Megascale data (S155329) and, more specifically, resulting from [this run](https://github.com/RitAreaSciencePark/PLM4Muts/tree/main/runs/S155329_MSA_Finetuning) , are available on Zenodo [here](https://zenodo.org/records/14026821) . 
 
 To download the trained weights
 
